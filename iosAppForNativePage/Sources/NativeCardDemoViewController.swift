@@ -1298,7 +1298,7 @@ class NativeCardDemoViewController: UIViewController {
     // MARK: - State
 
     /// How many cards to display on first entry, before any button tap.
-    private static let INITIAL_CARD_COUNT: Int = 3
+    private static let INITIAL_CARD_COUNT: Int = 20
 
     private let scrollView = UIScrollView()
     private let cardsContainer = UIStackView()
@@ -1322,6 +1322,17 @@ class NativeCardDemoViewController: UIViewController {
         }
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        // Hide the navigation bar (including the back button) for screenshot mode.
+        navigationController?.setNavigationBarHidden(true, animated: animated)
+    }
+
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.setNavigationBarHidden(false, animated: animated)
+    }
+
     deinit {
         surfaceViews.forEach { $0.destroy() }
         surfaceViews.removeAll()
@@ -1330,39 +1341,8 @@ class NativeCardDemoViewController: UIViewController {
     // MARK: - Layout
 
     private func buildLayout() {
-        // Header banner (mirrors #455A64 header in Android variant).
-        let header = UIView()
-        header.backgroundColor = UIColor(red: 0.27, green: 0.35, blue: 0.39, alpha: 1.0)
-        header.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(header)
-
-        let headerTitle = UILabel()
-        headerTitle.text = "卡片场景接入示例"
-        headerTitle.font = .boldSystemFont(ofSize: 20)
-        headerTitle.textColor = .white
-        headerTitle.translatesAutoresizingMaskIntoConstraints = false
-        header.addSubview(headerTitle)
-
-        let headerSubtitle = UILabel()
-        headerSubtitle.text = "宿主：Native UIViewController + A2UISurfaceView\n初始 3 张，点击按钮追加下一张（共 20 种，循环轮播）"
-        headerSubtitle.font = .systemFont(ofSize: 11)
-        headerSubtitle.textColor = UIColor(red: 0.81, green: 0.85, blue: 0.86, alpha: 1.0)
-        headerSubtitle.numberOfLines = 2
-        headerSubtitle.translatesAutoresizingMaskIntoConstraints = false
-        header.addSubview(headerSubtitle)
-
-        // Append button pinned at the bottom.
-        let addButton = UIButton(type: .system)
-        addButton.setTitle("点击追加 A2UI 卡片", for: .normal)
-        addButton.titleLabel?.font = .systemFont(ofSize: 14)
-        addButton.backgroundColor = UIColor(red: 0.27, green: 0.35, blue: 0.39, alpha: 1.0)
-        addButton.setTitleColor(.white, for: .normal)
-        addButton.layer.cornerRadius = 4
-        addButton.translatesAutoresizingMaskIntoConstraints = false
-        addButton.addTarget(self, action: #selector(appendNextCard), for: .touchUpInside)
-        view.addSubview(addButton)
-
-        // Scroll host filling the space between header and button.
+        // Screenshot mode: no top header, no bottom button — the scroll view
+        // fills the entire safe area so only the A2UI cards are visible.
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         scrollView.alwaysBounceVertical = true
         view.addSubview(scrollView)
@@ -1373,27 +1353,10 @@ class NativeCardDemoViewController: UIViewController {
         scrollView.addSubview(cardsContainer)
 
         NSLayoutConstraint.activate([
-            header.topAnchor.constraint(equalTo: view.topAnchor),
-            header.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            header.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-
-            headerTitle.topAnchor.constraint(equalTo: header.safeAreaLayoutGuide.topAnchor, constant: 12),
-            headerTitle.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 24),
-
-            headerSubtitle.topAnchor.constraint(equalTo: headerTitle.bottomAnchor, constant: 4),
-            headerSubtitle.leadingAnchor.constraint(equalTo: header.leadingAnchor, constant: 24),
-            headerSubtitle.trailingAnchor.constraint(equalTo: header.trailingAnchor, constant: -24),
-            headerSubtitle.bottomAnchor.constraint(equalTo: header.bottomAnchor, constant: -16),
-
-            addButton.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-            addButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-            addButton.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -12),
-            addButton.heightAnchor.constraint(equalToConstant: 44),
-
-            scrollView.topAnchor.constraint(equalTo: header.bottomAnchor),
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
             scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: addButton.topAnchor, constant: -8),
+            scrollView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor),
 
             cardsContainer.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 8),
             cardsContainer.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor, constant: 12),
