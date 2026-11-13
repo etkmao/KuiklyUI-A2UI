@@ -13,10 +13,7 @@
 Kuikly A2UI 覆盖了 A2UI 协议定义的 18 个标准组件（Text / Image / Button / Card / Column / Row / List / Tabs / Slider / CheckBox / ChoicePicker / DateTimeInput / TextField / Video / AudioPlayer / Modal / Divider / Icon），并支持业务自定义组件，Agent 可据此灵活组合，生成行程、天气、商品、表单、事项等多种形态的卡片。下面是 Kuikly A2UI 的部分渲染效果：
 
 <div style="display: inline-block; text-align: center; margin-left: 20px;">
-  <img src="docs/a2ui_card1.jpg" alt="Kuikly A2UI Card" width="200">
-  <img src="docs/a2ui_card2.jpg" alt="Kuikly A2UI Card" width="200">
-  <img src="docs/a2ui_card3.jpg" alt="Kuikly A2UI Card" width="200">
-  <img src="docs/a2ui_card4.jpg" alt="Kuikly A2UI Card" width="200">
+  <img src="docs/a2ui_cards_hstack.jpg" alt="Kuikly A2UI Card" width="800">
 </div>
 
 在标准协议之外，面向实际业务更广泛的组件需求与视觉诉求，Kuikly A2UI 还提供：
@@ -154,8 +151,6 @@ Kuikly A2UI 后续将沿这一思路演进：
 - 引入 Agent 策略、脚本校验与接口级校验，形成多层防护；
 - 复用团队既有的自动化测试与检查能力，为生成质量提供量化评估。
 
-稳定性与可修复性，将是 Kuikly A2UI 面向严肃业务的核心承诺之一。
-
 ### 2. Token 消耗与生成速度
 
 Token 消耗与端到端延迟，直接决定了「AI 生成 UI」在高频对话场景中的经济性与体验上限。
@@ -165,7 +160,7 @@ Token 消耗与端到端延迟，直接决定了「AI 生成 UI」在高频对�
 - 自然语言或紧凑描述串短于 JSON，且大模型在流式生成结构化 JSON 时本身效率偏低；
 - A2UI 的邻接表 JSON 结构在生成侧对模型并不友好，但在渲染侧对客户端增量更新极为友好。
 
-针对这一「生成不友好、渲染友好」的结构矛盾，一种可行路径是在服务侧先让模型生成更贴合其生成习惯的中间描述，再由网关转换为标准 A2UI JSON 下发；在客户端侧则继续发挥邻接表易于增量应用的优势。Kuikly A2UI 将把 Token 与速度优化作为持续投入的方向之一。
+针对这一「生成不友好、渲染友好」的结构矛盾，一种可行路径是在服务侧先让模型生成更贴合其生成习惯的中间描述，再由网关转换为标准 A2UI JSON 下发；在客户端侧则继续发挥邻接表易于增量应用的优势。
 
 此外，随着端侧小模型能力的提升，模型本地化部署亦将进一步压缩网络时延。无论云端大模型还是端侧小模型，其性能的每一次跃迁，都会同步放大「AI 实时生成 UI」的应用价值。
 
@@ -188,7 +183,7 @@ Token 消耗与端到端延迟，直接决定了「AI 生成 UI」在高频对�
 - **Bundle 下发**：将整段逻辑作为一个 Kuikly View bundle 下发，运行时动态加载；
 - **函数级下发**：基于 KN 热修能力，在 ARM64 虚拟机层做函数级替换，使下发内容可覆盖 C++、Swift、Kotlin 等多种语言，具备更终极的灵活性。
 
-一旦支持可执行代码下发，Kuikly A2UI 所能承载的场景将从「渲染预定义行为的卡片」扩展为「现场生成可操作的小型应用」——例如用户规划周末出游时，由模型现场生成一个可比较、可筛选、可调整的交互页面。该方向工程链路较长，需要配套的配置系统与热修系统协同，Kuikly A2UI 将分阶段推进。
+一旦支持可执行代码下发，Kuikly A2UI 所能承载的场景将从「渲染预定义行为的卡片」扩展为「现场生成可操作的小型应用」——例如用户规划周末出游时，由模型现场生成一个可比较、可筛选、可调整的交互页面。该方向工程链路较长，需要配套的配置系统与热修系统协同。
 
 ### 5. 预制卡片与卡片编辑器
 
