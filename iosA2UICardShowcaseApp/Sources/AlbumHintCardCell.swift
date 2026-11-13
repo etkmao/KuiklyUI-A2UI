@@ -9,7 +9,7 @@ final class AlbumHintCardCell: UITableViewCell {
     private let avatar = UILabel()
     private let card = UIView()
     private let icon = UILabel()
-    private let textLabel = UILabel()
+    private let messageLabel = UILabel()
     private let spinner = UIActivityIndicatorView(style: .medium)
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -39,16 +39,16 @@ final class AlbumHintCardCell: UITableViewCell {
         icon.text = "🖼️"
         icon.font = .systemFont(ofSize: 20)
 
-        textLabel.translatesAutoresizingMaskIntoConstraints = false
-        textLabel.font = .systemFont(ofSize: 14, weight: .medium)
-        textLabel.textColor = UIColor(hex: 0x1F6D5F)
-        textLabel.numberOfLines = 0
+        messageLabel.translatesAutoresizingMaskIntoConstraints = false
+        messageLabel.font = .systemFont(ofSize: 14, weight: .medium)
+        messageLabel.textColor = UIColor(hex: 0x1F6D5F)
+        messageLabel.numberOfLines = 0
 
         spinner.translatesAutoresizingMaskIntoConstraints = false
         spinner.color = UIColor(hex: 0x2BB9A5)
         spinner.startAnimating()
 
-        [icon, textLabel, spinner].forEach { card.addSubview($0) }
+        [icon, messageLabel, spinner].forEach { card.addSubview($0) }
 
         NSLayoutConstraint.activate([
             avatar.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
@@ -64,10 +64,10 @@ final class AlbumHintCardCell: UITableViewCell {
             icon.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 14),
             icon.centerYAnchor.constraint(equalTo: card.centerYAnchor),
 
-            textLabel.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 10),
-            textLabel.topAnchor.constraint(equalTo: card.topAnchor, constant: 14),
-            textLabel.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -14),
-            textLabel.trailingAnchor.constraint(equalTo: spinner.leadingAnchor, constant: -10),
+            messageLabel.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 10),
+            messageLabel.topAnchor.constraint(equalTo: card.topAnchor, constant: 14),
+            messageLabel.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -14),
+            messageLabel.trailingAnchor.constraint(equalTo: spinner.leadingAnchor, constant: -10),
 
             spinner.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -14),
             spinner.centerYAnchor.constraint(equalTo: card.centerYAnchor),
@@ -76,6 +76,6 @@ final class AlbumHintCardCell: UITableViewCell {
     required init?(coder: NSCoder) { fatalError() }
 
     func configure(text: String) {
-        textLabel.text = text
+        messageLabel.text = text
     }
 }

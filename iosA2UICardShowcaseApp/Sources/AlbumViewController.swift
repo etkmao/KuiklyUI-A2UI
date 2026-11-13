@@ -96,7 +96,7 @@ final class AlbumHeaderView: UIView {
 
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
-    private let tag = PaddedLabel()
+    private let tagChip = PaddedLabel()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -111,24 +111,24 @@ final class AlbumHeaderView: UIView {
         subtitleLabel.font = .systemFont(ofSize: 13)
         subtitleLabel.textColor = AppTheme.textSecondary
 
-        tag.translatesAutoresizingMaskIntoConstraints = false
-        tag.text = "AI 智能相册"
-        tag.font = .systemFont(ofSize: 11, weight: .semibold)
-        tag.textColor = AppTheme.primary
-        tag.backgroundColor = AppTheme.primarySoft
-        tag.layer.cornerRadius = 10
-        tag.layer.masksToBounds = true
-        tag.padding = UIEdgeInsets(top: 4, left: 10, bottom: 4, right: 10)
+        tagChip.translatesAutoresizingMaskIntoConstraints = false
+        tagChip.text = "AI 智能相册"
+        tagChip.font = .systemFont(ofSize: 11, weight: .semibold)
+        tagChip.textColor = AppTheme.primary
+        tagChip.backgroundColor = AppTheme.primarySoft
+        tagChip.layer.cornerRadius = 10
+        tagChip.layer.masksToBounds = true
+        tagChip.padding = UIEdgeInsets(top: 4, left: 10, bottom: 4, right: 10)
 
-        [titleLabel, subtitleLabel, tag].forEach(addSubview)
+        [titleLabel, subtitleLabel, tagChip].forEach(addSubview)
 
         NSLayoutConstraint.activate([
             titleLabel.topAnchor.constraint(equalTo: topAnchor, constant: 18),
             titleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
 
-            tag.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
-            tag.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 10),
-            tag.heightAnchor.constraint(equalToConstant: 22),
+            tagChip.centerYAnchor.constraint(equalTo: titleLabel.centerYAnchor),
+            tagChip.leadingAnchor.constraint(equalTo: titleLabel.trailingAnchor, constant: 10),
+            tagChip.heightAnchor.constraint(equalToConstant: 22),
 
             subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 6),
             subtitleLabel.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 16),
