@@ -75,14 +75,13 @@ final class ChatViewController: UIViewController {
         inputContainer.backgroundColor = AppTheme.background
         view.addSubview(inputContainer)
 
-        // Pill-shaped text field.
+        // Rounded rectangle text field (WeChat-ish).
         let pill = UIView()
         pill.translatesAutoresizingMaskIntoConstraints = false
         pill.backgroundColor = .white
-        pill.layer.cornerRadius = 22
+        pill.layer.cornerRadius = 8
         pill.layer.borderWidth = 1
-        pill.layer.borderColor = AppTheme.dividerColor.cgColor
-        pill.applyCardShadow(radius: 10, opacity: 0.04)
+        pill.layer.borderColor = AppTheme.cardBorder.cgColor
         inputContainer.addSubview(pill)
 
         textField.translatesAutoresizingMaskIntoConstraints = false
@@ -95,7 +94,7 @@ final class ChatViewController: UIViewController {
 
         sendButton.translatesAutoresizingMaskIntoConstraints = false
         sendButton.backgroundColor = AppTheme.primary
-        sendButton.layer.cornerRadius = 20
+        sendButton.layer.cornerRadius = 8
         sendButton.setTitle("发送", for: .normal)
         sendButton.setTitleColor(.white, for: .normal)
         sendButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
@@ -104,20 +103,20 @@ final class ChatViewController: UIViewController {
 
         // Lay out: [suggestions][pill][send] all within inputContainer.
         NSLayoutConstraint.activate([
-            pill.leadingAnchor.constraint(equalTo: inputContainer.leadingAnchor, constant: 16),
-            pill.trailingAnchor.constraint(equalTo: sendButton.leadingAnchor, constant: -10),
-            pill.heightAnchor.constraint(equalToConstant: 44),
+            pill.leadingAnchor.constraint(equalTo: inputContainer.leadingAnchor, constant: 12),
+            pill.trailingAnchor.constraint(equalTo: sendButton.leadingAnchor, constant: -8),
+            pill.heightAnchor.constraint(equalToConstant: 38),
             pill.bottomAnchor.constraint(equalTo: inputContainer.bottomAnchor, constant: -10),
 
-            textField.leadingAnchor.constraint(equalTo: pill.leadingAnchor, constant: 18),
-            textField.trailingAnchor.constraint(equalTo: pill.trailingAnchor, constant: -18),
+            textField.leadingAnchor.constraint(equalTo: pill.leadingAnchor, constant: 12),
+            textField.trailingAnchor.constraint(equalTo: pill.trailingAnchor, constant: -12),
             textField.topAnchor.constraint(equalTo: pill.topAnchor),
             textField.bottomAnchor.constraint(equalTo: pill.bottomAnchor),
 
-            sendButton.trailingAnchor.constraint(equalTo: inputContainer.trailingAnchor, constant: -16),
+            sendButton.trailingAnchor.constraint(equalTo: inputContainer.trailingAnchor, constant: -12),
             sendButton.centerYAnchor.constraint(equalTo: pill.centerYAnchor),
-            sendButton.widthAnchor.constraint(equalToConstant: 64),
-            sendButton.heightAnchor.constraint(equalToConstant: 40),
+            sendButton.widthAnchor.constraint(equalToConstant: 60),
+            sendButton.heightAnchor.constraint(equalToConstant: 38),
         ])
     }
 

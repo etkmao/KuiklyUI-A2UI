@@ -4,7 +4,7 @@ import UIKit
 ///
 /// Layout:
 ///   ┌─ card ─────────────────────────────┐
-///   │  [header: shop + notice]           │
+///   │  [banner: shop + notice]           │
 ///   │  [list of selectable drinks with   │
 ///   │   radio + emoji + name + price]    │
 ///   │  [quantity stepper]                │
@@ -24,8 +24,10 @@ final class OrderDrinkCardCell: UITableViewCell {
     private var quantity = 1
 
     // Views
-    private let card = UIView()
     private let avatar = UILabel()
+    private let card = UIView()
+    private let banner = UIView()
+    private let headerIcon = UILabel()
     private let shopLabel = UILabel()
     private let noticeLabel = UILabel()
     private let listStack = UIStackView()
@@ -47,52 +49,57 @@ final class OrderDrinkCardCell: UITableViewCell {
     // MARK: - Setup
 
     private func setupCard() {
-        card.translatesAutoresizingMaskIntoConstraints = false
-        card.backgroundColor = AppTheme.cardBg
-        card.layer.cornerRadius = 20
-        card.applyCardShadow()
-        contentView.addSubview(card)
-
         avatar.translatesAutoresizingMaskIntoConstraints = false
         avatar.text = "✨"
         avatar.textAlignment = .center
         avatar.font = .systemFont(ofSize: 20)
         avatar.backgroundColor = AppTheme.primarySoft
-        avatar.layer.cornerRadius = 16
+        avatar.layer.cornerRadius = 6
         avatar.layer.masksToBounds = true
         contentView.addSubview(avatar)
 
-        // Header
-        let headerIcon = UILabel()
-        headerIcon.text = "🧋"
-        headerIcon.font = .systemFont(ofSize: 28)
+        card.translatesAutoresizingMaskIntoConstraints = false
+        card.backgroundColor = AppTheme.cardBg
+        card.layer.cornerRadius = 14
+        card.layer.borderWidth = 1
+        card.layer.borderColor = AppTheme.cardBorder.cgColor
+        card.layer.masksToBounds = true
+        contentView.addSubview(card)
+
+        // ── Banner header ───────────────────────────────────────────────
+        banner.translatesAutoresizingMaskIntoConstraints = false
+        banner.backgroundColor = UIColor(hex: 0xFFF7EC) // warm milk-tea tint
+        card.addSubview(banner)
+
         headerIcon.translatesAutoresizingMaskIntoConstraints = false
+        headerIcon.text = "🧋"
+        headerIcon.font = .systemFont(ofSize: 24)
+        headerIcon.textAlignment = .center
+        headerIcon.backgroundColor = .white
+        headerIcon.layer.cornerRadius = 8
+        headerIcon.layer.masksToBounds = true
+        headerIcon.layer.borderWidth = 1
+        headerIcon.layer.borderColor = AppTheme.cardBorder.cgColor
+        banner.addSubview(headerIcon)
 
         shopLabel.translatesAutoresizingMaskIntoConstraints = false
-        shopLabel.font = .systemFont(ofSize: 17, weight: .semibold)
+        shopLabel.font = .systemFont(ofSize: 16, weight: .semibold)
         shopLabel.textColor = AppTheme.textPrimary
+        banner.addSubview(shopLabel)
 
         noticeLabel.translatesAutoresizingMaskIntoConstraints = false
         noticeLabel.font = .systemFont(ofSize: 12)
         noticeLabel.textColor = AppTheme.textSecondary
         noticeLabel.numberOfLines = 2
+        banner.addSubview(noticeLabel)
 
-        let headerV = UIStackView(arrangedSubviews: [shopLabel, noticeLabel])
-        headerV.axis = .vertical
-        headerV.spacing = 4
-        let header = UIStackView(arrangedSubviews: [headerIcon, headerV])
-        header.translatesAutoresizingMaskIntoConstraints = false
-        header.alignment = .center
-        header.spacing = 10
-        card.addSubview(header)
-
-        // List
+        // ── List ────────────────────────────────────────────────────────
         listStack.translatesAutoresizingMaskIntoConstraints = false
         listStack.axis = .vertical
-        listStack.spacing = 10
+        listStack.spacing = 8
         card.addSubview(listStack)
 
-        // Quantity row
+        // ── Quantity row ───────────────────────────────────────────────
         qtyLabel.translatesAutoresizingMaskIntoConstraints = false
         qtyLabel.font = .systemFont(ofSize: 14, weight: .medium)
         qtyLabel.textColor = AppTheme.textPrimary
@@ -104,10 +111,12 @@ final class OrderDrinkCardCell: UITableViewCell {
             b.translatesAutoresizingMaskIntoConstraints = false
             b.backgroundColor = AppTheme.subtleBg
             b.setTitleColor(AppTheme.primary, for: .normal)
-            b.titleLabel?.font = .systemFont(ofSize: 20, weight: .semibold)
-            b.layer.cornerRadius = 15
-            b.widthAnchor.constraint(equalToConstant: 30).isActive = true
-            b.heightAnchor.constraint(equalToConstant: 30).isActive = true
+            b.titleLabel?.font = .systemFont(ofSize: 18, weight: .semibold)
+            b.layer.cornerRadius = 6
+            b.layer.borderWidth = 1
+            b.layer.borderColor = AppTheme.cardBorder.cgColor
+            b.widthAnchor.constraint(equalToConstant: 28).isActive = true
+            b.heightAnchor.constraint(equalToConstant: 28).isActive = true
         }
         qtyMinus.addTarget(self, action: #selector(onMinus), for: .touchUpInside)
         qtyPlus.addTarget(self, action: #selector(onPlus), for: .touchUpInside)
@@ -116,53 +125,68 @@ final class OrderDrinkCardCell: UITableViewCell {
         qtyValue.font = .systemFont(ofSize: 15, weight: .semibold)
         qtyValue.textColor = AppTheme.textPrimary
         qtyValue.textAlignment = .center
-        qtyValue.widthAnchor.constraint(equalToConstant: 30).isActive = true
+        qtyValue.widthAnchor.constraint(equalToConstant: 28).isActive = true
 
         let qtyRow = UIStackView(arrangedSubviews: [qtyLabel, UIView(), qtyMinus, qtyValue, qtyPlus])
         qtyRow.translatesAutoresizingMaskIntoConstraints = false
         qtyRow.axis = .horizontal
         qtyRow.alignment = .center
-        qtyRow.spacing = 8
+        qtyRow.spacing = 6
         card.addSubview(qtyRow)
 
-        // Buy button
+        // ── Buy button ─────────────────────────────────────────────────
         buyButton.translatesAutoresizingMaskIntoConstraints = false
         buyButton.backgroundColor = AppTheme.primary
         buyButton.setTitleColor(.white, for: .normal)
-        buyButton.titleLabel?.font = .systemFont(ofSize: 16, weight: .semibold)
-        buyButton.layer.cornerRadius = 24
+        buyButton.titleLabel?.font = .systemFont(ofSize: 15, weight: .semibold)
+        buyButton.layer.cornerRadius = 10
         buyButton.addTarget(self, action: #selector(onBuyTap), for: .touchUpInside)
         card.addSubview(buyButton)
 
         NSLayoutConstraint.activate([
-            avatar.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            avatar.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
             avatar.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
-            avatar.widthAnchor.constraint(equalToConstant: 32),
-            avatar.heightAnchor.constraint(equalToConstant: 32),
+            avatar.widthAnchor.constraint(equalToConstant: 34),
+            avatar.heightAnchor.constraint(equalToConstant: 34),
 
             card.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
             card.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10),
             card.leadingAnchor.constraint(equalTo: avatar.trailingAnchor, constant: 8),
-            card.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            card.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -60),
 
-            header.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
-            header.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            header.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+            // Banner
+            banner.topAnchor.constraint(equalTo: card.topAnchor),
+            banner.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            banner.trailingAnchor.constraint(equalTo: card.trailingAnchor),
 
-            listStack.topAnchor.constraint(equalTo: header.bottomAnchor, constant: 14),
-            listStack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            listStack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+            headerIcon.leadingAnchor.constraint(equalTo: banner.leadingAnchor, constant: 14),
+            headerIcon.topAnchor.constraint(equalTo: banner.topAnchor, constant: 12),
+            headerIcon.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -12),
+            headerIcon.widthAnchor.constraint(equalToConstant: 36),
+            headerIcon.heightAnchor.constraint(equalToConstant: 36),
 
-            qtyRow.topAnchor.constraint(equalTo: listStack.bottomAnchor, constant: 14),
-            qtyRow.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            qtyRow.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
-            qtyRow.heightAnchor.constraint(equalToConstant: 34),
+            shopLabel.leadingAnchor.constraint(equalTo: headerIcon.trailingAnchor, constant: 10),
+            shopLabel.topAnchor.constraint(equalTo: headerIcon.topAnchor, constant: -1),
+            shopLabel.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -14),
+
+            noticeLabel.leadingAnchor.constraint(equalTo: shopLabel.leadingAnchor),
+            noticeLabel.topAnchor.constraint(equalTo: shopLabel.bottomAnchor, constant: 2),
+            noticeLabel.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -14),
+
+            listStack.topAnchor.constraint(equalTo: banner.bottomAnchor, constant: 12),
+            listStack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 12),
+            listStack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -12),
+
+            qtyRow.topAnchor.constraint(equalTo: listStack.bottomAnchor, constant: 12),
+            qtyRow.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 14),
+            qtyRow.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -14),
+            qtyRow.heightAnchor.constraint(equalToConstant: 30),
 
             buyButton.topAnchor.constraint(equalTo: qtyRow.bottomAnchor, constant: 12),
-            buyButton.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            buyButton.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
-            buyButton.heightAnchor.constraint(equalToConstant: 48),
-            buyButton.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16),
+            buyButton.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 12),
+            buyButton.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -12),
+            buyButton.heightAnchor.constraint(equalToConstant: 42),
+            buyButton.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -12),
         ])
     }
 
@@ -188,14 +212,15 @@ final class OrderDrinkCardCell: UITableViewCell {
 
     private func makeDrinkRow(_ drink: DrinkMenu.Drink, index: Int) -> UIView {
         let row = UIControl()
+        let selected = (index == selectedIndex)
         row.translatesAutoresizingMaskIntoConstraints = false
-        row.heightAnchor.constraint(equalToConstant: 64).isActive = true
-        row.backgroundColor = (index == selectedIndex) ? AppTheme.primarySoft : AppTheme.subtleBg
-        row.layer.cornerRadius = 14
+        row.heightAnchor.constraint(equalToConstant: 60).isActive = true
+        row.backgroundColor = selected ? AppTheme.primarySoft : AppTheme.subtleBg
+        row.layer.cornerRadius = 10
         row.layer.borderWidth = 1
-        row.layer.borderColor = (index == selectedIndex
-                                 ? AppTheme.primary.withAlphaComponent(0.4).cgColor
-                                 : UIColor.clear.cgColor)
+        row.layer.borderColor = (selected
+                                 ? AppTheme.primary.withAlphaComponent(0.5).cgColor
+                                 : AppTheme.cardBorder.cgColor)
         row.tag = index
         row.addTarget(self, action: #selector(onSelectDrink(_:)), for: .touchUpInside)
 
@@ -203,12 +228,12 @@ final class OrderDrinkCardCell: UITableViewCell {
         let ring = UIView()
         ring.translatesAutoresizingMaskIntoConstraints = false
         ring.layer.borderWidth = 1.5
-        ring.layer.borderColor = (index == selectedIndex
+        ring.layer.borderColor = (selected
                                   ? AppTheme.primary.cgColor
                                   : AppTheme.textTertiary.cgColor)
         ring.layer.cornerRadius = 9
         row.addSubview(ring)
-        if index == selectedIndex {
+        if selected {
             let dot = UIView()
             dot.translatesAutoresizingMaskIntoConstraints = false
             dot.backgroundColor = AppTheme.primary
@@ -224,7 +249,7 @@ final class OrderDrinkCardCell: UITableViewCell {
 
         let emoji = UILabel()
         emoji.text = drink.emoji
-        emoji.font = .systemFont(ofSize: 28)
+        emoji.font = .systemFont(ofSize: 26)
         emoji.translatesAutoresizingMaskIntoConstraints = false
 
         let name = UILabel()
@@ -264,7 +289,7 @@ final class OrderDrinkCardCell: UITableViewCell {
             desc.topAnchor.constraint(equalTo: name.bottomAnchor, constant: 2),
             desc.trailingAnchor.constraint(lessThanOrEqualTo: price.leadingAnchor, constant: -8),
 
-            price.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -14),
+            price.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -12),
             price.centerYAnchor.constraint(equalTo: row.centerYAnchor),
         ])
         return row

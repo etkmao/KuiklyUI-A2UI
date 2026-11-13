@@ -23,14 +23,14 @@ final class AlbumHintCardCell: UITableViewCell {
         avatar.textAlignment = .center
         avatar.font = .systemFont(ofSize: 20)
         avatar.backgroundColor = AppTheme.primarySoft
-        avatar.layer.cornerRadius = 16
+        avatar.layer.cornerRadius = 6
         avatar.layer.masksToBounds = true
         contentView.addSubview(avatar)
 
         card.translatesAutoresizingMaskIntoConstraints = false
         // A gentle green/teal banner so it reads as a confirmation.
         card.backgroundColor = UIColor(hex: 0xE8F7F4)
-        card.layer.cornerRadius = 16
+        card.layer.cornerRadius = 12
         card.layer.borderWidth = 1
         card.layer.borderColor = UIColor(hex: 0xA6E2D6).cgColor
         contentView.addSubview(card)
@@ -51,25 +51,25 @@ final class AlbumHintCardCell: UITableViewCell {
         [icon, messageLabel, spinner].forEach { card.addSubview($0) }
 
         NSLayoutConstraint.activate([
-            avatar.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            avatar.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
             avatar.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
-            avatar.widthAnchor.constraint(equalToConstant: 32),
-            avatar.heightAnchor.constraint(equalToConstant: 32),
+            avatar.widthAnchor.constraint(equalToConstant: 34),
+            avatar.heightAnchor.constraint(equalToConstant: 34),
 
             card.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
             card.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10),
             card.leadingAnchor.constraint(equalTo: avatar.trailingAnchor, constant: 8),
-            card.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            card.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -60),
 
-            icon.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 14),
+            icon.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 12),
             icon.centerYAnchor.constraint(equalTo: card.centerYAnchor),
 
             messageLabel.leadingAnchor.constraint(equalTo: icon.trailingAnchor, constant: 10),
-            messageLabel.topAnchor.constraint(equalTo: card.topAnchor, constant: 14),
-            messageLabel.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -14),
+            messageLabel.topAnchor.constraint(equalTo: card.topAnchor, constant: 12),
+            messageLabel.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -12),
             messageLabel.trailingAnchor.constraint(equalTo: spinner.leadingAnchor, constant: -10),
 
-            spinner.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -14),
+            spinner.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -12),
             spinner.centerYAnchor.constraint(equalTo: card.centerYAnchor),
         ])
     }

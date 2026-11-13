@@ -44,11 +44,13 @@ final class SuggestionBar: UIView {
         stack.arrangedSubviews.forEach { $0.removeFromSuperview() }
         for (i, text) in prompts.enumerated() {
             let b = UIButton(type: .system)
-            b.setTitle("✦ \(text)", for: .normal)
+            b.setTitle(text, for: .normal)
             b.titleLabel?.font = .systemFont(ofSize: 13, weight: .medium)
             b.setTitleColor(AppTheme.primary, for: .normal)
-            b.backgroundColor = AppTheme.primarySoft
-            b.contentEdgeInsets = UIEdgeInsets(top: 6, left: 14, bottom: 6, right: 14)
+            b.backgroundColor = .white
+            b.layer.borderWidth = 1
+            b.layer.borderColor = AppTheme.cardBorder.cgColor
+            b.contentEdgeInsets = UIEdgeInsets(top: 6, left: 12, bottom: 6, right: 12)
             b.layer.cornerRadius = 14
             b.tag = i
             b.addTarget(self, action: #selector(tap(_:)), for: .touchUpInside)
@@ -62,12 +64,13 @@ final class SuggestionBar: UIView {
     }
 }
 
-// MARK: - User message cell (right-aligned blue pill)
+// MARK: - User message cell (right-aligned, WeChat-green bubble with tail)
 
 final class UserMessageCell: UITableViewCell {
     static let reuseID = "UserMessageCell"
 
-    private let bubble = UIView()
+    private let avatar = UILabel()
+    private let bubble = BubbleView()
     private let label = UILabel()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -76,27 +79,44 @@ final class UserMessageCell: UITableViewCell {
         backgroundColor = .clear
         contentView.backgroundColor = .clear
 
+        avatar.translatesAutoresizingMaskIntoConstraints = false
+        avatar.text = "🙂"
+        avatar.textAlignment = .center
+        avatar.font = .systemFont(ofSize: 20)
+        avatar.backgroundColor = .white
+        avatar.layer.cornerRadius = 6
+        avatar.layer.masksToBounds = true
+        avatar.layer.borderWidth = 1
+        avatar.layer.borderColor = AppTheme.cardBorder.cgColor
+        contentView.addSubview(avatar)
+
         bubble.translatesAutoresizingMaskIntoConstraints = false
         bubble.backgroundColor = AppTheme.userBubble
-        bubble.layer.cornerRadius = 18
+        bubble.tailOnLeft = false
+        bubble.cornerRadius = 10
         contentView.addSubview(bubble)
 
         label.translatesAutoresizingMaskIntoConstraints = false
         label.numberOfLines = 0
         label.textColor = AppTheme.userBubbleTxt
-        label.font = .systemFont(ofSize: 15)
+        label.font = .systemFont(ofSize: 15.5)
         bubble.addSubview(label)
 
         NSLayoutConstraint.activate([
+            avatar.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
+            avatar.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
+            avatar.widthAnchor.constraint(equalToConstant: 34),
+            avatar.heightAnchor.constraint(equalToConstant: 34),
+
             bubble.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
             bubble.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6),
-            bubble.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            bubble.trailingAnchor.constraint(equalTo: avatar.leadingAnchor, constant: -8),
             bubble.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.leadingAnchor, constant: 60),
 
-            label.topAnchor.constraint(equalTo: bubble.topAnchor, constant: 10),
-            label.bottomAnchor.constraint(equalTo: bubble.bottomAnchor, constant: -10),
-            label.leadingAnchor.constraint(equalTo: bubble.leadingAnchor, constant: 14),
-            label.trailingAnchor.constraint(equalTo: bubble.trailingAnchor, constant: -14),
+            label.topAnchor.constraint(equalTo: bubble.topAnchor, constant: 9),
+            label.bottomAnchor.constraint(equalTo: bubble.bottomAnchor, constant: -9),
+            label.leadingAnchor.constraint(equalTo: bubble.leadingAnchor, constant: 13),
+            label.trailingAnchor.constraint(equalTo: bubble.trailingAnchor, constant: -13),
         ])
     }
     required init?(coder: NSCoder) { fatalError() }
@@ -104,13 +124,13 @@ final class UserMessageCell: UITableViewCell {
     func configure(text: String) { label.text = text }
 }
 
-// MARK: - AI plain-text cell (left-aligned white pill, with avatar)
+// MARK: - AI plain-text cell (left-aligned white bubble with tail + avatar)
 
 final class AITextMessageCell: UITableViewCell {
     static let reuseID = "AITextMessageCell"
 
     private let avatar = UILabel()
-    private let bubble = UIView()
+    private let bubble = BubbleView()
     private let label = UILabel()
     private let cursor = UIView()
 
@@ -125,21 +145,20 @@ final class AITextMessageCell: UITableViewCell {
         avatar.textAlignment = .center
         avatar.font = .systemFont(ofSize: 20)
         avatar.backgroundColor = AppTheme.primarySoft
-        avatar.layer.cornerRadius = 16
+        avatar.layer.cornerRadius = 6
         avatar.layer.masksToBounds = true
         contentView.addSubview(avatar)
 
         bubble.translatesAutoresizingMaskIntoConstraints = false
         bubble.backgroundColor = AppTheme.aiBubble
-        bubble.layer.cornerRadius = 18
-        bubble.layer.borderWidth = 1
-        bubble.layer.borderColor = AppTheme.dividerColor.cgColor
+        bubble.tailOnLeft = true
+        bubble.cornerRadius = 10
         contentView.addSubview(bubble)
 
         label.translatesAutoresizingMaskIntoConstraints = false
         label.numberOfLines = 0
         label.textColor = AppTheme.aiBubbleTxt
-        label.font = .systemFont(ofSize: 15)
+        label.font = .systemFont(ofSize: 15.5)
         bubble.addSubview(label)
 
         cursor.translatesAutoresizingMaskIntoConstraints = false
@@ -149,20 +168,20 @@ final class AITextMessageCell: UITableViewCell {
         bubble.addSubview(cursor)
 
         NSLayoutConstraint.activate([
-            avatar.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            avatar.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
             avatar.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
-            avatar.widthAnchor.constraint(equalToConstant: 32),
-            avatar.heightAnchor.constraint(equalToConstant: 32),
+            avatar.widthAnchor.constraint(equalToConstant: 34),
+            avatar.heightAnchor.constraint(equalToConstant: 34),
 
             bubble.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
             bubble.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6),
             bubble.leadingAnchor.constraint(equalTo: avatar.trailingAnchor, constant: 8),
             bubble.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -60),
 
-            label.topAnchor.constraint(equalTo: bubble.topAnchor, constant: 10),
-            label.bottomAnchor.constraint(equalTo: bubble.bottomAnchor, constant: -10),
-            label.leadingAnchor.constraint(equalTo: bubble.leadingAnchor, constant: 14),
-            label.trailingAnchor.constraint(equalTo: bubble.trailingAnchor, constant: -14),
+            label.topAnchor.constraint(equalTo: bubble.topAnchor, constant: 9),
+            label.bottomAnchor.constraint(equalTo: bubble.bottomAnchor, constant: -9),
+            label.leadingAnchor.constraint(equalTo: bubble.leadingAnchor, constant: 13),
+            label.trailingAnchor.constraint(equalTo: bubble.trailingAnchor, constant: -13),
 
             cursor.widthAnchor.constraint(equalToConstant: 3),
             cursor.heightAnchor.constraint(equalToConstant: 16),
@@ -194,7 +213,7 @@ final class TypingIndicatorCell: UITableViewCell {
     static let reuseID = "TypingIndicatorCell"
 
     private let avatar = UILabel()
-    private let bubble = UIView()
+    private let bubble = BubbleView()
     private let dots: [UIView] = (0..<3).map { _ in UIView() }
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
@@ -208,15 +227,14 @@ final class TypingIndicatorCell: UITableViewCell {
         avatar.textAlignment = .center
         avatar.font = .systemFont(ofSize: 20)
         avatar.backgroundColor = AppTheme.primarySoft
-        avatar.layer.cornerRadius = 16
+        avatar.layer.cornerRadius = 6
         avatar.layer.masksToBounds = true
         contentView.addSubview(avatar)
 
         bubble.translatesAutoresizingMaskIntoConstraints = false
         bubble.backgroundColor = AppTheme.aiBubble
-        bubble.layer.cornerRadius = 18
-        bubble.layer.borderWidth = 1
-        bubble.layer.borderColor = AppTheme.dividerColor.cgColor
+        bubble.tailOnLeft = true
+        bubble.cornerRadius = 10
         contentView.addSubview(bubble)
 
         let stack = UIStackView(arrangedSubviews: dots)
@@ -233,10 +251,10 @@ final class TypingIndicatorCell: UITableViewCell {
         }
 
         NSLayoutConstraint.activate([
-            avatar.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            avatar.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
             avatar.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
-            avatar.widthAnchor.constraint(equalToConstant: 32),
-            avatar.heightAnchor.constraint(equalToConstant: 32),
+            avatar.widthAnchor.constraint(equalToConstant: 34),
+            avatar.heightAnchor.constraint(equalToConstant: 34),
 
             bubble.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
             bubble.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -6),

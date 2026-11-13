@@ -4,8 +4,8 @@ import UIKit
 ///
 /// Layout mirrors the typical A2UI card shape:
 ///   ┌─ card ─────────────────────────────┐
-///   │  [header]                          │
-///   │  [Tab: 周一 周二 周三 … 周日]      │
+///   │  [banner header (icon + title)]    │
+///   │  [Tab: 周一 周二 … 周日  ← scroll] │
 ///   │  ────────────────────────────────  │
 ///   │  [List of meals for the selected   │
 ///   │   day — 早餐 / 午餐 / 晚餐 rows]   │
@@ -20,16 +20,18 @@ final class DietPlanCardCell: UITableViewCell {
     private var selectedDay = 0
 
     // Views
-    private let card = UIView()
     private let avatar = UILabel()
+    private let card = UIView()
+    private let banner = UIView()
+    private let headerIcon = UILabel()
     private let titleLabel = UILabel()
     private let subtitleLabel = UILabel()
     private let tabScroll = UIScrollView()
     private let tabStack = UIStackView()
+    private let highlightLabel = UILabel()
     private let divider = UIView()
     private let listStack = UIStackView()
     private let footerLabel = UILabel()
-    private let highlightLabel = UILabel()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -43,50 +45,57 @@ final class DietPlanCardCell: UITableViewCell {
     // MARK: - Setup
 
     private func setupCard() {
-        card.translatesAutoresizingMaskIntoConstraints = false
-        card.backgroundColor = AppTheme.cardBg
-        card.layer.cornerRadius = 20
-        card.applyCardShadow()
-        contentView.addSubview(card)
-
         avatar.translatesAutoresizingMaskIntoConstraints = false
         avatar.text = "✨"
         avatar.textAlignment = .center
         avatar.font = .systemFont(ofSize: 20)
         avatar.backgroundColor = AppTheme.primarySoft
-        avatar.layer.cornerRadius = 16
+        avatar.layer.cornerRadius = 6
         avatar.layer.masksToBounds = true
         contentView.addSubview(avatar)
 
+        card.translatesAutoresizingMaskIntoConstraints = false
+        card.backgroundColor = AppTheme.cardBg
+        card.layer.cornerRadius = 14
+        card.layer.borderWidth = 1
+        card.layer.borderColor = AppTheme.cardBorder.cgColor
+        card.layer.masksToBounds = true
+        contentView.addSubview(card)
+
+        // ── Banner header ───────────────────────────────────────────────
+        banner.translatesAutoresizingMaskIntoConstraints = false
+        banner.backgroundColor = AppTheme.cardBanner
+        card.addSubview(banner)
+
+        headerIcon.translatesAutoresizingMaskIntoConstraints = false
+        headerIcon.text = "🥗"
+        headerIcon.font = .systemFont(ofSize: 24)
+        headerIcon.textAlignment = .center
+        headerIcon.backgroundColor = .white
+        headerIcon.layer.cornerRadius = 8
+        headerIcon.layer.masksToBounds = true
+        headerIcon.layer.borderWidth = 1
+        headerIcon.layer.borderColor = AppTheme.cardBorder.cgColor
+        banner.addSubview(headerIcon)
+
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.font = .systemFont(ofSize: 17, weight: .semibold)
+        titleLabel.font = .systemFont(ofSize: 16, weight: .semibold)
         titleLabel.textColor = AppTheme.textPrimary
+        banner.addSubview(titleLabel)
 
         subtitleLabel.translatesAutoresizingMaskIntoConstraints = false
         subtitleLabel.font = .systemFont(ofSize: 12)
         subtitleLabel.textColor = AppTheme.textSecondary
+        banner.addSubview(subtitleLabel)
 
-        let headerIcon = UILabel()
-        headerIcon.text = "🥗"
-        headerIcon.font = .systemFont(ofSize: 28)
-        headerIcon.translatesAutoresizingMaskIntoConstraints = false
-
-        let headerV = UIStackView(arrangedSubviews: [titleLabel, subtitleLabel])
-        headerV.axis = .vertical
-        headerV.spacing = 4
-        let header = UIStackView(arrangedSubviews: [headerIcon, headerV])
-        header.translatesAutoresizingMaskIntoConstraints = false
-        header.alignment = .center
-        header.spacing = 10
-        card.addSubview(header)
-
-        // Tab bar.
+        // ── Tab bar (horizontally scrollable, full-bleed) ───────────────
         tabScroll.translatesAutoresizingMaskIntoConstraints = false
         tabScroll.showsHorizontalScrollIndicator = false
+        tabScroll.clipsToBounds = true
         card.addSubview(tabScroll)
         tabStack.translatesAutoresizingMaskIntoConstraints = false
         tabStack.axis = .horizontal
-        tabStack.spacing = 6
+        tabStack.spacing = 8
         tabScroll.addSubview(tabStack)
 
         highlightLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -100,7 +109,7 @@ final class DietPlanCardCell: UITableViewCell {
 
         listStack.translatesAutoresizingMaskIntoConstraints = false
         listStack.axis = .vertical
-        listStack.spacing = 12
+        listStack.spacing = 10
         card.addSubview(listStack)
 
         footerLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -110,48 +119,65 @@ final class DietPlanCardCell: UITableViewCell {
         card.addSubview(footerLabel)
 
         NSLayoutConstraint.activate([
-            avatar.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 8),
+            avatar.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
             avatar.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
-            avatar.widthAnchor.constraint(equalToConstant: 32),
-            avatar.heightAnchor.constraint(equalToConstant: 32),
+            avatar.widthAnchor.constraint(equalToConstant: 34),
+            avatar.heightAnchor.constraint(equalToConstant: 34),
 
             card.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 6),
             card.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10),
             card.leadingAnchor.constraint(equalTo: avatar.trailingAnchor, constant: 8),
-            card.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
+            card.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -60),
 
-            header.topAnchor.constraint(equalTo: card.topAnchor, constant: 16),
-            header.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            header.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+            // Banner
+            banner.topAnchor.constraint(equalTo: card.topAnchor),
+            banner.leadingAnchor.constraint(equalTo: card.leadingAnchor),
+            banner.trailingAnchor.constraint(equalTo: card.trailingAnchor),
 
-            tabScroll.topAnchor.constraint(equalTo: header.bottomAnchor, constant: 14),
+            headerIcon.leadingAnchor.constraint(equalTo: banner.leadingAnchor, constant: 14),
+            headerIcon.topAnchor.constraint(equalTo: banner.topAnchor, constant: 12),
+            headerIcon.bottomAnchor.constraint(equalTo: banner.bottomAnchor, constant: -12),
+            headerIcon.widthAnchor.constraint(equalToConstant: 36),
+            headerIcon.heightAnchor.constraint(equalToConstant: 36),
+
+            titleLabel.leadingAnchor.constraint(equalTo: headerIcon.trailingAnchor, constant: 10),
+            titleLabel.topAnchor.constraint(equalTo: headerIcon.topAnchor, constant: -1),
+            titleLabel.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -14),
+
+            subtitleLabel.leadingAnchor.constraint(equalTo: titleLabel.leadingAnchor),
+            subtitleLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 2),
+            subtitleLabel.trailingAnchor.constraint(equalTo: banner.trailingAnchor, constant: -14),
+
+            // Tabs — scroll is full-bleed, stack is only constrained to
+            // leading/top/bottom (NOT trailing) so it can grow horizontally.
+            tabScroll.topAnchor.constraint(equalTo: banner.bottomAnchor, constant: 10),
             tabScroll.leadingAnchor.constraint(equalTo: card.leadingAnchor),
             tabScroll.trailingAnchor.constraint(equalTo: card.trailingAnchor),
-            tabScroll.heightAnchor.constraint(equalToConstant: 34),
+            tabScroll.heightAnchor.constraint(equalToConstant: 32),
 
             tabStack.topAnchor.constraint(equalTo: tabScroll.topAnchor),
             tabStack.bottomAnchor.constraint(equalTo: tabScroll.bottomAnchor),
-            tabStack.leadingAnchor.constraint(equalTo: tabScroll.leadingAnchor, constant: 14),
-            tabStack.trailingAnchor.constraint(equalTo: tabScroll.trailingAnchor, constant: -14),
+            tabStack.leadingAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.leadingAnchor, constant: 14),
+            tabStack.trailingAnchor.constraint(equalTo: tabScroll.contentLayoutGuide.trailingAnchor, constant: -14),
             tabStack.heightAnchor.constraint(equalTo: tabScroll.heightAnchor),
 
-            highlightLabel.topAnchor.constraint(equalTo: tabScroll.bottomAnchor, constant: 8),
-            highlightLabel.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            highlightLabel.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+            highlightLabel.topAnchor.constraint(equalTo: tabScroll.bottomAnchor, constant: 10),
+            highlightLabel.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 14),
+            highlightLabel.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -14),
 
-            divider.topAnchor.constraint(equalTo: highlightLabel.bottomAnchor, constant: 10),
-            divider.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            divider.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+            divider.topAnchor.constraint(equalTo: highlightLabel.bottomAnchor, constant: 8),
+            divider.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 14),
+            divider.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -14),
             divider.heightAnchor.constraint(equalToConstant: 0.5),
 
-            listStack.topAnchor.constraint(equalTo: divider.bottomAnchor, constant: 12),
-            listStack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            listStack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
+            listStack.topAnchor.constraint(equalTo: divider.bottomAnchor, constant: 10),
+            listStack.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 14),
+            listStack.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -14),
 
-            footerLabel.topAnchor.constraint(equalTo: listStack.bottomAnchor, constant: 12),
-            footerLabel.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 16),
-            footerLabel.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -16),
-            footerLabel.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -16),
+            footerLabel.topAnchor.constraint(equalTo: listStack.bottomAnchor, constant: 10),
+            footerLabel.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 14),
+            footerLabel.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -14),
+            footerLabel.bottomAnchor.constraint(equalTo: card.bottomAnchor, constant: -14),
         ])
     }
 
@@ -172,8 +198,8 @@ final class DietPlanCardCell: UITableViewCell {
             let b = UIButton(type: .system)
             b.setTitle(d.weekday, for: .normal)
             b.titleLabel?.font = .systemFont(ofSize: 13, weight: .semibold)
-            b.contentEdgeInsets = UIEdgeInsets(top: 4, left: 14, bottom: 4, right: 14)
-            b.layer.cornerRadius = 15
+            b.contentEdgeInsets = UIEdgeInsets(top: 4, left: 12, bottom: 4, right: 12)
+            b.layer.cornerRadius = 14
             b.tag = i
             b.addTarget(self, action: #selector(onTab(_:)), for: .touchUpInside)
             tabStack.addArrangedSubview(b)
@@ -183,6 +209,12 @@ final class DietPlanCardCell: UITableViewCell {
 
     @objc private func onTab(_ sender: UIButton) {
         selectDay(sender.tag)
+        // Make sure the selected tab is visible (helpful for the last few).
+        if let btn = tabStack.arrangedSubviews[safe: sender.tag] {
+            let target = btn.convert(btn.bounds, to: tabScroll)
+                            .insetBy(dx: -14, dy: 0)
+            tabScroll.scrollRectToVisible(target, animated: true)
+        }
     }
 
     private func selectDay(_ idx: Int) {
@@ -202,6 +234,8 @@ final class DietPlanCardCell: UITableViewCell {
             let on = (b.tag == selectedDay)
             b.backgroundColor = on ? AppTheme.primary : AppTheme.subtleBg
             b.setTitleColor(on ? .white : AppTheme.textSecondary, for: .normal)
+            b.layer.borderWidth = on ? 0 : 1
+            b.layer.borderColor = AppTheme.cardBorder.cgColor
         }
     }
 
@@ -214,15 +248,18 @@ final class DietPlanCardCell: UITableViewCell {
 
     private func makeMealRow(slot: String, meal: DietPlan.Meal) -> UIView {
         let row = UIView()
+        row.backgroundColor = AppTheme.subtleBg
+        row.layer.cornerRadius = 10
 
         // Slot badge: 早餐/午餐/晚餐.
-        let slotBadge = UILabel()
-        slotBadge.text = "  \(slot)  "
+        let slotBadge = PaddedLabel()
+        slotBadge.text = slot
         slotBadge.font = .systemFont(ofSize: 11, weight: .semibold)
         slotBadge.textColor = AppTheme.primary
         slotBadge.backgroundColor = AppTheme.primarySoft
-        slotBadge.layer.cornerRadius = 10
+        slotBadge.layer.cornerRadius = 9
         slotBadge.layer.masksToBounds = true
+        slotBadge.padding = UIEdgeInsets(top: 3, left: 8, bottom: 3, right: 8)
         slotBadge.translatesAutoresizingMaskIntoConstraints = false
 
         let name = UILabel()
@@ -253,21 +290,21 @@ final class DietPlanCardCell: UITableViewCell {
         [slotBadge, name, detail, tagsRow].forEach { row.addSubview($0) }
 
         NSLayoutConstraint.activate([
-            slotBadge.topAnchor.constraint(equalTo: row.topAnchor, constant: 2),
-            slotBadge.leadingAnchor.constraint(equalTo: row.leadingAnchor),
+            slotBadge.topAnchor.constraint(equalTo: row.topAnchor, constant: 12),
+            slotBadge.leadingAnchor.constraint(equalTo: row.leadingAnchor, constant: 12),
             slotBadge.heightAnchor.constraint(equalToConstant: 20),
 
-            name.topAnchor.constraint(equalTo: row.topAnchor),
+            name.topAnchor.constraint(equalTo: row.topAnchor, constant: 10),
             name.leadingAnchor.constraint(equalTo: slotBadge.trailingAnchor, constant: 8),
-            name.trailingAnchor.constraint(lessThanOrEqualTo: row.trailingAnchor),
+            name.trailingAnchor.constraint(lessThanOrEqualTo: row.trailingAnchor, constant: -12),
 
             detail.topAnchor.constraint(equalTo: name.bottomAnchor, constant: 4),
             detail.leadingAnchor.constraint(equalTo: name.leadingAnchor),
-            detail.trailingAnchor.constraint(equalTo: row.trailingAnchor),
+            detail.trailingAnchor.constraint(equalTo: row.trailingAnchor, constant: -12),
 
-            tagsRow.topAnchor.constraint(equalTo: detail.bottomAnchor, constant: 6),
+            tagsRow.topAnchor.constraint(equalTo: detail.bottomAnchor, constant: 8),
             tagsRow.leadingAnchor.constraint(equalTo: name.leadingAnchor),
-            tagsRow.bottomAnchor.constraint(equalTo: row.bottomAnchor),
+            tagsRow.bottomAnchor.constraint(equalTo: row.bottomAnchor, constant: -12),
         ])
 
         return row
@@ -280,7 +317,7 @@ final class DietPlanCardCell: UITableViewCell {
         l.font = .systemFont(ofSize: 11, weight: .medium)
         l.textColor = palette.fg
         l.backgroundColor = palette.bg
-        l.layer.cornerRadius = 9
+        l.layer.cornerRadius = 8
         l.layer.masksToBounds = true
         l.padding = UIEdgeInsets(top: 3, left: 8, bottom: 3, right: 8)
         return l
@@ -298,5 +335,13 @@ final class PaddedLabel: UILabel {
         let s = super.intrinsicContentSize
         return CGSize(width: s.width + padding.left + padding.right,
                       height: s.height + padding.top + padding.bottom)
+    }
+}
+
+// MARK: - Safe array subscript
+
+private extension Array {
+    subscript(safe index: Int) -> Element? {
+        indices.contains(index) ? self[index] : nil
     }
 }
