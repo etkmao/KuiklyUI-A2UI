@@ -217,6 +217,36 @@ open class A2UIOhosPager : Pager() {
                         null
                     }
                 }
+                A2UINativeMethod.SEND_RPC_ENVELOPE -> {
+                    // arg0 = instanceId, arg1 = envelopeJson.
+                    //
+                    // On OHOS we route this through the standard Kuikly
+                    // Module channel instead of letting it reach
+                    // `com_tencent_kuikly_CallNative` with no handler
+                    // (which would silently drop every renderer-to-agent
+                    // RPC). The ArkTS-side `A2UIBridgeModule.rpcEnvelope`
+                    // method is responsible for uploading the envelope to
+                    // the agent transport (WebSocket / SSE / \u2026).
+                    //
+                    // syncCall = 0 because RPC traffic is inherently async
+                    // and the agent response, when it arrives, is fed back
+                    // into the Kotlin core via the regular WRITE_STREAM
+                    // path \u2014 NOT via the return value of this call.
+                    val instanceId = arg0 as? String ?: return null
+                    val envelopeJson = arg1 as? String ?: return null
+                    return try {
+                        BridgeManager.callModuleMethod(
+                            instanceId,
+                            "A2UIBridgeModule",
+                            "rpcEnvelope",
+                            envelopeJson,
+                            null,
+                            0
+                        )
+                    } catch (_: Throwable) {
+                        null
+                    }
+                }
             }
             // Mirrors the KSP-generated callNative (see kuikly
             // core-ksp/.../impl/OhOsTargetEntryBuilder.kt). Each argument is
