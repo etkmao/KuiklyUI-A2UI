@@ -20,6 +20,7 @@ import com.tencent.kuikly.a2ui.protocol.A2UIMessageType
 import com.tencent.kuikly.a2ui.protocol.A2UIProtocolDefaults
 import com.tencent.kuikly.a2ui.protocol.A2UIProtocolVersion
 import com.tencent.kuikly.a2ui.protocol.A2UISurfaceConfig
+import com.tencent.kuikly.a2ui.protocol.ProtocolKeys
 
 /**
  * Adapter that converts standard A2UI v0.9 protocol messages into internal A2UIMessage format.
@@ -269,6 +270,179 @@ class A2UIProtocolAdapter {
      */
     fun setExpectedProtocolVersion(version: A2UIProtocolVersion?) {
         expectedProtocolVersion = version
+    }
+
+    // ================================================================
+    //  Version-aware mixin-key readers (PR-2)
+    //
+    //  v0.9 uses bare mixin keys (`path`, `call`, `accessibility`,
+    //  `checks`); v1.0 renames these to `@`-prefixed keys (`@path`,
+    //  `@call`, `@accessibility`, `@checks`) and reserves `@@` as the
+    //  literal-`@` escape sequence inside user-provided map keys.
+    //
+    //  All call sites inside this adapter — including the historical
+    //  code that still lives inside [convertMessageV09] — MUST go
+    //  through these helpers rather than reading the raw string
+    //  literal, so that:
+    //    1. A single switch (the current [protocolVersion]) dictates
+    //       which key form is recognised.
+    //    2. v1.0 strict mode can reject payloads that still use the
+    //       deprecated bare form (see [rejectBareKeyUnderStrictV10]).
+    //    3. The `@@` → `@` escape is applied uniformly whenever a
+    //       user-authored map is cloned into the Kuikly runtime
+    //       (see [unescapeAtKeysDeep]).
+    //
+    //  Semantics shared by all four readers:
+    //    * Under v0.9 / v0.9.1: ONLY the bare key is recognised.
+    //    * Under v1.0 (strict or lenient): the `@`-prefixed key is
+    //      preferred; if absent, the bare key is also accepted but
+    //      - in strict mode it triggers a one-shot error log via
+    //        [reportBareKeyUnderStrict] and still returns the value
+    //        (to preserve render-ability of partially-correct streams
+    //        during migration); hosts that want "fail hard" can gate
+    //        strict mode at [A2UIBridgeManager] level.
+    //      - in lenient mode it silently falls through with a one-shot
+    //        warning.
+    // ================================================================
+    private fun readPathKey(map: Map<*, *>): String? = readMixinKey(map, "path")
+
+    private fun readCallKey(map: Map<*, *>): String? = readMixinKey(map, "call")
+
+    private fun readAccessibilityKey(map: Map<*, *>): Map<String, Any?>? {
+        @Suppress("UNCHECKED_CAST")
+        return readMixinKeyRaw(map, "accessibility") as? Map<String, Any?>
+    }
+
+    private fun readChecksKey(map: Map<*, *>): List<*>? =
+        readMixinKeyRaw(map, "checks") as? List<*>
+
+    /** Read a string-valued mixin key under the current protocol version. */
+    private fun readMixinKey(map: Map<*, *>, bareKey: String): String? =
+        readMixinKeyRaw(map, bareKey) as? String
+
+    /**
+     * Core mixin-key lookup. Returns the value stored under either the
+     * `@`-prefixed key (v1.0, preferred) or the bare key (v0.9 compat),
+     * applying strict-mode diagnostics along the way.
+     */
+    private fun readMixinKeyRaw(map: Map<*, *>, bareKey: String): Any? {
+        return when (_protocolVersion) {
+            A2UIProtocolVersion.V0_9, A2UIProtocolVersion.V0_9_1 ->
+                map[bareKey]
+            A2UIProtocolVersion.V1_0 -> {
+                val atKey = "@$bareKey"
+                val atValue = map[atKey]
+                if (atValue != null) {
+                    atValue
+                } else if (map[bareKey] != null) {
+                    // Legacy bare key present in a v1.0 payload: honour it
+                    // (lenient) but surface the violation to the host.
+                    reportBareKeyUnderV10(bareKey)
+                    map[bareKey]
+                } else {
+                    null
+                }
+            }
+        }
+    }
+
+    /**
+     * One-shot diagnostic emitter for v1.0 payloads that still carry a
+     * deprecated bare mixin key. Collapsed into a Set so a single bad
+     * payload does not spam the log 1000 times.
+     */
+    private val reportedBareKeys = mutableSetOf<String>()
+
+    private fun reportBareKeyUnderV10(bareKey: String) {
+        if (!reportedBareKeys.add(bareKey)) return
+        if (strictV10) {
+            println(
+                "[A2UI] error: v1.0 payload uses deprecated bare mixin key " +
+                    "'$bareKey'; expected '@$bareKey'. Accepting under lenient " +
+                    "fallback — fix your producer."
+            )
+        } else {
+            println(
+                "[A2UI] warn: v1.0 payload uses deprecated bare mixin key " +
+                    "'$bareKey'; expected '@$bareKey'."
+            )
+        }
+    }
+
+    /**
+     * skipKeys set used by the adapter's "copy-all-other-props" style
+     * loops (there are 5 such sites in this file). Must include the
+     * version-appropriate mixin keys so they are NOT propagated to the
+     * output map as plain props.
+     *
+     * Under v1.0 both the `@`-prefixed and the bare form are skipped,
+     * because lenient mode may still accept bare form from legacy
+     * producers (see [readMixinKeyRaw]).
+     */
+    private fun bindingSkipKeys(extra: Set<String> = emptySet()): Set<String> {
+        val base = setOf("id", "component", "children", "child", "action", "tabs")
+        return when (_protocolVersion) {
+            A2UIProtocolVersion.V0_9, A2UIProtocolVersion.V0_9_1 ->
+                base + setOf("accessibility", "checks") + extra
+            A2UIProtocolVersion.V1_0 ->
+                base + setOf(
+                    "accessibility", "@accessibility",
+                    "checks", "@checks"
+                ) + extra
+        }
+    }
+
+    /**
+     * Apply the v1.0 `@@xxx` → `@xxx` key unescape rule to every nested
+     * [Map] / [List] inside [value].
+     *
+     * v0.9 passes [value] through verbatim (returned by identity-equality
+     * when no transformation is needed).
+     *
+     * Semantics:
+     *   * On a [Map], each key is routed through [ProtocolKeys.unescapeAtKey]
+     *     so that `"@@path"` is written to the Kuikly data model as the
+     *     literal string `"@path"`.
+     *   * Values are recursed into so nested dictionaries / arrays in
+     *     user-authored JSON all get unescaped.
+     *   * Non-collection values (primitives, strings) are returned as-is.
+     *   * The input is NEVER mutated — a fresh Map/List is allocated
+     *     when any key needs rewriting; otherwise the original is
+     *     returned by reference.
+     *
+     * Only called from the v1.0 path (see [handleUpdateDataModel]); callers
+     * on the v0.9 path should bypass this helper entirely.
+     */
+    private fun unescapeAtKeysDeep(value: Any?): Any? {
+        if (_protocolVersion != A2UIProtocolVersion.V1_0) return value
+        return when (value) {
+            is Map<*, *> -> {
+                var changed = false
+                val out = LinkedHashMap<String, Any?>(value.size)
+                for ((k, v) in value) {
+                    val keyStr = k as? String ?: continue
+                    val newKey = ProtocolKeys.unescapeAtKey(keyStr)
+                    val newVal = unescapeAtKeysDeep(v)
+                    if (newKey !== keyStr || newVal !== v) changed = true
+                    out[newKey] = newVal
+                }
+                if (changed) out else {
+                    @Suppress("UNCHECKED_CAST")
+                    value as Map<String, Any?>
+                }
+            }
+            is List<*> -> {
+                var changed = false
+                val out = ArrayList<Any?>(value.size)
+                for (item in value) {
+                    val v2 = unescapeAtKeysDeep(item)
+                    if (v2 !== item) changed = true
+                    out.add(v2)
+                }
+                if (changed) out else value
+            }
+            else -> value
+        }
     }
 
     /** Theme primary color (default per protocol spec: #00BFFF) */
@@ -599,19 +773,38 @@ class A2UIProtocolAdapter {
     /**
      * v1.0 conversion path.
      *
-     * NOTE (PR-1 scaffolding only): at this point the v1.0 branch
-     * intentionally delegates to the v0.9 path so the compile-time
-     * surface area of PR-1 is kept small. PR-2 replaces this body with
-     * the full `@`-prefixed mixin-key aware converter (and the
-     * bidirectional RPC envelopes will be added in PR-6). Payloads that
-     * declare `version="1.0"` BUT still use v0.9 bare keys will therefore
-     * silently continue to work until PR-2 lands — this is the intended
-     * transitional behaviour and matches the migration plan.
+     * The core DataBinding / FunctionCall / ChildList plumbing invoked from
+     * [convertMessageV09] is already version-aware thanks to the
+     * [readPathKey] / [readCallKey] / [readAccessibilityKey] / [readChecksKey]
+     * helpers, so this wrapper's only responsibility is to run
+     * v1.0-specific envelope-level validation BEFORE handing the raw map
+     * to the shared conversion body.
+     *
+     * Strict-mode validations enforced here:
+     *   * `createSurface.theme` was removed in v1.0 (see
+     *     `evolution_guide.md` §"Removed fields"). Payloads carrying it
+     *     under strict mode are rejected; lenient mode warns and strips it.
+     *
+     * Additional strict checks (unknown single-`@` keys, bare mixin keys
+     * still present inside DataBinding positions, mixed-catalog consistency)
+     * are added by later PRs; this hook is the single place to extend.
      */
     private fun convertMessageV10(rawMessage: Map<String, Any?>): List<A2UIMessage> {
-        // TODO(PR-2): rewrite in terms of `ProtocolKeys.{path,call,...}(V1_0)`,
-        //  reject bare `path`/`call`/`accessibility`/`checks` under strictV10,
-        //  honour `@catalogId` / `@metadata` / `@@`-escaping per v1.0 spec.
+        // ---- Envelope-level validation ------------------------------
+        if (strictV10) {
+            val createSurface = rawMessage["createSurface"] as? Map<*, *>
+            if (createSurface != null && createSurface.containsKey("theme")) {
+                println(
+                    "[A2UI] error: v1.0 strict: createSurface.theme was " +
+                        "removed in v1.0. Reject envelope."
+                )
+                return emptyList()
+            }
+        }
+        // ---- Delegate to the shared conversion body -----------------
+        // The mixin-key helpers inside handleCreateSurface / handleUpdateComponents
+        // / handleUpdateDataModel already branch on [_protocolVersion], so
+        // v1.0 payloads produce v1.0-correct A2UI messages.
         return convertMessageV09(rawMessage)
     }
 
@@ -654,6 +847,7 @@ class A2UIProtocolAdapter {
         // re-detects its own version from its first envelope.
         _protocolVersion = A2UIProtocolDefaults.DEFAULT_VERSION
         expectedProtocolVersion = null
+        reportedBareKeys.clear()
     }
 
     /**
@@ -688,11 +882,11 @@ class A2UIProtocolAdapter {
     private fun resolveActionValue(obj: Any?): Any? {
         return when (obj) {
             is Map<*, *> -> {
-                val path = obj["path"] as? String
+                val path = readPathKey(obj)
                 if (path != null && obj.size == 1) {
                     return resolveNestedDataPath(path.removePrefix("/"))
                 }
-                val call = obj["call"] as? String
+                val call = readCallKey(obj)
                 if (call != null) {
                     val evaluated = evaluateFunctionCall(obj)
                     if (evaluated != null) {
@@ -864,7 +1058,7 @@ class A2UIProtocolAdapter {
             }
 
             val updatedProps = mutableMapOf<String, Any?>()
-            val skipKeys = setOf("id", "component", "children", "child", "accessibility", "action", "checks", "tabs")
+            val skipKeys = bindingSkipKeys()
             for ((propKey, propValue) in originalDef) {
                 if (propKey in skipKeys) continue
                 // Kuikly `styles` extension: re-expand on data-model change so
@@ -1080,7 +1274,13 @@ class A2UIProtocolAdapter {
                         }
                     }
                 } else if (children is Map<*, *>) {
-                    // ChildList template binding: {"path": "/events", "componentId": "event-template"}
+                    // ChildList template binding: {"path":"/events", "componentId":"event-template"}
+                    // NOTE(v1.0): per `evolution_guide.md` §"Reserved @ prefix",
+                    //   ChildList template objects explicitly KEEP the bare
+                    //   `path` / `componentId` keys — the `@`-prefix rename
+                    //   ONLY applies to DataBinding / FunctionCall positions,
+                    //   NOT to ChildList template shapes. Do not route this
+                    //   through readPathKey().
                     val dataPath = children["path"] as? String
                     val templateId = children["componentId"] as? String
                     if (dataPath != null && templateId != null) {
@@ -1324,7 +1524,7 @@ class A2UIProtocolAdapter {
                     else -> true
                 }
                 val fieldLabel = if (hasLabel) resolveLabelString(labelSpec, id) else ""
-                val hasChecks = (compMap["checks"] != null || compMap["validationRegexp"] != null) &&
+                val hasChecks = (readChecksKey(compMap) != null || compMap["validationRegexp"] != null) &&
                     (componentType == "TextField" || componentType == "Button")
                 val needsWrapper = hasChecks || hasLabel
                 if (needsWrapper) {
@@ -1895,11 +2095,21 @@ class A2UIProtocolAdapter {
 
     private fun handleUpdateDataModel(data: Map<String, Any?>): List<A2UIMessage> {
         val surfaceId = data["surfaceId"] as? String ?: currentSurfaceId
+        // NOTE(v1.0): `updateDataModel` envelope keeps bare `path` / `value` /
+        //   `surfaceId` field names in v1.0 — the `@`-prefix rename only
+        //   applies to in-document DataBinding / FunctionCall mixin keys,
+        //   NOT to top-level envelope fields. Do not route this through
+        //   readPathKey().
         val path = data["path"] as? String
         // Per A2UI protocol, `value` can be any JSON type (string / number / boolean /
         // array / object). Keep it as Any? here and only narrow to Map where the
         // full-replace semantics require it.
-        val value: Any? = data["value"]
+        // Under v1.0 we additionally apply the `@@xxx` → `@xxx` key-unescape
+        // rule across the entire structure so user-authored dictionaries
+        // that intentionally carry a literal `@`-prefixed key land in the
+        // data model with that literal name intact (per
+        // evolution_guide.md §"Reserved @ prefix"). For v0.9 this is a no-op.
+        val value: Any? = unescapeAtKeysDeep(data["value"])
         @Suppress("UNCHECKED_CAST")
         val valueAsMap = value as? Map<String, Any?>
 
@@ -2060,7 +2270,7 @@ class A2UIProtocolAdapter {
 
             // Re-evaluate properties that use data bindings (path references and function calls)
             val updatedProps = mutableMapOf<String, Any?>()
-            val skipKeys = setOf("id", "component", "children", "child", "accessibility", "action", "tabs")
+            val skipKeys = bindingSkipKeys()
             for ((propKey, propValue) in originalDef) {
                 if (propKey in skipKeys) continue
                 // Kuikly `styles` extension: re-expand on data-model change.
@@ -2781,7 +2991,7 @@ class A2UIProtocolAdapter {
                 // Extract binding path for two-way binding support
                 val valueSpec = compMap["value"]
                 if (valueSpec is Map<*, *>) {
-                    val path = valueSpec["path"] as? String
+                    val path = readPathKey(valueSpec)
                     if (path != null) {
                         props["__textFieldBindingPath"] = path.removePrefix("/")
                     }
@@ -2806,7 +3016,7 @@ class A2UIProtocolAdapter {
                 // Extract binding path for two-way binding support
                 val valueSpec = compMap["value"]
                 if (valueSpec is Map<*, *>) {
-                    val path = valueSpec["path"] as? String
+                    val path = readPathKey(valueSpec)
                     if (path != null) {
                         props["__checkBoxBindingPath"] = path.removePrefix("/")
                     }
@@ -2838,7 +3048,7 @@ class A2UIProtocolAdapter {
                 // Extract binding path for two-way binding, or direct initial selection
                 val valueSpec = compMap["value"]
                 if (valueSpec is Map<*, *>) {
-                    val path = valueSpec["path"] as? String
+                    val path = readPathKey(valueSpec)
                     if (path != null) {
                         props["__choicePickerBindingPath"] = path.removePrefix("/")
                     }
@@ -2877,7 +3087,7 @@ class A2UIProtocolAdapter {
                 // Extract binding path for two-way binding support
                 val valueSpec = compMap["value"]
                 if (valueSpec is Map<*, *>) {
-                    val path = valueSpec["path"] as? String
+                    val path = readPathKey(valueSpec)
                     if (path != null) {
                         props["__sliderBindingPath"] = path.removePrefix("/")
                     }
@@ -2902,7 +3112,7 @@ class A2UIProtocolAdapter {
                 // Extract binding path for two-way binding support
                 val valueSpec = compMap["value"]
                 if (valueSpec is Map<*, *>) {
-                    val path = valueSpec["path"] as? String
+                    val path = readPathKey(valueSpec)
                     if (path != null) {
                         props["__dateTimeBindingPath"] = path.removePrefix("/")
                     }
@@ -2921,7 +3131,7 @@ class A2UIProtocolAdapter {
         }
 
         // Process component-specific properties
-val skipKeys = setOf("id", "component", "children", "child", "accessibility", "action", "tabs")
+            val skipKeys = bindingSkipKeys()
         for ((key, value) in compMap) {
             if (key in skipKeys) continue
 
@@ -2982,7 +3192,7 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
         }
 
         // Register and evaluate checks for this component
-        val checks = compMap["checks"] as? List<*>
+        val checks = readChecksKey(compMap)
         if (checks != null && id != null) {
             registerChecks(id, checks)
             val errorMessage = evaluateChecksForComponent(id)
@@ -3014,7 +3224,7 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
             // Determine the binding path for the regex check's value reference
             val valueSpec = compMap["value"]
             val bindingPath = if (valueSpec is Map<*, *>) {
-                (valueSpec["path"] as? String) ?: "/__vr_$id"
+                (readPathKey(valueSpec) ?: "/__vr_$id")
             } else {
                 "/__vr_$id"
             }
@@ -3198,8 +3408,9 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
         // Legacy fallback for raw values not wrapped in A2UIValue
         if (value is String) return value
         if (value is Map<*, *>) {
-            // Data binding path reference: {"path": "/key"}
-            val path = value["path"] as? String
+            // Data binding path reference: {"path":"/key"} (v0.9)
+            //                        or {"@path":"/key"} (v1.0)
+            val path = readPathKey(value)
             if (path != null) {
                 val key = path.removePrefix("/")
                 if (componentId != null) {
@@ -3207,8 +3418,8 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
                 }
                 return resolveNestedDataPath(key) ?: ""
             }
-            // Function call: {"call": "formatDate", "args": {...}}
-            val call = value["call"] as? String
+            // FunctionCall: bare `call` in v0.9, `@call` in v1.0.
+            val call = readCallKey(value)
             if (call != null) {
                 if (componentId != null) {
                     registerFunctionDependencies(componentId, value)
@@ -3251,8 +3462,9 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
                 extractPathsFromTemplate(obj, paths)
             }
             is Map<*, *> -> {
-                // Check if this map is a path reference
-                val path = obj["path"] as? String
+                // Check if this map is a DataBinding reference
+                // (bare `path` in v0.9, `@path` in v1.0 — see readPathKey).
+                val path = readPathKey(obj)
                 if (path != null) {
                     paths.add(path)
                 }
@@ -3318,7 +3530,7 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
      * Supports: formatDate, formatNumber, formatCurrency, formatString, pluralize.
      */
     private fun evaluateFunctionCall(funcCall: Map<*, *>): String? {
-        val call = funcCall["call"] as? String ?: return null
+        val call = readCallKey(funcCall) ?: return null
         @Suppress("UNCHECKED_CAST")
         val args = funcCall["args"] as? Map<String, Any?> ?: return null
 
@@ -3341,14 +3553,14 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
         if (arg is Number) return arg
         if (arg is Boolean) return arg
         if (arg is Map<*, *>) {
-            // Path reference: {"path": "/key"}
-            val path = arg["path"] as? String
+            // DataBinding reference: bare `path` in v0.9, `@path` in v1.0.
+            val path = readPathKey(arg)
             if (path != null) {
                 val key = path.removePrefix("/")
                 return resolveNestedDataPath(key)
             }
-            // Nested function call: {"call": "...", "args": {...}}
-            val call = arg["call"] as? String
+            // Nested FunctionCall: bare `call` in v0.9, `@call` in v1.0.
+            val call = readCallKey(arg)
             if (call != null) {
                 return evaluateFunctionCall(arg)
             }
@@ -4281,6 +4493,9 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
      */
     private fun getInlineChildListBinding(compDef: Map<String, Any?>): Pair<String, String>? {
         val children = compDef["children"] as? Map<*, *> ?: return null
+        // NOTE(v1.0): ChildList template objects keep bare `path` and
+        //   `componentId` keys in v1.0 (see handleUpdateComponents for the
+        //   reference to evolution_guide.md). Do not route through readPathKey.
         val path = children["path"] as? String ?: return null
         val templateId = children["componentId"] as? String ?: return null
         return path to templateId
@@ -4438,7 +4653,7 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
         applyDefaultLayoutProps(componentType, props, instanceId)
 
         // Process component-specific properties with scope-aware resolution
-        val skipKeys = setOf("id", "component", "children", "child", "accessibility", "action", "tabs")
+            val skipKeys = bindingSkipKeys()
         for ((key, value) in compMap) {
             if (key in skipKeys) continue
 
@@ -4594,7 +4809,7 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
         // Legacy fallback for raw values not wrapped in A2UIValue
         if (value is String) return value
         if (value is Map<*, *>) {
-            val pathRef = value["path"] as? String
+            val pathRef = readPathKey(value)
             if (pathRef != null) {
                 if (pathRef.startsWith("/")) {
                     // Absolute path - resolve from root data model, with template
@@ -4609,8 +4824,8 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
                     return resolveRelativePath(pathRef, itemData)
                 }
             }
-            // Function call
-            val call = value["call"] as? String
+            // FunctionCall: bare `call` in v0.9, `@call` in v1.0.
+            val call = readCallKey(value)
             if (call != null) {
                 return evaluateFunctionCallWithScope(value, itemData)
             }
@@ -4646,7 +4861,7 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
      * Evaluate a function call with scope-aware argument resolution.
      */
     private fun evaluateFunctionCallWithScope(funcCall: Map<*, *>, itemData: Map<String, Any?>): String? {
-        val call = funcCall["call"] as? String ?: return null
+        val call = readCallKey(funcCall) ?: return null
         @Suppress("UNCHECKED_CAST")
         val args = funcCall["args"] as? Map<String, Any?> ?: return null
 
@@ -5126,18 +5341,18 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
         // Number treated as boolean (0 = false, non-zero = true)
         if (condition is Number) return condition.toInt() != 0
 
-        // Map: either path reference or function call
+        // Map: either DataBinding or FunctionCall
         if (condition is Map<*, *>) {
-            // Path reference: {"path": "/someFlag"}
-            val path = condition["path"] as? String
+            // DataBinding: bare `path` in v0.9, `@path` in v1.0.
+            val path = readPathKey(condition)
             if (path != null) {
                 val key = path.removePrefix("/")
                 val value = resolveNestedDataPath(key)
                 return toBooleanValue(value)
             }
 
-            // Function call: {"call": "required", "args": {...}}
-            val call = condition["call"] as? String
+            // FunctionCall: bare `call` in v0.9, `@call` in v1.0.
+            val call = readCallKey(condition)
             if (call != null) {
                 @Suppress("UNCHECKED_CAST")
                 val args = condition["args"] as? Map<String, Any?> ?: emptyMap()
@@ -5312,14 +5527,14 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
         if (arg is Number) return arg
         if (arg is Boolean) return arg
         if (arg is Map<*, *>) {
-            // Path reference: {"path": "/key"}
-            val path = arg["path"] as? String
+            // DataBinding reference: bare `path` in v0.9, `@path` in v1.0.
+            val path = readPathKey(arg)
             if (path != null) {
                 val key = path.removePrefix("/")
                 return resolveNestedDataPath(key)
             }
-            // Nested function call: {"call": "...", "args": {...}}
-            val call = arg["call"] as? String
+            // Nested FunctionCall: bare `call` in v0.9, `@call` in v1.0.
+            val call = readCallKey(arg)
             if (call != null) {
                 @Suppress("UNCHECKED_CAST")
                 val nestedArgs = arg["args"] as? Map<String, Any?> ?: emptyMap()
@@ -5486,7 +5701,7 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
         val variant = originalDef["variant"] as? String ?: "mutuallyExclusive"
         val valueSpec = originalDef["value"]
         val bindingPath = if (valueSpec is Map<*, *>) {
-            (valueSpec["path"] as? String)?.removePrefix("/")
+            readPathKey(valueSpec)?.removePrefix("/")
         } else null
 
         // For ChoicePickers without a binding path, use an internal tracking path
@@ -5612,7 +5827,7 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
             val compViewName = A2UIComponentMapper.mapComponentName(compType)
 
             val updatedProps = mutableMapOf<String, Any?>()
-            val skipKeys = setOf("id", "component", "children", "child", "accessibility", "action", "checks", "tabs")
+            val skipKeys = bindingSkipKeys()
             for ((propKey, propValue) in compDef) {
                 if (propKey in skipKeys) continue
                 // Kuikly `styles` extension: re-expand on data-model change so
@@ -5680,7 +5895,7 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
         val originalDef = idToOriginalDef[componentId] ?: return null
         val valueSpec = originalDef["value"]
         if (valueSpec is Map<*, *>) {
-            return (valueSpec["path"] as? String)?.removePrefix("/")
+            return readPathKey(valueSpec)?.removePrefix("/")
         }
         return null
     }
@@ -6051,7 +6266,7 @@ val skipKeys = setOf("id", "component", "children", "child", "accessibility", "a
             else -> true
         }
         val fieldLabel = if (hasLabel) resolveLabelString(labelSpec, compId) else ""
-        val hasChecks = (def["checks"] != null || def["validationRegexp"] != null) &&
+            val hasChecks = (readChecksKey(def) != null || def["validationRegexp"] != null) &&
             (componentType == "TextField" || componentType == "Button")
         val needsWrapper = (hasChecks || hasLabel) &&
             (componentType == "TextField" || componentType == "DateTimeInput" || componentType == "Slider")

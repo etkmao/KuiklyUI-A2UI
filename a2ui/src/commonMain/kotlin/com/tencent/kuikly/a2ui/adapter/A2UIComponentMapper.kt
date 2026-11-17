@@ -27,6 +27,43 @@ package com.tencent.kuikly.a2ui.adapter
  */
 object A2UIComponentMapper {
 
+    // -------------------------------------------------------------------
+    // Protocol-version-agnostic key readers
+    //
+    // v0.9 uses bare mixin keys (`path`, `call`), v1.0 prefixes them with
+    // `@` (`@path`, `@call`). The Mapper itself is stateless and does not
+    // know the current wire-protocol version, so every binding-shape
+    // detection inside this file must go through these two helpers —
+    // never read the raw string literal `"path"` / `"call"` directly.
+    //
+    // Semantics:
+    //   * `@`-prefixed key wins over the bare key when both are present
+    //     (per v1.0 spec §4.2 "mixin precedence").
+    //   * `@@`-escaped literals (e.g. a user-level map that intentionally
+    //     carries a `"@path"` property as its own data) are handled by
+    //     the Adapter before any map reaches the Mapper, so the Mapper
+    //     does not need to unescape here.
+    //
+    // Strict-mode rejection of bare `path` / `call` under v1.0 payloads
+    // is the Adapter's responsibility (see A2UIProtocolAdapter
+    // #validateV10Payload); the Mapper always stays lenient so the same
+    // code path can be reused by both v0.9 and v1.0.
+    // -------------------------------------------------------------------
+    internal fun readBindingPath(map: Map<*, *>): String? =
+        (map["@path"] as? String) ?: (map["path"] as? String)
+
+    internal fun readBindingCall(map: Map<*, *>): String? =
+        (map["@call"] as? String) ?: (map["call"] as? String)
+
+    /**
+     * True when [map] looks like a binding shape — i.e. carries either
+     * `path` / `@path` or `call` / `@call`. Preferred over inlining the
+     * two-key check at call sites to keep binding-shape detection
+     * canonical across the codebase.
+     */
+    internal fun isBindingShape(map: Map<*, *>): Boolean =
+        readBindingPath(map) != null || readBindingCall(map) != null
+
     /**
      * Mapping status for components that cannot be directly mapped to Kuikly components.
      * These are listed here for documentation purposes.
@@ -295,8 +332,10 @@ object A2UIComponentMapper {
                 is Map<*, *> -> {
                     // Detect data-binding shapes and lift them into A2UIValue so that
                     // callers' resolveValue()/resolveValueWithScope() can dereference.
-                    val hasPath = rawValue["path"] is String
-                    val hasCall = rawValue["call"] is String
+                    // Accept both v0.9 bare keys (`path`, `call`) and v1.0
+                    // `@`-prefixed keys (`@path`, `@call`) via the helpers.
+                    val hasPath = readBindingPath(rawValue) != null
+                    val hasCall = readBindingCall(rawValue) != null
                     when {
                         hasPath || hasCall -> resolveTextValue(rawValue)
                         // Structured backgroundLinearGradient →  CSS linear-gradient string
@@ -778,7 +817,7 @@ object A2UIComponentMapper {
                 if (isIconRenderedAsImage()) {
                     // ---- image mode ----
                     if (value is Map<*, *>) {
-                        val path = value["path"] as? String
+                        val path = readBindingPath(value)
                         if (path != null) {
                             // Data-bound name: emit an IconPathBinding so the adapter's value
                             // resolvers know to (1) resolve the underlying path to a name
@@ -801,7 +840,7 @@ object A2UIComponentMapper {
 
                 // ---- text mode (registry empty) ----
                 if (value is Map<*, *>) {
-                    val path = value["path"] as? String
+                    val path = readBindingPath(value)
                     if (path != null) {
                         return "text" to resolveTextValue(value)
                     }
@@ -1034,14 +1073,15 @@ object A2UIComponentMapper {
         if (value is String) return A2UIValue.Literal(value)
         if (value is Number) return A2UIValue.Literal(value)
         if (value is Map<*, *>) {
-            // Data binding: {"path": "/key"}
-            val path = value["path"] as? String
+            // Data binding: {"path":"/key"} (v0.9) or {"@path":"/key"} (v1.0)
+            val path = readBindingPath(value)
             if (path != null) {
                 val isAbsolute = path.startsWith("/")
                 return A2UIValue.PathBinding(path, isAbsolute)
             }
-            // Function call: {"call": "formatDate", "args": {...}}
-            val call = value["call"] as? String
+            // Function call: {"call":"formatDate","args":{...}} (v0.9)
+            //            or {"@call":"formatDate","args":{...}} (v1.0)
+            val call = readBindingCall(value)
             if (call != null) {
                 return A2UIValue.FunctionCall(value)
             }
