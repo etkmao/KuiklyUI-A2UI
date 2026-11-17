@@ -17,6 +17,8 @@ package com.tencent.kuikly.a2ui.adapter
 
 import com.tencent.kuikly.a2ui.protocol.A2UIMessage
 import com.tencent.kuikly.a2ui.protocol.A2UIMessageType
+import com.tencent.kuikly.a2ui.protocol.A2UIProtocolDefaults
+import com.tencent.kuikly.a2ui.protocol.A2UIProtocolVersion
 import com.tencent.kuikly.a2ui.protocol.A2UISurfaceConfig
 
 /**
@@ -207,6 +209,67 @@ class A2UIProtocolAdapter {
 
     /** Current surface ID */
     private var currentSurfaceId: String = ""
+
+    // -------------------------------------------------------------------
+    // Protocol version state
+    //
+    // Resolved from the top-level `"version"` field of the FIRST envelope
+    // in a stream (see [convertMessage] below). Downstream helpers read
+    // this field via the [protocolVersion] property so individual
+    // conversion routines can honour the v0.9 vs v1.0 mixin-key
+    // differences (`path` vs `@path`, `call` vs `@call`, ...) without
+    // having to re-detect the version on every call.
+    //
+    // Reset to [A2UIProtocolDefaults.DEFAULT_VERSION] by [reset]. The
+    // very first envelope of a stream updates this field atomically
+    // (same message that produces the `createSurface` A2UI message), so
+    // subsequent envelopes inherit the pinned version — mixing v0.9 and
+    // v1.0 envelopes in a single stream is not supported by design.
+    // -------------------------------------------------------------------
+    private var _protocolVersion: A2UIProtocolVersion = A2UIProtocolDefaults.DEFAULT_VERSION
+
+    /** Protocol version resolved from the current stream's first envelope. */
+    val protocolVersion: A2UIProtocolVersion
+        get() = _protocolVersion
+
+    /**
+     * Whether v1.0 strict-mode schema enforcement is active for this
+     * adapter instance.
+     *
+     * When `true` AND [protocolVersion] is [A2UIProtocolVersion.V1_0], the
+     * adapter will reject payloads that carry removed v0.9 bare keys
+     * (`path`, `call`, ...) or unknown `@foo` reserved keys. When `false`
+     * (the "lenient" v1.0 profile), such payloads are logged and still
+     * processed. Has no effect on v0.9 / v0.9.1 streams.
+     *
+     * Public setter so the entry point ([A2UIBridgeManager]) can flip
+     * strict mode per configuration without having to thread the flag
+     * through every constructor call.
+     */
+    var strictV10: Boolean = A2UIProtocolDefaults.STRICT_V10_BY_DEFAULT
+
+    /**
+     * Host-declared expected protocol version. When non-null, the first
+     * envelope of each stream is additionally cross-checked against this
+     * value under [strictV10]:
+     *
+     *  * v1.0 strict + expected=V1_0 + incoming declares v0.9 -> rejected
+     *    (stream yields no messages).
+     *  * all other combinations -> auto-detected version wins.
+     *
+     * Resetting is intentionally scoped to [reset]; a single stream MUST NOT
+     * change its expected version mid-flight.
+     */
+    private var expectedProtocolVersion: A2UIProtocolVersion? = null
+
+    /**
+     * Declare the protocol version the host EXPECTS this stream to speak.
+     * See [expectedProtocolVersion] for the enforcement semantics. Pass
+     * `null` to clear.
+     */
+    fun setExpectedProtocolVersion(version: A2UIProtocolVersion?) {
+        expectedProtocolVersion = version
+    }
 
     /** Theme primary color (default per protocol spec: #00BFFF) */
     private var primaryColor: String = "#00BFFF"
@@ -426,10 +489,87 @@ class A2UIProtocolAdapter {
     }
 
     /**
-     * Convert a standard A2UI 0.9 protocol message (as parsed JSON map) into
-     * a list of internal A2UIMessage objects.
+     * Convert a standard A2UI protocol message (as parsed JSON map) into a
+     * list of internal A2UIMessage objects.
+     *
+     * The top-level `"version"` field of each envelope is used to resolve
+     * the protocol version:
+     *
+     *  * The FIRST envelope of a stream determines the version for the
+     *    whole stream; subsequent envelopes inherit [protocolVersion].
+     *  * When [strictV10] is `true` AND the resolved version is
+     *    [A2UIProtocolVersion.V1_0], envelopes that carry a `"version"`
+     *    field inconsistent with the already-pinned version are rejected
+     *    (return empty list). This mirrors the "v1.0 strict" renderer
+     *    profile described in `docs/A2UI_V10_MIGRATION.md`.
+     *  * v0.9 / v0.9.1 envelopes continue to be handled by the existing
+     *    code path verbatim; version-sensitive branches will be split out
+     *    into [convertMessageV10] in PR-2 when the `@`-prefixed mixin
+     *    keys are wired up.
      */
     fun convertMessage(rawMessage: Map<String, Any?>): List<A2UIMessage> {
+        // ---- Version negotiation ------------------------------------
+        // Only trust an explicit "version" field; a missing field inherits
+        // the version already pinned for this stream (defaulting to v0.9
+        // on the very first envelope via [A2UIProtocolDefaults.DEFAULT_VERSION]).
+        val declared = (rawMessage["version"] as? String)?.takeIf { it.isNotBlank() }
+        if (declared != null) {
+            val detected = A2UIProtocolVersion.detectVersion(rawMessage)
+            // Host-declared expectation: under v1.0 strict mode, a host that
+            // declared "I only accept V1_0" must see the stream also declare
+            // v1.0; anything else is rejected before any A2UI message is
+            // emitted. Lenient mode treats this as a warning.
+            val expected = expectedProtocolVersion
+            if (expected != null && expected != detected) {
+                if (strictV10 && expected == A2UIProtocolVersion.V1_0) {
+                    println(
+                        "[A2UI] error: stream declared version=" +
+                            "${detected.wireValue} but host expected " +
+                            "${expected.wireValue} under v1.0 strict mode; " +
+                            "rejecting envelope"
+                    )
+                    return emptyList()
+                } else {
+                    println(
+                        "[A2UI] warn: stream declared version=" +
+                            "${detected.wireValue} but host expected " +
+                            "${expected.wireValue} (lenient mode: accepting)"
+                    )
+                }
+            }
+            if (_protocolVersion != detected && currentSurfaceId.isNotEmpty()) {
+                // Mid-stream version switch is a protocol violation under
+                // v1.0 strict mode; under lenient mode we still honour the
+                // first version seen.
+                if (strictV10 && (detected == A2UIProtocolVersion.V1_0 ||
+                        _protocolVersion == A2UIProtocolVersion.V1_0)) {
+                    println(
+                        "[A2UI] error: mid-stream version switch " +
+                            "${_protocolVersion.wireValue} -> ${detected.wireValue} " +
+                            "rejected under v1.0 strict mode"
+                    )
+                    return emptyList()
+                }
+            } else {
+                _protocolVersion = detected
+            }
+        }
+
+        // ---- Version-specific dispatch ------------------------------
+        return when (_protocolVersion) {
+            A2UIProtocolVersion.V1_0 -> convertMessageV10(rawMessage)
+            A2UIProtocolVersion.V0_9, A2UIProtocolVersion.V0_9_1 ->
+                convertMessageV09(rawMessage)
+        }
+    }
+
+    /**
+     * v0.9 / v0.9.1 conversion path. This is the historical body of
+     * [convertMessage] from before multi-version support was added — the
+     * behaviour here is UNCHANGED relative to pre-PR-1 code so that
+     * existing v0.9 payloads render bit-for-bit identically.
+     */
+    private fun convertMessageV09(rawMessage: Map<String, Any?>): List<A2UIMessage> {
         val messages = mutableListOf<A2UIMessage>()
 
         // Check for createSurface
@@ -454,6 +594,25 @@ class A2UIProtocolAdapter {
         }
 
         return messages
+    }
+
+    /**
+     * v1.0 conversion path.
+     *
+     * NOTE (PR-1 scaffolding only): at this point the v1.0 branch
+     * intentionally delegates to the v0.9 path so the compile-time
+     * surface area of PR-1 is kept small. PR-2 replaces this body with
+     * the full `@`-prefixed mixin-key aware converter (and the
+     * bidirectional RPC envelopes will be added in PR-6). Payloads that
+     * declare `version="1.0"` BUT still use v0.9 bare keys will therefore
+     * silently continue to work until PR-2 lands — this is the intended
+     * transitional behaviour and matches the migration plan.
+     */
+    private fun convertMessageV10(rawMessage: Map<String, Any?>): List<A2UIMessage> {
+        // TODO(PR-2): rewrite in terms of `ProtocolKeys.{path,call,...}(V1_0)`,
+        //  reject bare `path`/`call`/`accessibility`/`checks` under strictV10,
+        //  honour `@catalogId` / `@metadata` / `@@`-escaping per v1.0 spec.
+        return convertMessageV09(rawMessage)
     }
 
     /**
@@ -491,6 +650,10 @@ class A2UIProtocolAdapter {
         nextTag = 1
         currentSurfaceId = ""
         sendDataModel = false
+        // Reset version negotiation back to the default so the next stream
+        // re-detects its own version from its first envelope.
+        _protocolVersion = A2UIProtocolDefaults.DEFAULT_VERSION
+        expectedProtocolVersion = null
     }
 
     /**

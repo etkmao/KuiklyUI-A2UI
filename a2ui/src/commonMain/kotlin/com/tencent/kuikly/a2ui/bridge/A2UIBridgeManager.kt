@@ -495,13 +495,39 @@ object A2UIBridgeManager {
         // Parse real screen size from the config (used to size full-screen overlays like Modal).
         var deviceWidth = 0f
         var deviceHeight = 0f
+        // Protocol version / strict-mode knobs. These are optional: when the
+        // host omits them we fall back to the defaults declared in
+        // [com.tencent.kuikly.a2ui.protocol.A2UIProtocolDefaults]. The actual
+        // wire version of each stream is still auto-detected by the adapter
+        // from the first envelope's `"version"` field; `expectedProtocolVersion`
+        // (when non-null) is used as a floor so hosts that have fully migrated
+        // to v1.0 can reject stale v0.9 payloads without having to filter
+        // them themselves.
+        var expectedProtocolVersion: com.tencent.kuikly.a2ui.protocol.A2UIProtocolVersion? = null
+        var strictV10: Boolean =
+            com.tencent.kuikly.a2ui.protocol.A2UIProtocolDefaults.STRICT_V10_BY_DEFAULT
         if (!configJson.isNullOrEmpty()) {
             try {
                 val cfg = com.tencent.kuikly.core.nvi.serialization.json.JSONObject(configJson)
                 deviceWidth = cfg.optDouble("deviceWidth", 0.0).toFloat()
                 deviceHeight = cfg.optDouble("deviceHeight", 0.0).toFloat()
+                // `protocolVersion` is an optional string: "v0.9" / "v0.9.1" /
+                // "1.0" / "v1.0". Unknown values are treated as "unspecified"
+                // (left null) so the adapter keeps its "accept any version
+                // declared on the wire" default.
+                val rawVersion = cfg.optString("protocolVersion", "").takeIf { it.isNotBlank() }
+                if (rawVersion != null) {
+                    expectedProtocolVersion =
+                        com.tencent.kuikly.a2ui.protocol.A2UIProtocolVersion.fromWireString(rawVersion)
+                }
+                // `strictV10` is an optional boolean; when the key is absent
+                // we leave `strictV10` at its [A2UIProtocolDefaults] default.
+                if (cfg.has("strictV10")) {
+                    strictV10 = cfg.optBoolean("strictV10", strictV10)
+                }
             } catch (e: Exception) {
-                // Ignore malformed config; overlays fall back to heuristic sizing.
+                // Ignore malformed config; overlays fall back to heuristic sizing
+                // and version-related knobs keep their defaults.
             }
         }
 
@@ -612,6 +638,20 @@ object A2UIBridgeManager {
             dslBridge.initialize(storedSize.first, effectiveDeviceWidth, effectiveDeviceHeight)
         } else {
             dslBridge.initialize(0f, effectiveDeviceWidth, effectiveDeviceHeight)
+        }
+
+        // Propagate the parsed protocol-version knobs to the freshly-created
+        // adapter. We do this AFTER `initialize(...)` because the adapter is
+        // lazily created inside `initialize()`; attempting to set these fields
+        // before that call would no-op against a null adapter. The actual
+        // wire version is still auto-detected per stream; `expectedProtocolVersion`
+        // merely pre-seeds the adapter's pinned version so hosts that want to
+        // "declare and enforce" v1.0 can do so.
+        dslBridge.protocolAdapter?.let { adapter ->
+            adapter.strictV10 = strictV10
+            if (expectedProtocolVersion != null) {
+                adapter.setExpectedProtocolVersion(expectedProtocolVersion)
+            }
         }
     }
 
