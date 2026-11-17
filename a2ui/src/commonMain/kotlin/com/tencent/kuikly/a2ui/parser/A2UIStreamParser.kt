@@ -265,11 +265,17 @@ class A2UIStreamParser {
         if (value == null) return null
         @Suppress("UNCHECKED_CAST")
         val map = value as? Map<String, Any?> ?: return null
+        @Suppress("UNCHECKED_CAST")
+        val catalogs = (map["catalogs"] as? List<Any?>)
+            ?.mapNotNull { it as? String }
+            ?.takeIf { it.isNotEmpty() }
         return A2UISurfaceConfig(
             width = (map["width"] as? Number)?.toFloat() ?: 0f,
             height = (map["height"] as? Number)?.toFloat() ?: 0f,
             backgroundColor = map["backgroundColor"] as? String,
-            incrementalRender = map["incrementalRender"] as? Boolean ?: true
+            incrementalRender = map["incrementalRender"] as? Boolean ?: true,
+            defaultCatalogId = map["defaultCatalogId"] as? String,
+            catalogs = catalogs
         )
     }
 

@@ -790,21 +790,59 @@ class A2UIProtocolAdapter {
      * are added by later PRs; this hook is the single place to extend.
      */
     private fun convertMessageV10(rawMessage: Map<String, Any?>): List<A2UIMessage> {
-        // ---- Envelope-level validation ------------------------------
+        // ---- Envelope-level strict-mode validation ------------------
         if (strictV10) {
             val createSurface = rawMessage["createSurface"] as? Map<*, *>
-            if (createSurface != null && createSurface.containsKey("theme")) {
-                println(
-                    "[A2UI] error: v1.0 strict: createSurface.theme was " +
-                        "removed in v1.0. Reject envelope."
-                )
-                return emptyList()
+            if (createSurface != null) {
+                // (a) `theme` was removed in v1.0.
+                if (createSurface.containsKey("theme")) {
+                    println(
+                        "[A2UI] error: v1.0 strict: createSurface.theme was " +
+                            "removed in v1.0. Reject envelope."
+                    )
+                    return emptyList()
+                }
+                // (b) `catalogs`, when present, must be a list of strings.
+                val catalogs = createSurface["catalogs"]
+                if (catalogs != null) {
+                    if (catalogs !is List<*> || catalogs.any { it !is String }) {
+                        println(
+                            "[A2UI] error: v1.0 strict: createSurface.catalogs " +
+                                "must be a List<String>; got ${catalogs::class.simpleName}. " +
+                                "Reject envelope."
+                        )
+                        return emptyList()
+                    }
+                }
+                // (c) inline `components`, when present, must be a list.
+                val inlineComponents = createSurface["components"]
+                if (inlineComponents != null && inlineComponents !is List<*>) {
+                    println(
+                        "[A2UI] error: v1.0 strict: createSurface.components " +
+                            "must be a List; got ${inlineComponents::class.simpleName}. " +
+                            "Reject envelope."
+                    )
+                    return emptyList()
+                }
+                // (d) inline `dataModel`, when present, must be a map
+                //     (per v1.0 spec dataModel root must be a dictionary).
+                val inlineDataModel = createSurface["dataModel"]
+                if (inlineDataModel != null && inlineDataModel !is Map<*, *>) {
+                    println(
+                        "[A2UI] error: v1.0 strict: createSurface.dataModel " +
+                            "must be a Map at the root; got " +
+                            "${inlineDataModel::class.simpleName}. Reject envelope."
+                    )
+                    return emptyList()
+                }
             }
         }
         // ---- Delegate to the shared conversion body -----------------
         // The mixin-key helpers inside handleCreateSurface / handleUpdateComponents
         // / handleUpdateDataModel already branch on [_protocolVersion], so
-        // v1.0 payloads produce v1.0-correct A2UI messages.
+        // v1.0 payloads produce v1.0-correct A2UI messages. The v1.0-specific
+        // inline components/dataModel expansion is implemented inside
+        // handleCreateSurfaceV10.
         return convertMessageV09(rawMessage)
     }
 
@@ -1202,7 +1240,25 @@ class A2UIProtocolAdapter {
     }
     // ---- Private handlers ----
 
+    /**
+     * Dispatches to the version-specific `createSurface` handler so the
+     * v0.9 wire shape stays byte-for-byte unchanged while v1.0 picks up
+     * the inline `components` / `dataModel` + mixed-catalog support.
+     */
     private fun handleCreateSurface(data: Map<String, Any?>): List<A2UIMessage> {
+        return when (_protocolVersion) {
+            A2UIProtocolVersion.V0_9, A2UIProtocolVersion.V0_9_1 ->
+                handleCreateSurfaceV09(data)
+            A2UIProtocolVersion.V1_0 ->
+                handleCreateSurfaceV10(data)
+        }
+    }
+
+    /**
+     * v0.9 / v0.9.1 implementation. Unchanged from pre-PR-3 behaviour so
+     * existing payloads render identically.
+     */
+    private fun handleCreateSurfaceV09(data: Map<String, Any?>): List<A2UIMessage> {
         val surfaceId = data["surfaceId"] as? String ?: return emptyList()
         currentSurfaceId = surfaceId
 
@@ -1228,6 +1284,97 @@ class A2UIProtocolAdapter {
                 incrementalRender = true
             )
         ))
+    }
+
+    /**
+     * v1.0 implementation.
+     *
+     * Changes relative to v0.9:
+     *   1. `theme` is no longer accepted — strict-mode rejection happens
+     *      upstream in [convertMessageV10]; lenient mode silently drops
+     *      it here (NO primaryColor update).
+     *   2. `createSurface` may carry inline `components` and `dataModel`
+     *      fields that are expanded into equivalent updateComponents /
+     *      updateDataModel messages inside the SAME batch, so the surface
+     *      is renderable from a single envelope (per v1.0 spec
+     *      §"Single-envelope surface creation").
+     *   3. `defaultCatalogId` / `catalogs` are plumbed through
+     *      [A2UISurfaceConfig] for use by the component mapper when
+     *      resolving per-component `@catalogId` overrides (full support
+     *      lands in PR-8 — this PR just wires the data).
+     */
+    private fun handleCreateSurfaceV10(data: Map<String, Any?>): List<A2UIMessage> {
+        val surfaceId = data["surfaceId"] as? String ?: return emptyList()
+        currentSurfaceId = surfaceId
+
+        // sendDataModel semantics unchanged from v0.9.
+        sendDataModel = data["sendDataModel"] as? Boolean ?: false
+
+        // ---- catalogs / defaultCatalogId -----------------------------
+        @Suppress("UNCHECKED_CAST")
+        val catalogsRaw = data["catalogs"] as? List<Any?>
+        val catalogs: List<String>? = catalogsRaw?.mapNotNull { it as? String }
+            ?.takeIf { it.isNotEmpty() }
+        val defaultCatalogId = data["defaultCatalogId"] as? String
+
+        if (strictV10 && defaultCatalogId != null && catalogs != null &&
+            defaultCatalogId !in catalogs
+        ) {
+            // Enforced here (not in convertMessageV10) because it needs
+            // the parsed/normalised catalogs list — easier to reason
+            // about once we already hold both fields.
+            println(
+                "[A2UI] error: v1.0 strict: defaultCatalogId='$defaultCatalogId' " +
+                    "is not listed in catalogs=$catalogs; createSurface aborted."
+            )
+            return emptyList()
+        }
+
+        // Emit the CREATE_SURFACE message first so downstream consumers
+        // see the surface before any updateComponents/updateDataModel.
+        val messages = mutableListOf(
+            A2UIMessage(
+                type = A2UIMessageType.CREATE_SURFACE,
+                surfaceId = surfaceId,
+                config = A2UISurfaceConfig(
+                    width = 0f, // Will be set by the platform layer
+                    height = 0f,
+                    incrementalRender = true,
+                    defaultCatalogId = defaultCatalogId,
+                    catalogs = catalogs
+                )
+            )
+        )
+
+        // ---- Inline components -------------------------------------
+        // Per v1.0 spec, `createSurface.components` is identical in shape
+        // to `updateComponents.components`, so we delegate to the shared
+        // handler. The handler already reads `surfaceId` from
+        // [currentSurfaceId] when absent, so we don't need to copy it.
+        val inlineComponents = data["components"]
+        if (inlineComponents is List<*>) {
+            val wrapped = mapOf<String, Any?>(
+                "surfaceId" to surfaceId,
+                "components" to inlineComponents
+            )
+            messages.addAll(handleUpdateComponents(wrapped))
+        }
+
+        // ---- Inline dataModel --------------------------------------
+        // Treated as a single root-level `updateDataModel` with
+        // `path = "/"`. The `@@xxx` key-unescape is applied by
+        // handleUpdateDataModel itself.
+        val inlineDataModel = data["dataModel"]
+        if (inlineDataModel != null) {
+            val wrapped = mapOf<String, Any?>(
+                "surfaceId" to surfaceId,
+                "path" to "/",
+                "value" to inlineDataModel
+            )
+            messages.addAll(handleUpdateDataModel(wrapped))
+        }
+
+        return messages
     }
 
     private fun handleUpdateComponents(data: Map<String, Any?>): List<A2UIMessage> {

@@ -65,6 +65,11 @@ data class A2UIMessage(
 
 /**
  * Surface configuration for createSurface message.
+ *
+ * The [defaultCatalogId] / [catalogs] fields were introduced by A2UI v1.0
+ * (see `evolution_guide.md` §"Mixed catalogs") and are populated only when
+ * the incoming envelope declares `version="1.0"`. Under v0.9 / v0.9.1 they
+ * stay `null`, so pre-v1.0 renderers keep the same config shape as before.
  */
 data class A2UISurfaceConfig(
     /** Surface width in dp */
@@ -74,5 +79,23 @@ data class A2UISurfaceConfig(
     /** Background color */
     val backgroundColor: String? = null,
     /** Whether the surface supports incremental rendering */
-    val incrementalRender: Boolean = true
+    val incrementalRender: Boolean = true,
+
+    /**
+     * v1.0 only: the catalog used by components that do not carry an
+     * explicit `@catalogId` override. `null` under v0.9 streams and
+     * under v1.0 streams that rely on the renderer's host-configured
+     * default. Validated in strict mode to be a member of [catalogs]
+     * when both are present.
+     */
+    val defaultCatalogId: String? = null,
+
+    /**
+     * v1.0 only: the full set of catalog ids that the payload is
+     * allowed to reference. Used by the renderer to (a) refuse
+     * `@catalogId` values that fall outside this allow-list and
+     * (b) pre-load the corresponding catalog JSONs. `null` under
+     * v0.9 streams.
+     */
+    val catalogs: List<String>? = null
 )
