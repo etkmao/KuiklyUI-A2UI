@@ -153,7 +153,7 @@ class StreamingRenderDemoActivity : AppCompatActivity() {
         header.addView(headerRow)
 
         val headerSub = TextView(this).apply {
-            text = "点击下方按钮按 A2UI v0.9 协议分段推送 envelope，观察 UI 是否抖动"
+            text = "点击下方按钮按 A2UI 协议分段推送 envelope，观察 UI 是否抖动"
             setTextSize(TypedValue.COMPLEX_UNIT_SP, 12f)
             setTextColor(Color.parseColor("#FFE3D1"))
             setPadding(0, dp(4), 0, 0)
