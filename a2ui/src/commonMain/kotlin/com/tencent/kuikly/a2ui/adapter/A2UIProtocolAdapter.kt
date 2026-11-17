@@ -21,6 +21,7 @@ import com.tencent.kuikly.a2ui.protocol.A2UIProtocolDefaults
 import com.tencent.kuikly.a2ui.protocol.A2UIProtocolVersion
 import com.tencent.kuikly.a2ui.protocol.A2UISurfaceConfig
 import com.tencent.kuikly.a2ui.protocol.ProtocolKeys
+import com.tencent.kuikly.a2ui.protocol.ValidationResult
 
 /**
  * Adapter that converts standard A2UI v0.9 protocol messages into internal A2UIMessage format.
@@ -815,6 +816,23 @@ class A2UIProtocolAdapter {
     private fun convertMessageV10(rawMessage: Map<String, Any?>): List<A2UIMessage> {
         // ---- Envelope-level strict-mode validation ------------------
         if (strictV10) {
+            // (0) Reject any unknown single-`@` key anywhere in the tree.
+            //     This catches typos (`@paht`), stale reserved names from
+            //     the v1.0 drafts, and homegrown extensions that forgot to
+            //     use the `@@xxx` user-escape. Must run BEFORE the structural
+            //     createSurface checks so an unknown directive can't sneak
+            //     past those shape validations.
+            val offendingKey = findUnknownAtKey(rawMessage)
+            if (offendingKey != null) {
+                println(
+                    "[A2UI] error: v1.0 strict: envelope contains unknown " +
+                        "reserved key '$offendingKey'. Reject envelope. " +
+                        "(Use '@@${offendingKey.removePrefix("@")}' if you " +
+                        "meant a literal '$offendingKey' map key.)"
+                )
+                return emptyList()
+            }
+
             val createSurface = rawMessage["createSurface"] as? Map<*, *>
             if (createSurface != null) {
                 // (a) `theme` was removed in v1.0.
@@ -867,6 +885,48 @@ class A2UIProtocolAdapter {
         // inline components/dataModel expansion is implemented inside
         // handleCreateSurfaceV10.
         return convertMessageV09(rawMessage)
+    }
+
+    /**
+     * Walk every nested Map / List inside [root] and return the first key
+     * that starts with a single `@` but is NOT one of the keys reserved by
+     * v1.0 (see [ProtocolKeys.RESERVED_AT_KEYS]). Returns `null` when the
+     * entire tree is clean.
+     *
+     * Used by [convertMessageV10] in strict mode as a hard guard against
+     * typos (`@paht`), stale reserved names, and homegrown directives.
+     * Keys prefixed with two `@` (e.g. `"@@foo"`) are user-escaped literals
+     * and are silently tolerated — [ProtocolKeys.isUnknownAtKey] already
+     * returns `false` for them.
+     *
+     * Implementation note: iterative traversal with an explicit
+     * `ArrayDeque` stack keeps call-stack depth bounded even for payloads
+     * with deeply nested data models.
+     */
+    private fun findUnknownAtKey(root: Map<String, Any?>): String? {
+        val stack: ArrayDeque<Any?> = ArrayDeque()
+        stack.addLast(root)
+        while (stack.isNotEmpty()) {
+            when (val node = stack.removeLast()) {
+                is Map<*, *> -> {
+                    for ((k, v) in node) {
+                        if (k is String && ProtocolKeys.isUnknownAtKey(k)) {
+                            return k
+                        }
+                        if (v != null) stack.addLast(v)
+                    }
+                }
+                is List<*> -> {
+                    for (item in node) {
+                        if (item != null) stack.addLast(item)
+                    }
+                }
+                // Primitives (String / Number / Boolean / null) carry no
+                // further keys and need no inspection.
+                else -> { /* no-op */ }
+            }
+        }
+        return null
     }
 
     /**
@@ -1168,7 +1228,11 @@ class A2UIProtocolAdapter {
         for (compId in checksAffectedIds) {
             val originalDef = idToOriginalDef[compId] ?: continue
             val componentType = originalDef["component"] as? String ?: continue
-            val errorMessage = evaluateChecksForComponent(compId)
+            // PR-5: evaluateChecksForComponent now returns a structured
+            // ValidationResult; existing downstream code only needs the
+            // user-facing message, which keeps the `String?` null-means-pass
+            // contract the Button / error-text props expect.
+            val errorMessage = evaluateChecksForComponent(compId).errorMessage
 
             if (componentType == "Button") {
                 // Button: toggle the dispatch guard, dim the button, and show/hide
@@ -2605,7 +2669,8 @@ class A2UIProtocolAdapter {
                 A2UIComponentMapper.mapComponentName(componentType)
             }
 
-            val errorMessage = evaluateChecksForComponent(compId)
+            // PR-5: see note above — only .errorMessage is consumed here.
+            val errorMessage = evaluateChecksForComponent(compId).errorMessage
 
             if (componentType == "Button") {
                 // Button: toggle the dispatch guard, dim the button, and show/hide
@@ -3402,7 +3467,8 @@ class A2UIProtocolAdapter {
         val checks = readChecksKey(compMap)
         if (checks != null && id != null) {
             registerChecks(id, checks)
-            val errorMessage = evaluateChecksForComponent(id)
+            // PR-5: ValidationResult -> String? for downstream prop storage.
+            val errorMessage = evaluateChecksForComponent(id).errorMessage
             if (componentType == "Button") {
                 // Button: disabled when any check fails. We make the disabled state
                 // effective on every render path: (1) tagToActionDisabled guards the
@@ -3450,7 +3516,8 @@ class A2UIProtocolAdapter {
                 )
             )
             registerChecks(id, syntheticChecks)
-            val errorMessage = evaluateChecksForComponent(id)
+            // PR-5: ValidationResult -> String? for downstream prop storage.
+            val errorMessage = evaluateChecksForComponent(id).errorMessage
             // TextField: store error for wrapper error text component
             props["__checkError"] = errorMessage
             // Set border color based on check result
@@ -5570,25 +5637,48 @@ class A2UIProtocolAdapter {
     }
 
     /**
-     * Evaluate all checks for a component and return the first failed check's message.
-     * Returns null if all checks pass.
+     * Evaluate all checks for a component and return a structured
+     * [ValidationResult].
      *
-     * @param componentId The component ID
-     * @return The error message of the first failed check, or null if all pass
+     * Semantics (both v0.9 and v1.0):
+     *   * No rules registered for [componentId] -> [ValidationResult.VALID].
+     *     Callers that need to distinguish "no rules" from "all pass" can
+     *     inspect [checksRegistry]; most consumers only care about
+     *     `errorMessage != null`.
+     *   * Rules are evaluated in declaration order; the first failing rule
+     *     short-circuits with its [ValidationResult].
+     *
+     * The returned object's [ValidationResult.errorMessage] field keeps
+     * the legacy `String?` contract (null on pass, non-null on fail) so
+     * all four existing call-sites only need a `.errorMessage` accessor.
      */
-    fun evaluateChecksForComponent(componentId: String): String? {
-        val checkRules = checksRegistry[componentId] ?: return null
+    fun evaluateChecksForComponent(componentId: String): ValidationResult {
+        val checkRules = checksRegistry[componentId] ?: return ValidationResult.VALID
 
         for (rule in checkRules) {
             val condition = rule["condition"]
-            val message = rule["message"] as? String ?: "Validation failed"
+            val rawMessage = rule["message"] as? String
+            val message = rawMessage ?: run {
+                // v1.0 relaxes `message` from "required" to "optional"; a
+                // missing value is tolerated under both v0.9 and v1.0 using
+                // the canonical fallback text, but under v1.0 we surface a
+                // one-shot warning so authors fix their catalogs.
+                if (_protocolVersion == A2UIProtocolVersion.V1_0 && rawMessage == null) {
+                    reportBareKeyUnderV10("checks.message[missing]")
+                }
+                "Validation failed"
+            }
 
             val result = evaluateDynamicBoolean(condition)
             if (!result) {
-                return message
+                // Extract the rule name for the structured result. The
+                // condition is usually a FunctionCall map with a `call` /
+                // `@call` key; raw boolean/path conditions return null here.
+                val ruleName = (condition as? Map<*, *>)?.let { readCallKey(it) }
+                return ValidationResult.failure(message, ruleName)
             }
         }
-        return null // All checks passed
+        return ValidationResult.VALID // All checks passed
     }
 
     /**
