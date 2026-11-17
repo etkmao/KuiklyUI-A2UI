@@ -208,6 +208,29 @@ class A2UIProtocolAdapter {
     /** Data model for resolving data bindings */
     private val dataModel = mutableMapOf<String, Any?>()
 
+    // -------------------------------------------------------------------
+    // Template-iteration index stack (v1.0 `@index` built-in)
+    //
+    // Each ChildList expansion pushes the active array index before
+    // recursing into [instantiateSubtree] for a given item, and pops it
+    // on the way back out. Nested ChildLists push again so the inner
+    // scope sees the inner array's index. Regular (non-ChildList) child
+    // recursion does NOT push, preserving the enclosing template's
+    // index value for the entire subtree — this matches v1.0 semantics
+    // where `@index` always refers to the nearest enclosing data-array
+    // iteration.
+    //
+    // Reading: [currentTemplateIndex] returns the top of the stack, or
+    // null when the lookup happens outside any template scope. The
+    // `evaluateFunctionCallWithScope` / `@index` branch is the sole
+    // consumer. Not used on the v0.9 code path at all.
+    // -------------------------------------------------------------------
+    private val templateIndexStack: ArrayDeque<Int> = ArrayDeque()
+
+    /** Top of [templateIndexStack], or `null` outside any template scope. */
+    private val currentTemplateIndex: Int?
+        get() = templateIndexStack.lastOrNull()
+
     /** Current surface ID */
     private var currentSurfaceId: String = ""
 
@@ -886,6 +909,7 @@ class A2UIProtocolAdapter {
         _protocolVersion = A2UIProtocolDefaults.DEFAULT_VERSION
         expectedProtocolVersion = null
         reportedBareKeys.clear()
+        templateIndexStack.clear()
     }
 
     /**
@@ -2248,6 +2272,24 @@ class A2UIProtocolAdapter {
         //   NOT to top-level envelope fields. Do not route this through
         //   readPathKey().
         val path = data["path"] as? String
+
+        // --- v1.0 strict-mode `value`-presence validation -------------
+        // Per `evolution_guide.md` §"updateDataModel tightened" the `value`
+        // field is MANDATORY in v1.0. v0.9 payloads often omitted it and
+        // were silently tolerated; v1.0 strict mode must reject such
+        // envelopes. We check for KEY PRESENCE here, not non-null, because
+        // `value: null` is the explicit v1.0 delete signal and must be
+        // allowed through.
+        if (_protocolVersion == A2UIProtocolVersion.V1_0 && strictV10 &&
+            !data.containsKey("value")
+        ) {
+            println(
+                "[A2UI] error: v1.0 strict: updateDataModel is missing the " +
+                    "required `value` field (path=$path). Reject envelope."
+            )
+            return emptyList()
+        }
+
         // Per A2UI protocol, `value` can be any JSON type (string / number / boolean /
         // array / object). Keep it as Any? here and only narrow to Map where the
         // full-replace semantics require it.
@@ -2260,7 +2302,13 @@ class A2UIProtocolAdapter {
         @Suppress("UNCHECKED_CAST")
         val valueAsMap = value as? Map<String, Any?>
 
-        if (value == null && path == null) return emptyList()
+        // v1.0 delete signal: `value: null` at a specific path means
+        // "remove this leaf and notify downstream". We detect it here so
+        // the UPDATE_DATA emit branch below can propagate the deletion.
+        val isV10DeleteSignal = _protocolVersion == A2UIProtocolVersion.V1_0 &&
+            path != null && data.containsKey("value") && value == null
+
+        if (value == null && path == null && !isV10DeleteSignal) return emptyList()
 
         // Per protocol: if path is omitted or "/", replace entire data model
         // If path is specified, update at that path
@@ -2283,6 +2331,8 @@ class A2UIProtocolAdapter {
         } else {
             // Update at specific path (e.g., "/user/firstName" -> nested update).
             // value may be any JSON type; setNestedDataPath supports arbitrary leaf values.
+            // A null value removes the leaf (see setNestedDataPath KDoc) — this is
+            // also how the v1.0 delete signal is realised.
             val key = path.removePrefix("/")
             // Write into the nested Map structure so resolveNestedDataPath() can
             // read the value back (handles both single-segment and nested keys).
@@ -2294,6 +2344,9 @@ class A2UIProtocolAdapter {
         // Emit UPDATE_DATA message for the dispatcher's binding mechanism.
         // For full-replace, forward the original Map. For partial upsert, wrap the
         // written value under its path key so downstream consumers see a Map too.
+        // For v1.0 delete (value == null at a specific path) we still emit an
+        // UPDATE_DATA carrying `{pathKey -> null}` so dependents re-resolve
+        // bindings and ChildLists shrink correctly.
         if (valueAsMap != null) {
             messages.add(A2UIMessage(
                 type = A2UIMessageType.UPDATE_DATA,
@@ -2306,6 +2359,13 @@ class A2UIProtocolAdapter {
                 type = A2UIMessageType.UPDATE_DATA,
                 surfaceId = surfaceId,
                 data = mapOf(pathKey to value)
+            ))
+        } else if (isV10DeleteSignal) {
+            val pathKey = path!!.removePrefix("/")
+            messages.add(A2UIMessage(
+                type = A2UIMessageType.UPDATE_DATA,
+                surfaceId = surfaceId,
+                data = mapOf(pathKey to null)
             ))
         }
 
@@ -3678,6 +3738,25 @@ class A2UIProtocolAdapter {
      */
     private fun evaluateFunctionCall(funcCall: Map<*, *>): String? {
         val call = readCallKey(funcCall) ?: return null
+
+        // v1.0 `@index` built-in. This non-scope entry point is reachable
+        // when a card uses `@index` outside any ChildList (which is a
+        // misuse — per v1.0 spec `@index` is only defined inside template
+        // iteration). We still handle it gracefully by reading
+        // [currentTemplateIndex], which is `null` here, and returning an
+        // empty string with a warning so the UI shows a benign placeholder
+        // instead of "@index" leaking through as a custom-function miss.
+        if (call == "@index") {
+            val idx = currentTemplateIndex
+            return idx?.toString() ?: run {
+                println(
+                    "[A2UI] warn: v1.0 @index evaluated outside any " +
+                        "ChildList scope; returning empty string."
+                )
+                ""
+            }
+        }
+
         @Suppress("UNCHECKED_CAST")
         val args = funcCall["args"] as? Map<String, Any?> ?: return null
 
@@ -4573,18 +4652,29 @@ class A2UIProtocolAdapter {
 
                 val scopePath = "/${dataKey}/$index"
                 val sizeBefore = binding.generatedInstanceIds.size
-                messages.addAll(
-                    instantiateSubtree(
-                        originalId = binding.templateId,
-                        parentInstanceTag = parentTag,
-                        indexInSiblings = index,
-                        indexPath = "$index",
-                        itemData = itemData,
-                        scopePath = scopePath,
-                        surfaceId = surfaceId,
-                        binding = binding
+                // v1.0 `@index` support: publish the current data-array
+                // index to [templateIndexStack] for the duration of this
+                // item's instantiation so FunctionCalls evaluated inside
+                // the template subtree see it via [currentTemplateIndex].
+                // try/finally guarantees the stack stays balanced even if
+                // instantiation throws.
+                templateIndexStack.addLast(index)
+                try {
+                    messages.addAll(
+                        instantiateSubtree(
+                            originalId = binding.templateId,
+                            parentInstanceTag = parentTag,
+                            indexInSiblings = index,
+                            indexPath = "$index",
+                            itemData = itemData,
+                            scopePath = scopePath,
+                            surfaceId = surfaceId,
+                            binding = binding
+                        )
                     )
-                )
+                } finally {
+                    templateIndexStack.removeLast()
+                }
                 val produced = binding.generatedInstanceIds.subList(
                     sizeBefore,
                     binding.generatedInstanceIds.size
@@ -4745,18 +4835,28 @@ class A2UIProtocolAdapter {
                     val innerItemData = innerItem as Map<String, Any?>
                     val innerScopePath = "${innerScopeBase}/${innerIdx}"
                     val innerIndexPath = "${indexPath}_${innerIdx}"
-                    messages.addAll(
-                        instantiateSubtree(
-                            originalId = innerTemplateId,
-                            parentInstanceTag = instanceTag,
-                            indexInSiblings = innerIdx,
-                            indexPath = innerIndexPath,
-                            itemData = innerItemData,
-                            scopePath = innerScopePath,
-                            surfaceId = surfaceId,
-                            binding = binding
+                    // Nested ChildList: push the inner index on top of
+                    // the outer one. `@index` deepest-scope semantics
+                    // means the inner template sees `innerIdx`; when we
+                    // return control to the outer template, the pop
+                    // restores the outer index.
+                    templateIndexStack.addLast(innerIdx)
+                    try {
+                        messages.addAll(
+                            instantiateSubtree(
+                                originalId = innerTemplateId,
+                                parentInstanceTag = instanceTag,
+                                indexInSiblings = innerIdx,
+                                indexPath = innerIndexPath,
+                                itemData = innerItemData,
+                                scopePath = innerScopePath,
+                                surfaceId = surfaceId,
+                                binding = binding
+                            )
                         )
-                    )
+                    } finally {
+                        templateIndexStack.removeLast()
+                    }
                 }
             }
             return messages
@@ -5009,6 +5109,25 @@ class A2UIProtocolAdapter {
      */
     private fun evaluateFunctionCallWithScope(funcCall: Map<*, *>, itemData: Map<String, Any?>): String? {
         val call = readCallKey(funcCall) ?: return null
+
+        // v1.0 `@index` built-in: no args, returns the active ChildList
+        // iteration index (0-based) as a string. Must be recognised BEFORE
+        // the args null-check below because spec-compliant `@index`
+        // FunctionCalls omit the args field entirely. Under v0.9 the call
+        // name "@index" cannot be emitted (v0.9 would route through bare
+        // `call` where "@index" is just an unrecognised function name),
+        // so this short-circuit never fires on legacy streams.
+        if (call == "@index") {
+            val idx = currentTemplateIndex
+            return idx?.toString() ?: run {
+                println(
+                    "[A2UI] warn: v1.0 @index evaluated outside any " +
+                        "ChildList scope; returning empty string."
+                )
+                ""
+            }
+        }
+
         @Suppress("UNCHECKED_CAST")
         val args = funcCall["args"] as? Map<String, Any?> ?: return null
 
