@@ -22,6 +22,10 @@ import com.tencent.kuikly.a2ui.protocol.A2UIProtocolVersion
 import com.tencent.kuikly.a2ui.protocol.A2UISurfaceConfig
 import com.tencent.kuikly.a2ui.protocol.ProtocolKeys
 import com.tencent.kuikly.a2ui.protocol.ValidationResult
+import com.tencent.kuikly.a2ui.rpc.A2UIRpcDispatcher
+import com.tencent.kuikly.a2ui.rpc.A2UIRpcError
+import com.tencent.kuikly.a2ui.rpc.A2UIRpcRequest
+import com.tencent.kuikly.a2ui.rpc.A2UIRpcResponse
 
 /**
  * Adapter that converts standard A2UI v0.9 protocol messages into internal A2UIMessage format.
@@ -492,6 +496,32 @@ class A2UIProtocolAdapter {
      */
     internal var customFunctionInvoker: ((name: String, argsJson: String, spec: String) -> Any?)? = null
 
+    // -------------------------------------------------------------------
+    //  v1.0 bidirectional RPC wiring (PR-6a)
+    //
+    //  Lifecycle:
+    //   * [rpcDispatcher] owns the pending-table and requestId minting.
+    //     We create one per adapter instance so the per-surface reset
+    //     flow can `cancelAll(null)` without reaching into BridgeManager.
+    //   * [onIncomingAgentCall]  — invoked by [convertMessageV10] when
+    //     a `callRendererFunction` envelope is received. Host installs
+    //     it via [A2UIBridgeManager.setRendererFunctionHandler]. When
+    //     unset, the adapter immediately replies with UNKNOWN_FUNCTION
+    //     so the agent isn't left hanging.
+    //   * [emitWireMessage]      — invoked by the adapter to serialise
+    //     a `rendererFunctionResponse` or `callAgentFunction` envelope
+    //     back to the host transport (BridgeManager -> native bridge).
+    //     Signature: (envelopeJson: String) -> Unit. Null means "no
+    //     outbound transport" which is only legal during unit tests.
+    // -------------------------------------------------------------------
+    internal val rpcDispatcher: A2UIRpcDispatcher = A2UIRpcDispatcher()
+
+    /** Set by BridgeManager; receives agent-originated calls. */
+    internal var onIncomingAgentCall: ((A2UIRpcRequest) -> Unit)? = null
+
+    /** Set by BridgeManager; carries serialised wire envelopes outbound. */
+    internal var emitWireMessage: ((String) -> Unit)? = null
+
     /**
      * Split a data-model path expression into its atomic segments.
      *
@@ -754,11 +784,16 @@ class A2UIProtocolAdapter {
         }
 
         // ---- Version-specific dispatch ------------------------------
-        return when (_protocolVersion) {
+        val out = when (_protocolVersion) {
             A2UIProtocolVersion.V1_0 -> convertMessageV10(rawMessage)
             A2UIProtocolVersion.V0_9, A2UIProtocolVersion.V0_9_1 ->
                 convertMessageV09(rawMessage)
         }
+        // Drive timeout expiry opportunistically after every envelope so
+        // long-running agent calls don't sit forever on quiet streams.
+        // `tick()` is a cheap no-op when the pending table is empty.
+        rpcDispatcher.tick()
+        return out
     }
 
     /**
@@ -878,6 +913,30 @@ class A2UIProtocolAdapter {
                 }
             }
         }
+        // ---- v1.0-only: bidirectional RPC envelopes -----------------
+        // These four keys do NOT produce A2UIMessage entries; they are
+        // pure side-effects (pending-table bookkeeping + host callbacks
+        // + outbound serialisation). After handling them we fall through
+        // to the shared conversion body so a single envelope can carry
+        // both an RPC key and a regular `updateDataModel` (e.g. an agent
+        // can ACK a renderer call AND push new state in one message).
+        rawMessage["callRendererFunction"]?.let { payload ->
+            @Suppress("UNCHECKED_CAST")
+            handleCallRendererFunction(payload as? Map<String, Any?>)
+        }
+        rawMessage["rendererFunctionResponse"]?.let { payload ->
+            @Suppress("UNCHECKED_CAST")
+            handleRendererFunctionResponse(payload as? Map<String, Any?>)
+        }
+        rawMessage["callAgentFunction"]?.let { payload ->
+            @Suppress("UNCHECKED_CAST")
+            handleCallAgentFunctionIncoming(payload as? Map<String, Any?>)
+        }
+        rawMessage["agentFunctionResponse"]?.let { payload ->
+            @Suppress("UNCHECKED_CAST")
+            handleAgentFunctionResponse(payload as? Map<String, Any?>)
+        }
+
         // ---- Delegate to the shared conversion body -----------------
         // The mixin-key helpers inside handleCreateSurface / handleUpdateComponents
         // / handleUpdateDataModel already branch on [_protocolVersion], so
@@ -885,6 +944,382 @@ class A2UIProtocolAdapter {
         // inline components/dataModel expansion is implemented inside
         // handleCreateSurfaceV10.
         return convertMessageV09(rawMessage)
+    }
+
+    // ===================================================================
+    //  v1.0 bidirectional RPC envelope handlers (PR-6a)
+    //
+    //  These handlers are only invoked from [convertMessageV10]; they
+    //  are UNREACHABLE on v0.9 streams by construction. Each handler
+    //  is responsible for:
+    //    1. Minimal structural validation (strict mode rejects, lenient
+    //       mode warns-and-drops).
+    //    2. Dispatcher bookkeeping.
+    //    3. Fan-out to host (incoming call) or wire (outgoing response).
+    //
+    //  Wire-format checks that fire here are DEFENSIVE — the outer
+    //  [findUnknownAtKey] + top-level envelope checks in
+    //  [convertMessageV10] already caught most problems; what remains is
+    //  shape validation of the RPC sub-object itself.
+    // ===================================================================
+
+    /** Handle an incoming `callRendererFunction` envelope (agent → renderer). */
+    private fun handleCallRendererFunction(payload: Map<String, Any?>?) {
+        val parsed = parseRpcRequest(
+            payload = payload,
+            direction = A2UIRpcRequest.Direction.AGENT_TO_RENDERER,
+            envelopeKey = "callRendererFunction",
+        ) ?: return
+
+        // Record the pending entry (for timeout bookkeeping). The host
+        // may call `respondToAgent` / `failAgentRequest` later — those
+        // paths will look up this requestId again.
+        rpcDispatcher.onIncomingAgentCall(parsed)
+
+        val handler = onIncomingAgentCall
+        if (handler == null) {
+            // No host handler attached → immediately fail back so the
+            // agent is not left waiting. Log once, loudly.
+            println(
+                "[A2UI] warn: callRendererFunction '${parsed.name}' received " +
+                    "but no host handler is installed. Replying with " +
+                    "UNKNOWN_FUNCTION. Call " +
+                    "A2UIBridgeManager.setRendererFunctionHandler to opt in."
+            )
+            val resp = rpcDispatcher.failAgentCall(
+                surfaceId = parsed.surfaceId,
+                requestId = parsed.requestId,
+                error = A2UIRpcError.unknownFunction(parsed.name),
+            )
+            if (resp != null) emitRendererFunctionResponse(resp)
+            return
+        }
+        // Invoke the host asynchronously from the adapter's POV — the
+        // host will call `respondToAgent` / `failAgentRequest` when
+        // ready. We swallow handler exceptions here so a buggy host
+        // can't take the whole stream down; the pending entry still
+        // exists and will eventually time out if the host never
+        // responds.
+        try {
+            handler(parsed)
+        } catch (t: Throwable) {
+            println(
+                "[A2UI] error: rendererFunctionHandler for '${parsed.name}' " +
+                    "threw: ${t.message}. Failing RPC with INTERNAL_ERROR."
+            )
+            val resp = rpcDispatcher.failAgentCall(
+                surfaceId = parsed.surfaceId,
+                requestId = parsed.requestId,
+                error = A2UIRpcError.internalError(t.message ?: "handler threw"),
+            )
+            if (resp != null) emitRendererFunctionResponse(resp)
+        }
+    }
+
+    /** Handle an incoming `agentFunctionResponse` envelope (reply to renderer-originated call). */
+    private fun handleAgentFunctionResponse(payload: Map<String, Any?>?) {
+        val resp = parseRpcResponse(
+            payload = payload,
+            direction = A2UIRpcRequest.Direction.RENDERER_TO_AGENT,
+            envelopeKey = "agentFunctionResponse",
+        ) ?: return
+
+        val entry = rpcDispatcher.onIncomingAgentResponse(resp) ?: return
+        try {
+            entry.onComplete?.invoke(resp)
+        } catch (t: Throwable) {
+            println(
+                "[A2UI] error: onComplete for requestId='${resp.requestId}' " +
+                    "threw: ${t.message}"
+            )
+        }
+    }
+
+    /**
+     * Guard against stray `rendererFunctionResponse` / `callAgentFunction`
+     * envelopes arriving at the adapter. Both of these are OUTBOUND from
+     * the renderer's POV; if an agent tries to send one, it is a
+     * wire-format error. Under strict mode we log; under lenient we also
+     * log (there is no meaningful "accept" path). Kept as named helpers
+     * so the diagnostic reads cleanly.
+     */
+    private fun handleRendererFunctionResponse(payload: Map<String, Any?>?) {
+        if (payload == null) return
+        println(
+            "[A2UI] warn: envelope key 'rendererFunctionResponse' is an " +
+                "outbound-only message from the renderer side; ignoring " +
+                "it on the inbound path."
+        )
+    }
+
+    private fun handleCallAgentFunctionIncoming(payload: Map<String, Any?>?) {
+        if (payload == null) return
+        println(
+            "[A2UI] warn: envelope key 'callAgentFunction' is an " +
+                "outbound-only message from the renderer side; ignoring " +
+                "it on the inbound path."
+        )
+    }
+
+    // -------------------------------------------------------------------
+    //  Outbound entry points (BridgeManager -> adapter -> wire)
+    // -------------------------------------------------------------------
+
+    /**
+     * Called by BridgeManager after the host has produced a result
+     * for an earlier `callRendererFunction`. Serialises and emits the
+     * `rendererFunctionResponse` envelope to the host transport.
+     * No-op when the pending entry has already timed out.
+     */
+    internal fun respondToAgent(surfaceId: String, requestId: String, result: Any?) {
+        val resp = rpcDispatcher.completeAgentCall(surfaceId, requestId, result)
+            ?: return
+        emitRendererFunctionResponse(resp)
+    }
+
+    /** Failure variant of [respondToAgent]. */
+    internal fun failAgentRequest(
+        surfaceId: String,
+        requestId: String,
+        error: A2UIRpcError,
+    ) {
+        val resp = rpcDispatcher.failAgentCall(surfaceId, requestId, error) ?: return
+        emitRendererFunctionResponse(resp)
+    }
+
+    /**
+     * Called by BridgeManager to initiate a renderer-originated
+     * `callAgentFunction` RPC. Returns the minted requestId (opaque to
+     * the host, useful for logging). [onComplete] is invoked exactly
+     * once — on wire response, timeout, or surface close.
+     */
+    internal fun invokeAgentFunction(
+        surfaceId: String,
+        name: String,
+        args: Map<String, Any?>,
+        timeoutMs: Long?,
+        onComplete: (A2UIRpcResponse) -> Unit,
+    ): String {
+        val req = rpcDispatcher.beginRendererCall(
+            surfaceId = surfaceId,
+            name = name,
+            args = args,
+            timeoutMs = timeoutMs,
+            onComplete = onComplete,
+        )
+        emitCallAgentFunction(req)
+        return req.requestId
+    }
+
+    // -------------------------------------------------------------------
+    //  Wire-format parsers
+    // -------------------------------------------------------------------
+
+    /**
+     * Parse an RPC-request-shaped map. Returns `null` on wire-format
+     * errors; in strict mode an error log is emitted, in lenient mode a
+     * warning. The caller is expected to drop the envelope on `null`.
+     */
+    private fun parseRpcRequest(
+        payload: Map<String, Any?>?,
+        direction: A2UIRpcRequest.Direction,
+        envelopeKey: String,
+    ): A2UIRpcRequest? {
+        if (payload == null) {
+            rpcWireError(envelopeKey, "payload is not a Map")
+            return null
+        }
+        val surfaceId = payload["surfaceId"] as? String
+        if (surfaceId.isNullOrEmpty()) {
+            rpcWireError(envelopeKey, "missing or non-string 'surfaceId'")
+            return null
+        }
+        // Cross-check against adapter's current surface. Mismatch is a
+        // strict-mode reject because the dispatcher's pending table is
+        // keyed by requestId only; accepting mismatched surfaceIds would
+        // make cancel-by-surface unreliable.
+        if (currentSurfaceId.isNotEmpty() && surfaceId != currentSurfaceId) {
+            rpcWireError(
+                envelopeKey,
+                "surfaceId '$surfaceId' does not match current '$currentSurfaceId'",
+            )
+            return null
+        }
+        val requestId = payload["requestId"] as? String
+        if (requestId.isNullOrEmpty()) {
+            rpcWireError(envelopeKey, "missing or non-string 'requestId'")
+            return null
+        }
+        val name = payload["name"] as? String
+        if (name.isNullOrEmpty()) {
+            rpcWireError(envelopeKey, "missing or non-string 'name'")
+            return null
+        }
+        val argsRaw = payload["args"]
+        val args: Map<String, Any?> = when (argsRaw) {
+            null -> emptyMap()
+            is Map<*, *> -> {
+                @Suppress("UNCHECKED_CAST")
+                argsRaw as Map<String, Any?>
+            }
+            else -> {
+                rpcWireError(envelopeKey, "'args' must be a Map when present")
+                return null
+            }
+        }
+        val timeoutMs = when (val t = payload["timeoutMs"]) {
+            null -> null
+            is Number -> {
+                val v = t.toLong()
+                if (v < 0L) {
+                    rpcWireError(envelopeKey, "'timeoutMs' must be non-negative")
+                    return null
+                }
+                v
+            }
+            else -> {
+                rpcWireError(envelopeKey, "'timeoutMs' must be a Number")
+                return null
+            }
+        }
+        return A2UIRpcRequest(
+            direction = direction,
+            surfaceId = surfaceId,
+            requestId = requestId,
+            name = name,
+            args = args,
+            timeoutMs = timeoutMs,
+        )
+    }
+
+    /**
+     * Parse an RPC-response-shaped map. Enforces the "exactly one of
+     * result / error" invariant: when both are present or neither is,
+     * we synthesise a [A2UIRpcError.Codes.WIRE_FORMAT_ERROR] so the
+     * caller's `onComplete` still fires (otherwise the host would wait
+     * forever on a malformed reply).
+     */
+    private fun parseRpcResponse(
+        payload: Map<String, Any?>?,
+        direction: A2UIRpcRequest.Direction,
+        envelopeKey: String,
+    ): A2UIRpcResponse? {
+        if (payload == null) {
+            rpcWireError(envelopeKey, "payload is not a Map")
+            return null
+        }
+        val surfaceId = payload["surfaceId"] as? String
+        if (surfaceId.isNullOrEmpty()) {
+            rpcWireError(envelopeKey, "missing or non-string 'surfaceId'")
+            return null
+        }
+        val requestId = payload["requestId"] as? String
+        if (requestId.isNullOrEmpty()) {
+            rpcWireError(envelopeKey, "missing or non-string 'requestId'")
+            return null
+        }
+        val hasResult = payload.containsKey("result")
+        val errorRaw = payload["error"]
+        if (hasResult == (errorRaw != null)) {
+            // Both present or both absent → wire-format violation.
+            rpcWireError(
+                envelopeKey,
+                "exactly one of 'result' / 'error' must be present",
+            )
+            return A2UIRpcResponse.failure(
+                direction = direction,
+                surfaceId = surfaceId,
+                requestId = requestId,
+                error = A2UIRpcError.wireFormat(
+                    "$envelopeKey envelope had both or neither of result/error",
+                ),
+            )
+        }
+        return if (errorRaw != null) {
+            val errMap = errorRaw as? Map<*, *>
+            if (errMap == null) {
+                rpcWireError(envelopeKey, "'error' must be a Map")
+                return A2UIRpcResponse.failure(
+                    direction = direction,
+                    surfaceId = surfaceId,
+                    requestId = requestId,
+                    error = A2UIRpcError.wireFormat("error field was not a Map"),
+                )
+            }
+            val code = (errMap["code"] as? String)?.takeIf { it.isNotEmpty() }
+                ?: A2UIRpcError.Codes.INTERNAL_ERROR
+            val message = errMap["message"] as? String
+            @Suppress("UNCHECKED_CAST")
+            val details = errMap["details"] as? Map<String, Any?>
+            A2UIRpcResponse.failure(
+                direction = direction,
+                surfaceId = surfaceId,
+                requestId = requestId,
+                error = A2UIRpcError(code, message, details),
+            )
+        } else {
+            A2UIRpcResponse.success(
+                direction = direction,
+                surfaceId = surfaceId,
+                requestId = requestId,
+                result = payload["result"],
+            )
+        }
+    }
+
+    private fun rpcWireError(envelopeKey: String, detail: String) {
+        val prefix = if (strictV10 && _protocolVersion == A2UIProtocolVersion.V1_0) {
+            "[A2UI] error"
+        } else {
+            "[A2UI] warn"
+        }
+        println("$prefix: v1.0 RPC '$envelopeKey' envelope invalid — $detail")
+    }
+
+    // -------------------------------------------------------------------
+    //  Wire-format serialisers
+    // -------------------------------------------------------------------
+
+    private fun emitRendererFunctionResponse(resp: A2UIRpcResponse) {
+        val json = serializeToJson(mapOf(
+            "version" to A2UIProtocolVersion.V1_0.wireValue,
+            "rendererFunctionResponse" to buildResponsePayload(resp),
+        )) ?: return
+        (emitWireMessage ?: return).invoke(json)
+    }
+
+    private fun emitCallAgentFunction(req: A2UIRpcRequest) {
+        val payload = mutableMapOf<String, Any?>(
+            "surfaceId" to req.surfaceId,
+            "requestId" to req.requestId,
+            "name" to req.name,
+            "args" to req.args,
+        )
+        req.timeoutMs?.let { payload["timeoutMs"] = it }
+        val json = serializeToJson(mapOf(
+            "version" to A2UIProtocolVersion.V1_0.wireValue,
+            "callAgentFunction" to payload,
+        )) ?: return
+        (emitWireMessage ?: return).invoke(json)
+    }
+
+    private fun buildResponsePayload(resp: A2UIRpcResponse): Map<String, Any?> {
+        val base = mutableMapOf<String, Any?>(
+            "surfaceId" to resp.surfaceId,
+            "requestId" to resp.requestId,
+        )
+        if (resp.isSuccess) {
+            base["result"] = resp.result
+        } else {
+            val err = resp.error!!
+            val errMap = mutableMapOf<String, Any?>(
+                "code" to err.code,
+            )
+            err.message?.let { errMap["message"] = it }
+            err.details?.let { errMap["details"] = it }
+            base["error"] = errMap
+        }
+        return base
     }
 
     /**
@@ -970,6 +1405,10 @@ class A2UIProtocolAdapter {
         expectedProtocolVersion = null
         reportedBareKeys.clear()
         templateIndexStack.clear()
+        // Cancel every pending RPC so renderer-originated callbacks
+        // resolve with SURFACE_CLOSED and the pending table doesn't
+        // leak across streams.
+        rpcDispatcher.cancelAll(surfaceId = null)
     }
 
     /**
