@@ -136,3 +136,5 @@ ohosAppForTest/entry/src/main/cpp/thirdparty/biz_entry/libshared_api.h
 # androidAppForNativePage/build.gradle.kts) before every build.
 androidAppForNativePage/src/main/assets/
 
+AGENTS.md
+.codebuddy/
