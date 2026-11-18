@@ -132,6 +132,15 @@ class A2UIDemoActivity : AppCompatActivity() {
             startActivity(Intent(this, CustomIconDemoActivity::class.java))
         })
 
+        contentLayout.addView(createDemoEntry(
+            title = "🔁 v1.0 RPC 回路 Demo (Native)",
+            description = "用 A2UISurfaceView.rpcEnvelopeOutboundHandler + instanceId 跑一遍 callAgentFunction / callRendererFunction 双向回路，验证 PR-6d native-page RPC 通道",
+            iconText = "🔁",
+            color = "#1A73E8"
+        ) {
+            startActivity(Intent(this, NativeRpcDemoActivity::class.java))
+        })
+
         // ===== Group 2: 组件展示 =====
         contentLayout.addView(createSectionHeader("组件展示"))
 

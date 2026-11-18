@@ -25,8 +25,13 @@ import com.tencent.kuikly.a2ui.function.A2UICustomFunctionRegistry
 import kotlinx.atomicfu.locks.SynchronizedObject
 import kotlinx.atomicfu.locks.synchronized
 import kotlinx.cinterop.ByteVar
+import kotlinx.cinterop.CFunction
+import kotlinx.cinterop.COpaquePointer
 import kotlinx.cinterop.CPointer
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.cstr
+import kotlinx.cinterop.invoke
+import kotlinx.cinterop.memScoped
 import kotlinx.cinterop.staticCFunction
 import kotlinx.cinterop.toKString
 import ohos.com_tencent_kuikly_ScheduleContextTask
@@ -313,4 +318,257 @@ private object A2UICustomViewResizeRelay : SynchronizedObject() {
             )
         }
     }
+}
+
+// =====================================================================
+//  A2UI v1.0 Bidirectional-RPC NAPI writers (PR-6b follow-up)
+//
+//  These three top-level functions let the ArkTS A2UIBridgeModule /
+//  A2UINativeManager reach into the Kotlin core's RPC entry points
+//  (`A2UIBridgeManager.respondToAgentJson / failAgentRequestJson /
+//  invokeAgentFunctionJson`) from the ohosArm64 app, mirroring the
+//  Android `A2UIRpcBridge` Java facade and the iOS `A2UIRpcBridge`
+//  ObjC facade.
+//
+//  Threading contract
+//  ------------------
+//  All three Kotlin entry points are safe to call from any thread.
+//  They only touch `A2UIBridgeManager.dslBridgeMap` lookups + the
+//  `A2UIRpcDispatcher`'s internal state, both of which are already
+//  guarded by the dispatcher's own synchronisation (see KDoc on
+//  `A2UIRpcDispatcher.pendingAgentCalls` / `handlerMap`).
+//
+//  The outbound-RPC completion callback for `a2uiInvokeAgentFunction`
+//  is delivered on whatever thread the response arrives on (typically
+//  the Kotlin core's stream-parse thread). The C++ NAPI shim is
+//  responsible for hopping the JSON back to the ArkTS main thread via
+//  `napi_call_threadsafe_function`.
+// =====================================================================
+
+/**
+ * Respond to an inbound `callRendererFunction` with a success result.
+ *
+ * Mirrors `A2UIBridgeManager.respondToAgentJson` — the ArkTS host calls
+ * this once it has finished processing a `callRendererFunction` RPC
+ * that arrived through the renderer-function-json-handler (registered
+ * via `A2UIBridgeManager.setRendererFunctionJsonHandler`).
+ *
+ * @param instanceId A2UI DSL surface instance id (same string that was
+ *                   used as the `A2UISurfaceDSLView.instanceId` key).
+ * @param surfaceId  surfaceId echoed from the inbound RPC request.
+ * @param requestId  requestId echoed from the inbound RPC request.
+ * @param resultJson Arbitrary JSON fragment to return to the agent.
+ *                   Empty string is equivalent to `null` (void result).
+ */
+public fun a2uiRespondToRpc(
+    instanceId: String,
+    surfaceId: String,
+    requestId: String,
+    resultJson: String
+) {
+    A2UIBridgeManager.respondToAgentJson(
+        instanceId = instanceId,
+        surfaceId = surfaceId,
+        requestId = requestId,
+        resultJson = resultJson.takeIf { it.isNotEmpty() }
+    )
+}
+
+/**
+ * Respond to an inbound `callRendererFunction` with a failure.
+ *
+ * Mirrors `A2UIBridgeManager.failAgentRequestJson`. See
+ * `A2UIRpcError.Codes` for the canonical error-code vocabulary; hosts
+ * may use custom codes with the `x-` prefix.
+ *
+ * @param instanceId  A2UI DSL surface instance id.
+ * @param surfaceId   surfaceId echoed from the inbound RPC request.
+ * @param requestId   requestId echoed from the inbound RPC request.
+ * @param code        Error code string (see `A2UIRpcError.Codes`).
+ * @param message     Human-readable error message. Empty → null.
+ * @param detailsJson Optional JSON object with extra diagnostics. Empty
+ *                    → null; malformed JSON is silently dropped.
+ */
+public fun a2uiFailRpc(
+    instanceId: String,
+    surfaceId: String,
+    requestId: String,
+    code: String,
+    message: String,
+    detailsJson: String
+) {
+    A2UIBridgeManager.failAgentRequestJson(
+        instanceId = instanceId,
+        surfaceId = surfaceId,
+        requestId = requestId,
+        code = code,
+        message = message.takeIf { it.isNotEmpty() },
+        detailsJson = detailsJson.takeIf { it.isNotEmpty() }
+    )
+}
+
+/**
+ * Fire a renderer-to-agent RPC (`callAgentFunction`) and arrange for
+ * the response to be delivered through a C callback.
+ *
+ * ## Callback transport
+ *
+ * The caller passes a C function pointer `onComplete` and an opaque
+ * `callbackCtx` cookie. When the Kotlin RPC dispatcher resolves the
+ * pending call (success, failure, timeout, or surface close), we
+ * invoke `onComplete(callbackCtx, responseCStr)` with the full wire-
+ * response JSON serialised the same way as `invokeAgentFunctionJson`:
+ *
+ * ```
+ *   {"surfaceId":"...","requestId":"...","result":...}                // success
+ *   {"surfaceId":"...","requestId":"...","error":{"code":"...", ...}} // failure
+ * ```
+ *
+ * The C string buffer is allocated with `memScoped` on the Kotlin
+ * side and *only* valid for the duration of the `onComplete` call —
+ * the C++ shim MUST copy it (typically via `napi_create_string_utf8`
+ * inside a `napi_call_threadsafe_function` callback) before returning.
+ *
+ * ## Threading
+ *
+ * `onComplete` is invoked on whatever thread the response arrives on
+ * (Kotlin core's stream-parse thread for successful replies, the
+ * dispatcher's timer thread for timeouts, the destroy-time cleanup
+ * thread for surface close). The C++ NAPI shim is expected to hop
+ * the JSON onto the ArkTS main thread via
+ * `napi_call_threadsafe_function`.
+ *
+ * ## Error handling
+ *
+ * Returns `null` when the instance is unknown or the stream is still
+ * in v0.9 mode (no requestId minted → `onComplete` is NOT invoked).
+ * The caller should treat `null` as a synchronous error and clean up
+ * the `callbackCtx` immediately.
+ *
+ * @param instanceId   A2UI DSL surface instance id.
+ * @param surfaceId    surfaceId to embed in the outbound envelope.
+ * @param name         Agent function name.
+ * @param argsJson     JSON object serialised as string. Empty/malformed
+ *                     → `{}`.
+ * @param timeoutMs    Dispatcher timeout in ms. `0` means "use the
+ *                     dispatcher default" (matches the iOS facade's
+ *                     convention of using `0` as "no explicit value",
+ *                     since ObjC/ArkTS cannot express `Long?`).
+ * @param callbackCtx  Opaque cookie forwarded to `onComplete`. Typically
+ *                     a C++-side `napi_threadsafe_function` handle wrapper.
+ * @param onComplete   C function pointer invoked exactly once on
+ *                     dispatch resolution. May be `null` to fire-and-
+ *                     forget (the Kotlin dispatcher still runs the
+ *                     outbound RPC, but no reply is forwarded).
+ * @return The minted Kotlin-side requestId, or `null` on synchronous
+ *         dispatch failure.
+ */
+@OptIn(ExperimentalForeignApi::class)
+public fun a2uiInvokeAgentFunction(
+    instanceId: String,
+    surfaceId: String,
+    name: String,
+    argsJson: String,
+    timeoutMs: Long,
+    callbackCtx: COpaquePointer?,
+    onComplete: CPointer<CFunction<(COpaquePointer?, CPointer<ByteVar>?) -> Unit>>?
+): String? {
+    return A2UIBridgeManager.invokeAgentFunctionJson(
+        instanceId = instanceId,
+        surfaceId = surfaceId,
+        name = name,
+        argsJson = argsJson.takeIf { it.isNotEmpty() },
+        timeoutMs = timeoutMs.takeIf { it > 0L }
+    ) { responseJson ->
+        // Dispatcher-side completion: pass the JSON back to the C++
+        // shim through the provided function pointer. `onComplete`
+        // may be null when the caller opted out of a reply; in that
+        // case we simply drop the response.
+        if (onComplete != null) {
+            // The C callee treats the string as borrowed; memScoped
+            // guarantees the buffer stays alive for the duration of
+            // the invoke() call below.
+            memScoped {
+                val cstr = responseJson.cstr.ptr
+                onComplete.invoke(callbackCtx, cstr)
+            }
+        }
+    }
+}
+
+/**
+ * Install a C function pointer as this instance's inbound
+ * `callRendererFunction` handler.
+ *
+ * Mirror of [a2uiInvokeAgentFunction] for the opposite direction: ArkTS
+ * registers a JS callback through the NAPI shim, which wraps it in a
+ * `napi_threadsafe_function` and hands us the holder pointer + a C
+ * trampoline. We then install a Kotlin lambda that, whenever Kotlin's
+ * `A2UIRpcDispatcher` dispatches an inbound call, serialises the request
+ * payload and forwards it through the trampoline. The C++ shim is in
+ * charge of hopping onto the ArkTS main thread.
+ *
+ * ## Why we do NOT thread-hop in Kotlin
+ *
+ * The companion `setRendererFunctionJsonHandler` runs the handler on
+ * whatever thread the dispatcher is on — typically the Kotlin stream-
+ * parse thread (Kuikly Context Thread for native-page / Kuikly Core
+ * worker for embedded mode). The Android / iOS facades document the
+ * same contract and let the host do its own hop. On OHOS we would
+ * eventually need to reach the ArkTS main thread anyway, so the C++
+ * shim is the natural place to do that hop — it already owns a
+ * threadsafe-function to drive ArkTS callbacks for
+ * [a2uiInvokeAgentFunction].
+ *
+ * ## Lifetime
+ *
+ * The NAPI shim owns the lifetime of `callbackCtx` (typically a
+ * `RpcInboundHandlerHolder*`). The Kotlin side only treats the pointer
+ * as an opaque cookie and never dereferences it, so there's nothing to
+ * free here. On surface close `rendererFunctionHandlers` is cleared by
+ * [A2UIBridgeManager.installRpcTransport] / surface-destroy, which in
+ * turn simply drops our reference to the C function pointer; the shim
+ * is expected to call [a2uiRemoveRendererFunctionHandler] from its own
+ * ArkTS-side cleanup (`aboutToDisappear`) to release the tsfn.
+ *
+ * @param instanceId  A2UI DSL surface instance id to attach the handler to.
+ * @param callbackCtx Opaque cookie forwarded verbatim to `onCall`.
+ * @param onCall      C function pointer invoked for every inbound
+ *                    `callRendererFunction` on this instance. May be
+ *                    `null`, which is equivalent to calling
+ *                    [a2uiRemoveRendererFunctionHandler].
+ */
+@OptIn(ExperimentalForeignApi::class)
+public fun a2uiSetRendererFunctionHandler(
+    instanceId: String,
+    callbackCtx: COpaquePointer?,
+    onCall: CPointer<CFunction<(COpaquePointer?, CPointer<ByteVar>?) -> Unit>>?
+) {
+    if (onCall == null) {
+        A2UIBridgeManager.setRendererFunctionJsonHandler(instanceId, null)
+        return
+    }
+    A2UIBridgeManager.setRendererFunctionJsonHandler(instanceId) { requestJson ->
+        // Same lifetime contract as the outbound-RPC completion in
+        // [a2uiInvokeAgentFunction]: the C callee treats the string as
+        // borrowed; memScoped keeps the buffer alive for the duration
+        // of the invoke() call.
+        memScoped {
+            val cstr = requestJson.cstr.ptr
+            onCall.invoke(callbackCtx, cstr)
+        }
+    }
+}
+
+/**
+ * Detach the inbound renderer-function handler previously installed via
+ * [a2uiSetRendererFunctionHandler]. Idempotent; calling this on an
+ * instance without an installed handler is a no-op.
+ *
+ * Hosts are expected to call this from their teardown path
+ * (`aboutToDisappear` on OHOS, `deinit` on iOS, `onDestroy` on Android)
+ * so the NAPI shim can release the associated threadsafe-function.
+ */
+public fun a2uiRemoveRendererFunctionHandler(instanceId: String) {
+    A2UIBridgeManager.setRendererFunctionJsonHandler(instanceId, null)
 }

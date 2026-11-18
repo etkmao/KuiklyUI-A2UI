@@ -134,6 +134,15 @@ class A2UIDemoActivity : AppCompatActivity() {
         })
 
         contentLayout.addView(createDemoEntry(
+            title = "v1.0 RPC 回路 Demo",
+            description = "演示 A2UI v1.0 双向 RPC：Agent → Renderer 本地处理 openPage，Renderer → Agent 发起 fetchUser 并由 Mock Agent 应答",
+            iconText = "🔁",
+            color = "#1A73E8"
+        ) {
+            startActivity(Intent(this, A2UIRpcDemoActivity::class.java))
+        })
+
+        contentLayout.addView(createDemoEntry(
             title = "Compose 页面接入示例",
             description = "在 Kuikly Compose 页面（:compose 模块）里承载 A2UI，展示 Compose 世界的 A2UI 集成",
             iconText = "🧵",

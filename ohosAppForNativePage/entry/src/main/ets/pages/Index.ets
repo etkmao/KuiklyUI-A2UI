@@ -136,6 +136,14 @@ struct Index {
             () => { router.pushUrl({ url: 'pages/CustomIconDemoPage' }); }
           ))
 
+          this.DemoEntry(new DemoEntryParams(
+            '🔁 v1.0 RPC 回路 Demo (Native)',
+            '用 A2UISurfaceViewController.setRpcEnvelopeOutboundHandler + a2uiInvokeAgentFunction 跑一遍 callAgentFunction 外送回路（PR-6d outbound 半边）',
+            '🔁',
+            '#1A73E8',
+            () => { router.pushUrl({ url: 'pages/A2UIRpcDemoPage' }); }
+          ))
+
           // ===== Group 2: 组件展示 =====
           this.SectionHeader('组件展示')
 
