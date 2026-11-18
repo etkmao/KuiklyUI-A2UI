@@ -1,0 +1,78 @@
+{
+  "name": "PR-3 createSurface Inlined dataModel",
+  "description": "A2UI v1.0 showcases the createSurface.initialDataModel inline shortcut (replacing the v0.9 'sendDataModel: true' + separate updateDataModel pattern) and the new defaultCatalogId URL that resolves against the v1.0 schema registry. @index demonstrates the list-indexing dynamic string.",
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": {
+        "surfaceId": "pr3-inline-datamodel-surface",
+        "defaultCatalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
+        "initialDataModel": {
+          "cart": {
+            "title": "Your cart",
+            "items": [
+              { "name": "Espresso", "price": 3.5 },
+              { "name": "Croissant", "price": 2.8 },
+              { "name": "Tea latte", "price": 4.2 }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "version": "1.0",
+      "updateComponents": {
+        "surfaceId": "pr3-inline-datamodel-surface",
+        "components": [
+          {
+            "id": "root",
+            "component": "Column",
+            "children": ["title", "items-list"]
+          },
+          {
+            "id": "title",
+            "component": "Text",
+            "variant": "h2",
+            "text": {
+              "@path": "/cart/title"
+            }
+          },
+          {
+            "id": "items-list",
+            "component": "List",
+            "items": {
+              "@path": "/cart/items"
+            },
+            "template": "item-row"
+          },
+          {
+            "id": "item-row",
+            "component": "Row",
+            "children": ["item-index", "item-name", "item-price"]
+          },
+          {
+            "id": "item-index",
+            "component": "Text",
+            "text": {
+              "@index": {}
+            }
+          },
+          {
+            "id": "item-name",
+            "component": "Text",
+            "text": {
+              "@path": "/name"
+            }
+          },
+          {
+            "id": "item-price",
+            "component": "Text",
+            "text": {
+              "@path": "/price"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

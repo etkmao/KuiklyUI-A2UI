@@ -36,6 +36,7 @@ import androidx.appcompat.app.AppCompatActivity
  * on purpose — those apps only ship polished integration examples):
  *  1. 函数测试 / 数据绑定测试 / 主题测试
  *  2. A2UI v0.9 协议官方示例
+ *  3. A2UI v1.0 回归样本 (PR-10)
  */
 class A2UIDemoActivity : AppCompatActivity() {
 
@@ -140,6 +141,18 @@ class A2UIDemoActivity : AppCompatActivity() {
             color = "#9B59B6"
         ) {
             startActivity(Intent(this, OfficialExampleActivity::class.java))
+        })
+
+        // ===== Group 3: A2UI v1.0 回归样本 =====
+        contentLayout.addView(createSectionHeader("A2UI v1.0 回归样本"))
+
+        contentLayout.addView(createDemoEntry(
+            title = "A2UI v1.0 回归样本",
+            description = "展示 PR-10 产出的 5 份 v1.0 严格模式样本：Mixin keys / createSurface 内联 dataModel / 双向 RPC / 多 Catalog / Video.posterUrl 等小字段",
+            iconText = "🚀",
+            color = "#F39C12"
+        ) {
+            startActivity(Intent(this, A2UIV10SamplesActivity::class.java))
         })
 
         scrollView.addView(contentLayout)

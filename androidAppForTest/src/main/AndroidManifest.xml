@@ -22,6 +22,7 @@
         <activity android:name=".DataBindingDemoActivity" />
         <activity android:name=".ThemeDemoActivity" />
         <activity android:name=".StreamingRenderDemoActivity" />
+        <activity android:name=".A2UIV10SamplesActivity" />
     </application>
 
 </manifest>
