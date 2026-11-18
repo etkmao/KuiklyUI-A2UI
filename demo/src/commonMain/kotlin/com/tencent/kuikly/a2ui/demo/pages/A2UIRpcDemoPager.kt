@@ -21,6 +21,7 @@ import com.tencent.kuikly.a2ui.dsl.embed.A2UISurfaceDSLView
 import com.tencent.kuikly.core.annotations.Page
 import com.tencent.kuikly.core.base.Color
 import com.tencent.kuikly.core.base.ViewBuilder
+import com.tencent.kuikly.core.directives.vfor
 import com.tencent.kuikly.core.nvi.serialization.json.JSONObject
 import com.tencent.kuikly.core.pager.Pager
 import com.tencent.kuikly.core.reactive.handler.observable
@@ -287,7 +288,7 @@ class A2UIRpcDemoPager : Pager() {
                     borderRadius(6f)
                     padding(6f)
                 }
-                com.tencent.kuikly.core.directives.vfor({ ctx.eventLog }) { line ->
+                vfor({ ctx.eventLog }) { line ->
                     RichText {
                         attr {
                             text(line)
