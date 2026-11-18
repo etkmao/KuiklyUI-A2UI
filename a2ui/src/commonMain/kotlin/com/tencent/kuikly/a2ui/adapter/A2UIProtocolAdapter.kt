@@ -240,6 +240,32 @@ class A2UIProtocolAdapter {
     private var currentSurfaceId: String = ""
 
     // -------------------------------------------------------------------
+    //  v1.0 multi-catalog state (PR-8)
+    //
+    //  Per-surface view of the `createSurface.defaultCatalogId` + `catalogs`
+    //  fields. Resolved in [handleCreateSurfaceV10] and consumed by
+    //  [handleUpdateComponents] / [evaluateFunctionCall] /
+    //  [evaluateFunctionCallWithScope]:
+    //
+    //   * [currentDefaultCatalogId] is the fallback used when a component
+    //     or FunctionCall site does not carry its own `@catalogId` /
+    //     `catalogId` qualifier.
+    //   * [currentCatalogsSet] is the full list of advertised catalogs for
+    //     this surface. Mostly kept for diagnostics; the Adapter trusts
+    //     any `@catalogId` value the server sends (per-component override
+    //     is allowed even outside the advertised set per v1.0 spec \u00a7
+    //     "catalogs advertisement is optional").
+    //   * [componentCatalogIds] records the resolved catalogId per
+    //     component id so the applier/customFunction dispatcher can read
+    //     it back cheaply without re-scanning the compMap.
+    //
+    //  Reset by [reset] at the start of each stream.
+    // -------------------------------------------------------------------
+    private var currentDefaultCatalogId: String? = null
+    private var currentCatalogsSet: Set<String> = emptySet()
+    private val componentCatalogIds: MutableMap<String, String> = mutableMapOf()
+
+    // -------------------------------------------------------------------
     // Protocol version state
     //
     // Resolved from the top-level `"version"` field of the FIRST envelope
@@ -344,6 +370,28 @@ class A2UIProtocolAdapter {
     private fun readChecksKey(map: Map<*, *>): List<*>? =
         readMixinKeyRaw(map, "checks") as? List<*>
 
+    /**
+     * Read the resolved catalogId for a component in [handleUpdateComponents].
+     *
+     * Strategy (PR-8):
+     *   1. v0.9 / v0.9.1 \u2192 always `null` (no catalog concept in v0.9).
+     *   2. v1.0 \u2192 check `@catalogId` first, then the bare `catalogId`
+     *      (same lenient fallback as other mixin keys; a bare key logs
+     *      a one-shot diagnostic via [readMixinKeyRaw]).
+     *   3. If the component carries no catalogId key, fall back to the
+     *      surface-level `defaultCatalogId` captured in
+     *      [currentDefaultCatalogId].
+     *   4. Returns `null` if nothing resolves. The caller
+     *      ([handleUpdateComponents] pre-pass) decides how to react
+     *      based on [strictV10].
+     */
+    private fun resolveComponentCatalogId(compMap: Map<*, *>): String? {
+        if (_protocolVersion != A2UIProtocolVersion.V1_0) return null
+        val perComp = readMixinKey(compMap, "catalogId")
+        if (!perComp.isNullOrEmpty()) return perComp
+        return currentDefaultCatalogId
+    }
+
     /** Read a string-valued mixin key under the current protocol version. */
     private fun readMixinKey(map: Map<*, *>, bareKey: String): String? =
         readMixinKeyRaw(map, bareKey) as? String
@@ -415,7 +463,13 @@ class A2UIProtocolAdapter {
             A2UIProtocolVersion.V1_0 ->
                 base + setOf(
                     "accessibility", "@accessibility",
-                    "checks", "@checks"
+                    "checks", "@checks",
+                    // PR-8: `@catalogId` (and its lenient bare form) is a
+                    // protocol-level routing hint, not a render prop.
+                    // Strip it before the compMap is iterated into
+                    // Kuikly `attr{}` calls so it never reaches
+                    // native setProp as an unknown CSS attribute.
+                    "catalogId", "@catalogId"
                 ) + extra
         }
     }
@@ -1405,6 +1459,11 @@ class A2UIProtocolAdapter {
         expectedProtocolVersion = null
         reportedBareKeys.clear()
         templateIndexStack.clear()
+        // PR-8: forget any per-stream catalog resolution so the next
+        // stream starts from a clean slate.
+        currentDefaultCatalogId = null
+        currentCatalogsSet = emptySet()
+        componentCatalogIds.clear()
         // Cancel every pending RPC so renderer-originated callbacks
         // resolve with SURFACE_CLOSED and the pending table doesn't
         // leak across streams.
@@ -1857,6 +1916,17 @@ class A2UIProtocolAdapter {
             return emptyList()
         }
 
+        // ---- PR-8: expose resolved catalogs/defaultCatalogId to
+        //      downstream handlers (handleUpdateComponents /
+        //      evaluateFunctionCall / evaluateFunctionCallWithScope).
+        //      Trusting any catalogId the server attaches to a
+        //      component / FunctionCall site, including ones outside
+        //      the advertised list, per v1.0 spec "catalogs
+        //      advertisement is optional".
+        currentDefaultCatalogId = defaultCatalogId
+        currentCatalogsSet = catalogs?.toSet() ?: emptySet()
+        componentCatalogIds.clear()
+
         // Emit the CREATE_SURFACE message first so downstream consumers
         // see the surface before any updateComponents/updateDataModel.
         val messages = mutableListOf(
@@ -1920,6 +1990,46 @@ class A2UIProtocolAdapter {
                     newIds.add(id)
                 }
             }
+        }
+
+        // ---- PR-8: pre-pass \u2014 resolve each component's catalogId -----
+        // Reads the `@catalogId` mixin key (bare `catalogId` also tolerated
+        // under lenient v1.0 just like other `@`-prefixed keys) and falls
+        // back to the surface-level defaultCatalogId captured by
+        // [handleCreateSurfaceV10]. Under v1.0 strict mode a component that
+        // ends up with no resolved catalogId is skipped and reported via
+        // the standard `[A2UI] error:` channel \u2014 the rest of the batch
+        // still renders (matching how other v1.0 strict checks degrade).
+        //
+        // The resolved catalogId is cached in [componentCatalogIds] AND
+        // injected as `__catalogId` on each compMap's view of the world
+        // via a sidecar read (we don't mutate the input Map, see
+        // readResolvedCatalogId). The `@catalogId` key is listed in
+        // [com.tencent.kuikly.a2ui.schema.A2UIReservedKeys] so the lenient
+        // path doesn't flag it as an unknown reserved key.
+        val catalogSkipIds = mutableSetOf<String>()
+        val isStrict = strictV10 && _protocolVersion == A2UIProtocolVersion.V1_0
+        for (comp in components) {
+            if (comp !is Map<*, *>) continue
+            val id = comp["id"] as? String ?: continue
+            val resolved = resolveComponentCatalogId(comp)
+            if (resolved != null) {
+                componentCatalogIds[id] = resolved
+            } else if (isStrict) {
+                // v1.0 strict: no `@catalogId`, no `defaultCatalogId` \u2014
+                // we cannot know which catalog's schema to validate this
+                // component against. Skip it instead of rendering with
+                // ambiguous semantics.
+                println(
+                    "[A2UI] error: v1.0 strict: UNRESOLVED_CATALOG: " +
+                        "component '$id' has no @catalogId and no " +
+                        "defaultCatalogId is set; component skipped."
+                )
+                catalogSkipIds.add(id)
+            }
+            // Lenient mode (or v0.9): silently leave componentCatalogIds[id]
+            // unset \u2014 downstream lookups fall back to the global/name-only
+            // descriptor exactly like pre-PR-8.
         }
 
         // Second pass: build parent-child relationships and create messages
@@ -2114,11 +2224,98 @@ class A2UIProtocolAdapter {
             collectTemplateTree(binding.templateId, idToComp, childToParent, templateIds)
         }
 
+        // ---- PR-8: validate `allowedParents` / `allowedChildren` -------
+        // Only runs under v1.0 strict mode because v0.9 carries no such
+        // schema facet and lenient v1.0 historically renders as much as
+        // possible.
+        //
+        // Lookup is delegated to [A2UICatalogDescriptorRegistry] so the
+        // commonMain module has ZERO dependency on a JSON-schema parser
+        // (host apps opt-in by calling
+        // [A2UICatalogDescriptorRegistry.register] at startup).
+        //
+        // On a violation we DO NOT short-circuit the whole batch; the
+        // offending component id is added to [catalogSkipIds] which the
+        // CREATE loop below honours, mirroring how UNRESOLVED_CATALOG is
+        // handled in the pre-pass above. Error channel is the standard
+        // `[A2UI] error:` log line consumed by the Bridge diagnostics
+        // pipe.
+        if (isStrict) {
+            for (comp in components) {
+                if (comp !is Map<*, *>) continue
+                val id = comp["id"] as? String ?: continue
+                if (id in catalogSkipIds) continue
+                val componentType = comp["component"] as? String ?: continue
+                val catalogId = componentCatalogIds[id]
+                val constraint = com.tencent.kuikly.a2ui.function
+                    .A2UICatalogDescriptorRegistry.lookup(componentType, catalogId)
+                    ?: continue // Nothing registered \u2192 unconstrained.
+
+                // allowedParents check
+                val parentId = childToParent[id]
+                val parentType = parentId?.let {
+                    (idToComp[it]?.get("component") as? String)
+                }
+                val allowedParents = constraint.allowedParents
+                if (allowedParents != null &&
+                    com.tencent.kuikly.a2ui.function.A2UIComponentConstraint.WILDCARD !in allowedParents
+                ) {
+                    val parentMatch = when {
+                        // Component has no in-batch parent \u2192 treat as
+                        // "mounted at surface root"; accept only if the
+                        // catalog allows `Surface` as a parent.
+                        parentType == null ->
+                            com.tencent.kuikly.a2ui.function.A2UIComponentConstraint.ROOT_MARKER in allowedParents
+                        else -> parentType in allowedParents
+                    }
+                    if (!parentMatch) {
+                        val parentLabel = parentType
+                            ?: com.tencent.kuikly.a2ui.function.A2UIComponentConstraint.ROOT_MARKER
+                        println(
+                            "[A2UI] error: v1.0 strict: UNALLOWED_PARENT: " +
+                                "component '$id' (type=$componentType, " +
+                                "catalogId=$catalogId) placed under '$parentLabel'; " +
+                                "allowedParents=$allowedParents; component skipped."
+                        )
+                        catalogSkipIds.add(id)
+                        continue
+                    }
+                }
+
+                // allowedChildren check \u2014 applied from the parent's view:
+                // for every child of this component listed in idToComp,
+                // verify the child's type is allowed. We evaluate here so a
+                // violation can point at the specific offending child id.
+                val allowedChildren = constraint.allowedChildren
+                if (allowedChildren != null &&
+                    com.tencent.kuikly.a2ui.function.A2UIComponentConstraint.WILDCARD !in allowedChildren
+                ) {
+                    for ((childId, pId) in childToParent) {
+                        if (pId != id) continue
+                        val childType = idToComp[childId]?.get("component") as? String ?: continue
+                        if (childType !in allowedChildren) {
+                            println(
+                                "[A2UI] error: v1.0 strict: UNALLOWED_CHILD: " +
+                                    "component '$childId' (type=$childType) under " +
+                                    "parent '$id' (type=$componentType, " +
+                                    "catalogId=$catalogId); " +
+                                    "allowedChildren=$allowedChildren; child skipped."
+                            )
+                            catalogSkipIds.add(childId)
+                        }
+                    }
+                }
+            }
+        }
+
         for (id in sortedIds) {
             // Skip template components - they are only instantiated via ChildList expansion
             if (id in templateIds) continue
             // Skip Modal content subtrees - created lazily when the modal opens
             if (id in modalDeferredIds) continue
+            // PR-8: skip components whose catalog resolution failed under
+            // strict v1.0, or that violated allowedParents / allowedChildren.
+            if (id in catalogSkipIds) continue
 
             val compMap = idToComp[id] ?: continue
             val componentType = compMap["component"] as? String ?: continue
@@ -4266,13 +4463,21 @@ class A2UIProtocolAdapter {
         @Suppress("UNCHECKED_CAST")
         val args = funcCall["args"] as? Map<String, Any?> ?: return null
 
+        // PR-8: v1.0 FunctionCall sites may carry a `catalogId` field
+        // (bare — NOT `@catalogId` — because it lives INSIDE the
+        // FunctionCall envelope rather than on a component mixin, per the
+        // v1.0 evolution_guide.md §"Reserved @ prefix" clarification).
+        // Passing it to the custom-function lookup lets same-named
+        // functions from different catalogs coexist in the same process.
+        val fcCatalogId = funcCall["catalogId"] as? String ?: currentDefaultCatalogId
+
         return when (call) {
             "formatDate" -> evaluateFormatDate(args)
             "formatNumber" -> evaluateFormatNumber(args)
             "formatCurrency" -> evaluateFormatCurrency(args)
             "formatString" -> evaluateFormatString(args)
             "pluralize" -> evaluatePluralize(args)
-            else -> evaluateCustomFunctionAsString(call, args)
+            else -> evaluateCustomFunctionAsString(call, args, fcCatalogId)
         }
     }
 
@@ -5643,13 +5848,17 @@ class A2UIProtocolAdapter {
             resolvedArgs[key] = resolveValueWithScope(argValue, itemData, null)
         }
 
+        // PR-8: v1.0 FunctionCall sites may carry a bare `catalogId`
+        // field — same semantics as the non-scope evaluator above.
+        val fcCatalogId = funcCall["catalogId"] as? String ?: currentDefaultCatalogId
+
         return when (call) {
             "formatDate" -> evaluateFormatDate(resolvedArgs)
             "formatNumber" -> evaluateFormatNumber(resolvedArgs)
             "formatCurrency" -> evaluateFormatCurrency(resolvedArgs)
             "formatString" -> evaluateFormatString(resolvedArgs, itemData)
             "pluralize" -> evaluatePluralize(resolvedArgs)
-            else -> evaluateCustomFunctionAsString(call, resolvedArgs)
+            else -> evaluateCustomFunctionAsString(call, resolvedArgs, fcCatalogId)
         }
     }
 
@@ -7525,8 +7734,12 @@ class A2UIProtocolAdapter {
      * are returned as JSON. Returns `null` if the function is unknown or the
      * platform-side invoker is unavailable.
      */
-    private fun evaluateCustomFunctionAsString(call: String, args: Map<String, Any?>): String? {
-        val descriptor = com.tencent.kuikly.a2ui.function.A2UICustomFunctionRegistry.lookup(call)
+    private fun evaluateCustomFunctionAsString(
+        call: String,
+        args: Map<String, Any?>,
+        catalogId: String? = null
+    ): String? {
+        val descriptor = com.tencent.kuikly.a2ui.function.A2UICustomFunctionRegistry.lookup(call, catalogId)
         if (descriptor == null) {
             return null
         }
@@ -7567,8 +7780,12 @@ class A2UIProtocolAdapter {
      * existing A2UI protocol behaviour ("unknown check ⇒ pass"), matching
      * how the built-in path handles unrecognized names.
      */
-    private fun evaluateCustomFunctionAsBoolean(call: String, args: Map<String, Any?>): Boolean {
-        val descriptor = com.tencent.kuikly.a2ui.function.A2UICustomFunctionRegistry.lookup(call)
+    private fun evaluateCustomFunctionAsBoolean(
+        call: String,
+        args: Map<String, Any?>,
+        catalogId: String? = null
+    ): Boolean {
+        val descriptor = com.tencent.kuikly.a2ui.function.A2UICustomFunctionRegistry.lookup(call, catalogId)
             ?: return true // Unknown function: pass by default (protocol behaviour)
         if (descriptor.returnType != com.tencent.kuikly.a2ui.function.A2UIFunctionReturnType.BOOLEAN) return true
 

@@ -80,11 +80,29 @@ enum class A2UIFunctionInvokeMode {
 data class A2UICustomFunctionDescriptor(
     val name: String,
     val returnType: A2UIFunctionReturnType,
-    val invokeMode: A2UIFunctionInvokeMode
+    val invokeMode: A2UIFunctionInvokeMode,
+    /**
+     * v1.0: Optional catalog qualifier used to disambiguate same-named
+     * functions coming from different catalogs (see PR-8 of the v1.0
+     * upgrade). `null` means "global / no catalog" — the pre-PR-8 behaviour.
+     *
+     * Lookup rules in [A2UICustomFunctionRegistry]:
+     *   * If the FunctionCall site supplies a `catalogId`, we first try
+     *     the exact `(catalogId, name)` descriptor.
+     *   * If that misses, we fall back to the name-only descriptor
+     *     (registered with `catalogId == null`). This preserves v0.9
+     *     call sites and allows a catalog to shadow a global function
+     *     without disturbing other catalogs.
+     */
+    val catalogId: String? = null
 ) {
     /**
      * Encode the metadata into the wire format used across the Native ↔ Kotlin
      * boundary: `"returnType|invokeMode"`, e.g. `"string|sync"`, `"void|async"`.
+     *
+     * NOTE: `catalogId` is intentionally NOT serialised here — it stays on
+     * the Kotlin side as a dispatch hint. The native handler table is still
+     * keyed by function name.
      */
     fun toSpec(): String = "${returnType.toWire()}|${invokeMode.toWire()}"
 
@@ -158,49 +176,77 @@ object A2UICustomFunctionRegistry {
     private val functions: MutableMap<String, A2UICustomFunctionDescriptor> = mutableMapOf()
 
     /**
+     * Build the internal map key from `(catalogId, name)`. `null` catalogId
+     * means "global / no catalog" and keys to the bare name.
+     */
+    private fun keyOf(catalogId: String?, name: String): String =
+        if (catalogId.isNullOrEmpty()) name else "$catalogId::$name"
+
+    /**
      * Register (or replace) a custom function's metadata. Reserved names are
      * silently ignored so servers cannot shadow built-ins by accident.
+     *
+     * v1.0: descriptors carrying a non-null [A2UICustomFunctionDescriptor.catalogId]
+     * are stored under a catalog-qualified key so that the same function name
+     * can be defined by multiple catalogs in the same process (resolved per
+     * call-site `catalogId` at lookup time).
      */
     fun register(descriptor: A2UICustomFunctionDescriptor) {
         if (descriptor.name in RESERVED_NAMES) {
             return
         }
-        functions[descriptor.name] = descriptor
+        functions[keyOf(descriptor.catalogId, descriptor.name)] = descriptor
     }
 
     /**
      * Convenience overload: parse the wire format then register.
      * Returns `true` if the descriptor was accepted.
+     *
+     * v1.0 overload accepts an optional [catalogId] so the platform bridge
+     * can forward the catalog qualifier from `registerCustomFunction`.
      */
-    fun register(name: String, spec: String): Boolean {
+    fun register(name: String, spec: String, catalogId: String? = null): Boolean {
         if (name in RESERVED_NAMES) {
             return false
         }
-        val desc = A2UICustomFunctionDescriptor.parseSpec(name, spec)
-        if (desc == null) {
-            return false
-        }
-        functions[name] = desc
+        val base = A2UICustomFunctionDescriptor.parseSpec(name, spec) ?: return false
+        val desc = if (catalogId.isNullOrEmpty()) base else base.copy(catalogId = catalogId)
+        functions[keyOf(desc.catalogId, desc.name)] = desc
         return true
     }
 
     /**
      * Remove a previously registered function. No-op if the name is not
      * registered or is reserved.
+     *
+     * v1.0: pass [catalogId] to remove a catalog-qualified descriptor only;
+     * leave `null` to remove the global/name-only descriptor.
      */
-    fun unregister(name: String) {
+    fun unregister(name: String, catalogId: String? = null) {
         if (name in RESERVED_NAMES) return
-        functions.remove(name)
+        functions.remove(keyOf(catalogId, name))
     }
 
     /**
      * Look up a registered function by name. Returns `null` for unknown or
      * reserved names.
+     *
+     * v1.0: when a FunctionCall site supplies a [catalogId], we first try
+     * the exact catalog-qualified descriptor; if that misses, we fall back
+     * to the global (name-only) descriptor. This keeps v0.9 call sites
+     * working while letting a v1.0 catalog shadow a global function
+     * surgically.
      */
-    fun lookup(name: String): A2UICustomFunctionDescriptor? {
+    fun lookup(name: String, catalogId: String? = null): A2UICustomFunctionDescriptor? {
         if (name in RESERVED_NAMES) {
             return null
         }
+        // 1) Exact catalog-qualified match (if a catalogId was supplied).
+        if (!catalogId.isNullOrEmpty()) {
+            val exact = functions[keyOf(catalogId, name)]
+            if (exact != null) return exact
+        }
+        // 2) Fall back to the global/name-only descriptor.
         return functions[name]
     }
 
