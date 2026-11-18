@@ -392,6 +392,81 @@ class A2UIProtocolAdapter {
         return currentDefaultCatalogId
     }
 
+    /**
+     * PR-9: Resolve a component's `@accessibility` (or lenient bare
+     * `accessibility`) sub-map and inject its individual fields as internal
+     * `__accessibility*` props so [com.tencent.kuikly.a2ui.dsl.A2UIApplier]
+     * can forward them to the native layer.
+     *
+     * Three fields are supported today:
+     *
+     *   * `description` (DynamicString) — screen-reader label. Mapped to the
+     *     existing `__accessibility` prop that is already wired through
+     *     component-level mappers (e.g. Image.description). If the component
+     *     mapper already set `__accessibility`, we do NOT overwrite it —
+     *     component-level mapping wins.
+     *   * `live` (string: `off` / `polite` / `assertive`) — screen-reader
+     *     live region priority. Mapped to `__accessibilityLive`.
+     *   * `hidden` (DynamicBoolean) — hides the element from assistive
+     *     technologies without affecting visual rendering. Mapped to
+     *     `__accessibilityHidden`.
+     *
+     * DynamicValue inputs (`{"path": ...}`, `{"call": ...}`) are resolved
+     * via the same pipeline the rest of buildProps uses, so form state can
+     * drive live/hidden toggling (e.g. "assertive on error").
+     *
+     * No-op when the component has no accessibility sub-map, which keeps
+     * the path a zero-cost addition for v0.9 payloads and for v1.0
+     * components that don't declare accessibility metadata.
+     */
+    private fun injectAccessibilityProps(
+        compMap: Map<String, Any?>,
+        props: MutableMap<String, Any?>
+    ) {
+        val a11y = readAccessibilityKey(compMap) ?: return
+        val componentId = compMap["id"] as? String
+
+        // description -> __accessibility (only if component mapper didn't already set it)
+        if (!props.containsKey("__accessibility")) {
+            val description = a11y["description"]
+            if (description != null) {
+                val resolved = resolveValue(
+                    A2UIComponentMapper.resolveTextValue(description),
+                    componentId
+                )?.toString()
+                if (!resolved.isNullOrEmpty()) {
+                    props["__accessibility"] = resolved
+                }
+            }
+        }
+
+        // live -> __accessibilityLive (enum string, resolved via the same
+        // DynamicString pipeline so bindings work)
+        a11y["live"]?.let { live ->
+            val resolved = resolveValue(
+                A2UIComponentMapper.resolveTextValue(live),
+                componentId
+            )?.toString()?.lowercase()
+            if (resolved == "off" || resolved == "polite" || resolved == "assertive") {
+                props["__accessibilityLive"] = resolved
+            }
+        }
+
+        // hidden -> __accessibilityHidden (DynamicBoolean)
+        a11y["hidden"]?.let { hidden ->
+            val resolved = resolveValue(hidden, componentId)
+            val bool = when (resolved) {
+                is Boolean -> resolved
+                is Number -> resolved.toInt() != 0
+                is String -> resolved == "true" || resolved == "1"
+                else -> null
+            }
+            if (bool != null) {
+                props["__accessibilityHidden"] = bool
+            }
+        }
+    }
+
     /** Read a string-valued mixin key under the current protocol version. */
     private fun readMixinKey(map: Map<*, *>, bareKey: String): String? =
         readMixinKeyRaw(map, bareKey) as? String
@@ -4249,6 +4324,11 @@ class A2UIProtocolAdapter {
                 }
             }
         }
+
+        // PR-9: resolve `@accessibility` sub-map and expose its fields as
+        // __accessibility* props for the Applier to forward to native.
+        // No-op when the component has no accessibility metadata.
+        injectAccessibilityProps(compMap, props)
 
         normalizeColorFieldsInPlace(props)
         return props

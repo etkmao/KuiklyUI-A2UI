@@ -184,8 +184,21 @@ class A2UIApplier(private val host: A2UIHost) {
      */
     private val rowTextHiddenTags = mutableSetOf<Int>()
 
-    /** Slider binding info: stores the data key and min/max for denormalization */
-    private data class SliderBindingInfo(val dataKey: String, val min: Float, val max: Float)
+    /**
+     * Slider binding info: stores the data key, min/max for denormalization,
+     * and (PR-9, v1.0) an optional `steps` count for value snapping.
+     *
+     * `steps` is the number of intervals, i.e. `steps = 4` over `min=0, max=1`
+     * produces 5 legal values {0.0, 0.25, 0.5, 0.75, 1.0}. A `null` or
+     * non-positive value disables snapping and keeps the pre-PR-9 continuous
+     * behaviour.
+     */
+    private data class SliderBindingInfo(
+        val dataKey: String,
+        val min: Float,
+        val max: Float,
+        val steps: Int? = null
+    )
 
     /** Keys already handled by applyCommonProps (layout/style/container props) - not forwarded to native for custom components */
     private val COMMON_HANDLED_KEYS = setOf(
@@ -705,6 +718,42 @@ class A2UIApplier(private val host: A2UIHost) {
 
                     // Accessibility
                     "accessibility" -> accessibility(value.toString())
+
+                    // PR-9: `__accessibility` is the internal resolved form of a
+                    // v1.0 `@accessibility.description` DynamicString (Adapter
+                    // produces it via injectAccessibilityProps). On Image this
+                    // key is consumed again in applyImageProps (see applyImageProps
+                    // comment); on every OTHER component the common path owns it.
+                    // Guard against empty strings (resolveValue returns "" for
+                    // path bindings that haven't been resolved yet during initial
+                    // paint) so we don't overwrite a prior label with "".
+                    "__accessibility" ->
+                        (value as? String)?.takeIf { it.isNotEmpty() }?.let { accessibility(it) }
+
+                    // PR-9: v1.0 `@accessibility.live` (off / polite / assertive) and
+                    // `@accessibility.hidden` (boolean) — injected by the Adapter's
+                    // `injectAccessibilityProps` as resolved internal keys. Kuikly's
+                    // common attr API does not surface accessibilityLiveRegion /
+                    // accessibilityElementsHidden as first-class setters, so we
+                    // forward them as generic native props. A host render view that
+                    // knows how to consume them (e.g. android uses ViewCompat
+                    // .setAccessibilityLiveRegion, iOS maps to
+                    // accessibilityElementsHidden) picks them up via setProp.
+                    // Hosts that don't consume them are unaffected.
+                    "__accessibilityLive" -> value?.toString()?.lowercase()?.let { lv ->
+                        if (lv == "off" || lv == "polite" || lv == "assertive") {
+                            "accessibilityLive" with lv
+                        }
+                    }
+                    "__accessibilityHidden" -> {
+                        val hidden = when (value) {
+                            is Boolean -> value
+                            is Number -> value.toInt() != 0
+                            is String -> value == "true" || value == "1"
+                            else -> false
+                        }
+                        "accessibilityHidden" with hidden
+                    }
 
                     // Position
                     "positionType" -> {
@@ -1453,7 +1502,23 @@ class A2UIApplier(private val host: A2UIHost) {
         val storedInfo = if (tag != null) sliderBindingPaths[tag] else null
         val max = toFloat(props["max"] ?: storedInfo?.max ?: 1f)
         val min = toFloat(props["min"] ?: storedInfo?.min ?: 0f)
-        val value = toFloat(props["value"] ?: 0f)
+        val rawValue = toFloat(props["value"] ?: 0f)
+
+        // PR-9: v1.0 `steps` support. We treat `steps` as the number of intervals
+        // (same convention as HTML `<input type="range" step>` when combined with
+        // min/max/value): `steps = N` produces `N + 1` legal stops evenly spaced
+        // in [min, max]. Non-positive or absent -> continuous slider (pre-PR-9).
+        // We parse once here, keep it on SliderBindingInfo so later data-driven
+        // re-applies (updateDataModel path) and the drag-time progressDidChanged
+        // handler can both snap against the same number.
+        val steps: Int? = (props["steps"] ?: storedInfo?.steps)?.let { v ->
+            when (v) {
+                is Number -> v.toInt().takeIf { it > 0 }
+                is String -> v.toIntOrNull()?.takeIf { it > 0 }
+                else -> null
+            }
+        }
+        val value = snapSliderValue(rawValue, min, max, steps)
 
         view.attr {
             // Normalize value from [min, max] to [0, 1]
@@ -1479,7 +1544,12 @@ class A2UIApplier(private val host: A2UIHost) {
         val bindingPath = props["__sliderBindingPath"] as? String
         if (bindingPath != null) {
             val effectiveTag = tag ?: (host.registry.getTag(view) ?: return)
-            val bindingInfo = SliderBindingInfo(dataKey = bindingPath, min = min, max = max)
+            val bindingInfo = SliderBindingInfo(
+                dataKey = bindingPath,
+                min = min,
+                max = max,
+                steps = steps
+            )
             // Only register event once (first time)
             if (!sliderBindingPaths.containsKey(effectiveTag)) {
                 view.event {
@@ -1487,12 +1557,37 @@ class A2UIApplier(private val host: A2UIHost) {
                         // Denormalize: convert [0,1] back to [min, max]
                         val info = sliderBindingPaths[effectiveTag] ?: return@progressDidChanged
                         val denormalized = info.min + progress * (info.max - info.min)
-                        onSliderValueChanged?.invoke(effectiveTag, info.dataKey, denormalized)
+                        // PR-9: snap the user-driven value to the nearest legal
+                        // step before reporting back to the host. This keeps the
+                        // bound value quantised regardless of how fine-grained
+                        // the pan gesture was.
+                        val snapped = snapSliderValue(denormalized, info.min, info.max, info.steps)
+                        onSliderValueChanged?.invoke(effectiveTag, info.dataKey, snapped)
                     }
                 }
             }
             sliderBindingPaths[effectiveTag] = bindingInfo
         }
+    }
+
+    /**
+     * PR-9: Snap `value` to the nearest step of a v1.0 Slider.
+     *
+     *   stepValue = (max - min) / steps
+     *   snapped   = min + round((value - min) / stepValue) * stepValue
+     *
+     * The result is clamped to [min, max] so floating-point drift at the
+     * boundaries can never escape the legal range. When `steps` is null,
+     * zero, or negative, the function is a pass-through (continuous slider
+     * behaviour matches pre-PR-9).
+     */
+    private fun snapSliderValue(value: Float, min: Float, max: Float, steps: Int?): Float {
+        if (steps == null || steps <= 0 || max <= min) return value
+        val stepValue = (max - min) / steps.toFloat()
+        if (stepValue <= 0f) return value
+        val clamped = value.coerceIn(min, max)
+        val n = kotlin.math.round((clamped - min) / stepValue)
+        return (min + n * stepValue).coerceIn(min, max)
     }
 
     /**
@@ -2003,6 +2098,13 @@ class A2UIApplier(private val host: A2UIHost) {
                 }
             }
             props["rate"]?.let { rate(toFloat(it)) }
+            // PR-9: v1.0 `posterUrl` — forward as a generic native prop so a
+            // host-registered krVideoViewAdapter can pick it up via
+            // setProp("posterUrl", ...). Hosts that don't consume it see no
+            // behaviour change (setProp returns false; Kuikly drops it).
+            props["posterUrl"]?.toString()?.takeIf { it.isNotEmpty() }?.let {
+                "posterUrl" with it
+            }
         }
     }
 

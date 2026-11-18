@@ -962,6 +962,14 @@ object A2UIComponentMapper {
             "label" -> "" to null
             "value" -> "text" to resolveTextValue(value)
             "variant" -> "variant" to value // Input type hint, handled by A2UIApplier
+            // PR-9: v1.0 adds an in-field placeholder prop (empty-state hint text
+            // shown INSIDE the input until the user types). This is distinct from
+            // `label` above (which stays rendered as a sibling Text). Kuikly's
+            // InputAttr exposes `placeholder(...)` natively, and A2UIApplier's
+            // applyTextFieldProps already reads the `placeholder` key, so all we
+            // need here is the catalog-level mapping. DynamicString is supported
+            // via resolveTextValue so bindings such as {"path":"/hint"} work.
+            "placeholder" -> "placeholder" to resolveTextValue(value)
             "validationRegexp" -> "" to null // Validation, skip for now
             "checks" -> "" to null // Handled by adapter checks evaluation
             else -> null
@@ -975,6 +983,12 @@ object A2UIComponentMapper {
             "value" -> "value" to resolveTextValue(value)
             "min" -> "min" to value
             "max" -> "max" to value
+            // PR-9: v1.0 adds a `steps` prop (positive integer); the slider snaps
+            // the thumb and bound value to `min + round((v-min)/stepValue) * stepValue`
+            // where `stepValue = (max-min) / steps`. We forward it verbatim here —
+            // the actual snap math lives in A2UIApplier.applySliderProps (both when
+            // re-rendering from the data model and when the user drags the thumb).
+            "steps" -> "steps" to value
             "label" -> "" to null // Label is handled by adapter (separate Text component above slider)
             "progressColor" -> "progressColor" to value
             "trackColor" -> "trackColor" to value
@@ -1001,6 +1015,14 @@ object A2UIComponentMapper {
     private fun mapVideoProp(key: String, value: Any?): Pair<String, Any?>? {
         return when (key) {
             "url" -> "src" to resolveTextValue(value)
+            // PR-9: v1.0 adds an optional `posterUrl` (DynamicString) that hints at
+            // a cover image shown before playback begins / after an error. Kuikly's
+            // VideoAttr has no first-class poster API; we forward the resolved URL
+            // as a generic native prop (`posterUrl with ...` in A2UIApplier) so the
+            // host-registered krVideoViewAdapter.setProp("posterUrl", ...) can pick
+            // it up. Hosts that don't consume it are unaffected (setProp returns
+            // false and the value is silently dropped at the native layer).
+            "posterUrl" -> "posterUrl" to resolveTextValue(value)
             else -> null
         }
     }
