@@ -47,7 +47,10 @@ class A2UIPr9SmallFieldsTest {
         )
         assertNotNull(out)
         assertEquals("posterUrl", out.first)
-        assertEquals("https://cdn/x.jpg", out.second)
+        // resolveTextValue wraps literals in A2UIValue.Literal so that the
+        // adapter can tell "a plain string" apart from "a path binding";
+        // the raw string only reappears after resolveValue at buildProps time.
+        assertEquals(A2UIValue.Literal("https://cdn/x.jpg"), out.second)
     }
 
     @Test
@@ -69,7 +72,7 @@ class A2UIPr9SmallFieldsTest {
         )
         assertNotNull(out)
         assertEquals("placeholder", out.first)
-        assertEquals("Search ...", out.second)
+        assertEquals(A2UIValue.Literal("Search ..."), out.second)
     }
 
     @Test
@@ -133,24 +136,26 @@ class A2UIPr9SmallFieldsTest {
                 "version" to "1.0",
                 "createSurface" to mapOf(
                     "surfaceId" to "s1",
-                    "root" to mapOf("componentType" to "Div"),
+                    "catalogId" to "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
                 )
             )
         )
         // Preload a data-model value that the DynamicString binding
-        // below points at.
+        // below points at. The envelope key is `updateDataModel` and its
+        // payload field is `value` — NOT `setDataModel`/`data`.
         adapter.convertMessage(
             mapOf(
                 "version" to "1.0",
-                "setDataModel" to mapOf(
+                "updateDataModel" to mapOf(
                     "surfaceId" to "s1",
-                    "data" to mapOf("user" to mapOf("name" to "Alice"))
+                    "value" to mapOf("user" to mapOf("name" to "Alice"))
                 )
             )
         )
 
         // Emit a button with a v1.0-style action whose `event.userMessage`
-        // is a DynamicString path binding.
+        // is a DynamicString path binding. Under v1.0 the mixin key is
+        // `@path`, and Button requires a `child` rather than a `label`.
         adapter.convertMessage(
             mapOf(
                 "version" to "1.0",
@@ -160,15 +165,19 @@ class A2UIPr9SmallFieldsTest {
                         mapOf(
                             "id" to "btn-1",
                             "component" to "Button",
-                            "label" to "Say hi",
+                            "child" to "btn-1-text",
                             "action" to mapOf(
-                                "type" to "submit",
                                 "event" to mapOf(
                                     "name" to "greet",
                                     // DynamicString: resolves to "Alice" from the data model.
-                                    "userMessage" to mapOf("path" to "/user/name")
+                                    "userMessage" to mapOf("@path" to "/user/name")
                                 )
                             )
+                        ),
+                        mapOf(
+                            "id" to "btn-1-text",
+                            "component" to "Text",
+                            "text" to "Say hi"
                         )
                     )
                 )
