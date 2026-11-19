@@ -18,8 +18,10 @@ package com.tencent.kuikly.a2ui.adapter
 import com.tencent.kuikly.a2ui.parser.A2UIParseError
 import com.tencent.kuikly.a2ui.parser.A2UIStreamParser
 import com.tencent.kuikly.a2ui.protocol.A2UIMessage
+import com.tencent.kuikly.a2ui.protocol.A2UIMessageType
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
@@ -90,8 +92,8 @@ class A2UIV10SamplesParseTest {
         runSamplesThroughParser(
             listOf(
                 """{"version":"1.0","createSurface":{"surfaceId":"pr2-s",""" +
-                    """"defaultCatalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",""" +
-                    """"initialDataModel":{"userName":"Alice","score":87}}}""",
+                    """"catalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",""" +
+                    """"dataModel":{"userName":"Alice","score":87}}}""",
                 """{"version":"1.0","updateComponents":{"surfaceId":"pr2-s","components":[""" +
                     """{"id":"root","component":"Column","children":["g"]},""" +
                     """{"id":"g","component":"Text","text":{"@path":"/userName"},""" +
@@ -106,8 +108,8 @@ class A2UIV10SamplesParseTest {
         runSamplesThroughParser(
             listOf(
                 """{"version":"1.0","createSurface":{"surfaceId":"pr3-s",""" +
-                    """"defaultCatalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",""" +
-                    """"initialDataModel":{"cart":{"title":"t","items":[{"name":"A","price":1}]}}}}""",
+                    """"catalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",""" +
+                    """"dataModel":{"cart":{"title":"t","items":[{"name":"A","price":1}]}}}}""",
                 """{"version":"1.0","updateComponents":{"surfaceId":"pr3-s","components":[""" +
                     """{"id":"root","component":"Column","children":["t"]},""" +
                     """{"id":"t","component":"Text","text":{"@path":"/cart/title"}}""" +
@@ -121,8 +123,8 @@ class A2UIV10SamplesParseTest {
         runSamplesThroughParser(
             listOf(
                 """{"version":"1.0","createSurface":{"surfaceId":"pr6-s",""" +
-                    """"defaultCatalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",""" +
-                    """"initialDataModel":{"status":"idle"}}}""",
+                    """"catalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",""" +
+                    """"dataModel":{"status":"idle"}}}""",
                 """{"version":"1.0","callRendererFunction":{"surfaceId":"pr6-s",""" +
                     """"requestId":"r-1","name":"openPage","args":{"route":"/p"},"timeoutMs":3000}}""",
                 """{"version":"1.0","agentFunctionResponse":{"surfaceId":"pr6-s",""" +
@@ -136,8 +138,8 @@ class A2UIV10SamplesParseTest {
         runSamplesThroughParser(
             listOf(
                 """{"version":"1.0","createSurface":{"surfaceId":"pr8-s",""" +
-                    """"defaultCatalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",""" +
-                    """"initialDataModel":{"user":{"name":"A","totalScore":128}}}}""",
+                    """"catalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",""" +
+                    """"dataModel":{"user":{"name":"A","totalScore":128}}}}""",
                 """{"version":"1.0","updateComponents":{"surfaceId":"pr8-s","components":[""" +
                     """{"id":"root","component":"Column","children":["b"]},""" +
                     """{"id":"b","component":"A2UIBadge",""" +
@@ -154,8 +156,8 @@ class A2UIV10SamplesParseTest {
         runSamplesThroughParser(
             listOf(
                 """{"version":"1.0","createSurface":{"surfaceId":"pr9-s",""" +
-                    """"defaultCatalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",""" +
-                    """"initialDataModel":{"videoUrl":"u","coverUrl":"c","volume":50,"searchQuery":""}}}""",
+                    """"catalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",""" +
+                    """"dataModel":{"videoUrl":"u","coverUrl":"c","volume":50,"searchQuery":""}}}""",
                 """{"version":"1.0","updateComponents":{"surfaceId":"pr9-s","components":[""" +
                     """{"id":"root","component":"Column","children":["v","q","s","b"]},""" +
                     """{"id":"v","component":"Video","url":{"@path":"/videoUrl"},"posterUrl":{"@path":"/coverUrl"}},""" +
@@ -166,6 +168,82 @@ class A2UIV10SamplesParseTest {
                     """"context":{"q":{"@path":"/searchQuery"}},"userMessage":{"@path":"/searchQuery"}}}}""" +
                     """]}}""",
             )
+        )
+    }
+
+    /**
+     * Field-name fidelity gate.
+     *
+     * Official A2UI v1.0 `createSurface` properties are exactly
+     * `surfaceId, catalogId, sendDataModel, components, dataModel, metadata`.
+     * Earlier revisions of this renderer read the non-schema names
+     * `defaultCatalogId` / `initialDataModel`; because unknown fields are
+     * ignored, the samples still "passed" while the values were silently
+     * dropped. This test asserts the values actually land under the schema
+     * names, so a silent rename can never slip through again.
+     */
+    @Test
+    fun createSurface_readsSchemaFieldNames() {
+        val adapter = A2UIProtocolAdapter()
+        adapter.strictV10 = true
+        val messages = adapter.convertMessage(
+            mapOf(
+                "version" to "1.0",
+                "createSurface" to mapOf(
+                    "surfaceId" to "names-s",
+                    "catalogId" to "https://example.com/1.0/basic",
+                    "dataModel" to mapOf("user" to mapOf("name" to "Alice")),
+                ),
+            ),
+        )
+
+        val create = messages.firstOrNull { it.type == A2UIMessageType.CREATE_SURFACE }
+        assertTrue(create != null, "createSurface envelope produced no CREATE_SURFACE message")
+        assertEquals(
+            "https://example.com/1.0/basic",
+            create!!.config?.catalogId,
+            "createSurface.catalogId must populate A2UISurfaceConfig.catalogId",
+        )
+
+        val data = messages.firstOrNull { it.type == A2UIMessageType.UPDATE_DATA }
+        assertTrue(data != null, "createSurface.dataModel must be applied as an initial data update")
+        assertEquals(
+            "Alice",
+            ((data!!.data?.get("user") as? Map<*, *>)?.get("name")),
+            "inline dataModel payload must reach the data-model update verbatim",
+        )
+    }
+
+    /**
+     * The pre-schema names are gone, not aliased: this renderer has no
+     * shipped payloads to stay compatible with, so `defaultCatalogId` /
+     * `initialDataModel` must be ignored outright. If someone re-introduces
+     * a fallback branch, this test fails.
+     */
+    @Test
+    fun createSurface_ignoresNonSchemaAliases() {
+        val adapter = A2UIProtocolAdapter()
+        adapter.strictV10 = false
+        val messages = adapter.convertMessage(
+            mapOf(
+                "version" to "1.0",
+                "createSurface" to mapOf(
+                    "surfaceId" to "alias-s",
+                    "defaultCatalogId" to "https://example.com/1.0/basic",
+                    "initialDataModel" to mapOf("user" to mapOf("name" to "Alice")),
+                ),
+            ),
+        )
+
+        val create = messages.firstOrNull { it.type == A2UIMessageType.CREATE_SURFACE }
+        assertTrue(create != null, "createSurface envelope produced no CREATE_SURFACE message")
+        assertNull(
+            create!!.config?.catalogId,
+            "defaultCatalogId is not a schema field and must not populate catalogId",
+        )
+        assertTrue(
+            messages.none { it.type == A2UIMessageType.UPDATE_DATA },
+            "initialDataModel is not a schema field and must not seed the data model",
         )
     }
 

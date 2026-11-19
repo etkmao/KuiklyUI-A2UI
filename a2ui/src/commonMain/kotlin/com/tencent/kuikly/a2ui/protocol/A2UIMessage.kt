@@ -66,10 +66,10 @@ data class A2UIMessage(
 /**
  * Surface configuration for createSurface message.
  *
- * The [defaultCatalogId] / [catalogs] fields were introduced by A2UI v1.0
- * (see `evolution_guide.md` §"Mixed catalogs") and are populated only when
- * the incoming envelope declares `version="1.0"`. Under v0.9 / v0.9.1 they
- * stay `null`, so pre-v1.0 renderers keep the same config shape as before.
+ * Field names mirror the A2UI v1.0 `createSurface` schema one-to-one; the
+ * official property set is exactly `surfaceId, catalogId, sendDataModel,
+ * components, dataModel, metadata`. Nothing is renamed on the way in, and
+ * no non-schema field (such as a `catalogs` allow-list) is modelled here.
  */
 data class A2UISurfaceConfig(
     /** Surface width in dp */
@@ -82,20 +82,11 @@ data class A2UISurfaceConfig(
     val incrementalRender: Boolean = true,
 
     /**
-     * v1.0 only: the catalog used by components that do not carry an
-     * explicit `@catalogId` override. `null` under v0.9 streams and
-     * under v1.0 streams that rely on the renderer's host-configured
-     * default. Validated in strict mode to be a member of [catalogs]
-     * when both are present.
+     * v1.0 only: the default catalog for components that do not carry an
+     * explicit `@catalogId` override. A plain string identifier — the spec
+     * conventionally formats it as a URI but it is not required to resolve
+     * to any deployed resource. `null` under v0.9 streams and under v1.0
+     * streams that omit the field.
      */
-    val defaultCatalogId: String? = null,
-
-    /**
-     * v1.0 only: the full set of catalog ids that the payload is
-     * allowed to reference. Used by the renderer to (a) refuse
-     * `@catalogId` values that fall outside this allow-list and
-     * (b) pre-load the corresponding catalog JSONs. `null` under
-     * v0.9 streams.
-     */
-    val catalogs: List<String>? = null
+    val catalogId: String? = null
 )

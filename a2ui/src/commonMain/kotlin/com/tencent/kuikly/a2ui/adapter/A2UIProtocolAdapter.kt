@@ -242,27 +242,20 @@ class A2UIProtocolAdapter {
     // -------------------------------------------------------------------
     //  v1.0 multi-catalog state (PR-8)
     //
-    //  Per-surface view of the `createSurface.defaultCatalogId` + `catalogs`
-    //  fields. Resolved in [handleCreateSurfaceV10] and consumed by
-    //  [handleUpdateComponents] / [evaluateFunctionCall] /
-    //  [evaluateFunctionCallWithScope]:
+    //  Per-surface view of the `createSurface.catalogId` field. Resolved in
+    //  [handleCreateSurfaceV10] and consumed by [handleUpdateComponents] /
+    //  [evaluateFunctionCall] / [evaluateFunctionCallWithScope]:
     //
-    //   * [currentDefaultCatalogId] is the fallback used when a component
-    //     or FunctionCall site does not carry its own `@catalogId` /
-    //     `catalogId` qualifier.
-    //   * [currentCatalogsSet] is the full list of advertised catalogs for
-    //     this surface. Mostly kept for diagnostics; the Adapter trusts
-    //     any `@catalogId` value the server sends (per-component override
-    //     is allowed even outside the advertised set per v1.0 spec \u00a7
-    //     "catalogs advertisement is optional").
+    //   * [currentCatalogId] is the surface-level default used when a
+    //     component or FunctionCall site does not carry its own
+    //     `@catalogId` / `catalogId` qualifier.
     //   * [componentCatalogIds] records the resolved catalogId per
     //     component id so the applier/customFunction dispatcher can read
     //     it back cheaply without re-scanning the compMap.
     //
     //  Reset by [reset] at the start of each stream.
     // -------------------------------------------------------------------
-    private var currentDefaultCatalogId: String? = null
-    private var currentCatalogsSet: Set<String> = emptySet()
+    private var currentCatalogId: String? = null
     private val componentCatalogIds: MutableMap<String, String> = mutableMapOf()
 
     // -------------------------------------------------------------------
@@ -379,8 +372,7 @@ class A2UIProtocolAdapter {
      *      (same lenient fallback as other mixin keys; a bare key logs
      *      a one-shot diagnostic via [readMixinKeyRaw]).
      *   3. If the component carries no catalogId key, fall back to the
-     *      surface-level `defaultCatalogId` captured in
-     *      [currentDefaultCatalogId].
+     *      surface-level `catalogId` captured in [currentCatalogId].
      *   4. Returns `null` if nothing resolves. The caller
      *      ([handleUpdateComponents] pre-pass) decides how to react
      *      based on [strictV10].
@@ -389,7 +381,7 @@ class A2UIProtocolAdapter {
         if (_protocolVersion != A2UIProtocolVersion.V1_0) return null
         val perComp = readMixinKey(compMap, "catalogId")
         if (!perComp.isNullOrEmpty()) return perComp
-        return currentDefaultCatalogId
+        return currentCatalogId
     }
 
     /**
@@ -1007,19 +999,7 @@ class A2UIProtocolAdapter {
                     )
                     return emptyList()
                 }
-                // (b) `catalogs`, when present, must be a list of strings.
-                val catalogs = createSurface["catalogs"]
-                if (catalogs != null) {
-                    if (catalogs !is List<*> || catalogs.any { it !is String }) {
-                        println(
-                            "[A2UI] error: v1.0 strict: createSurface.catalogs " +
-                                "must be a List<String>; got ${catalogs::class.simpleName}. " +
-                                "Reject envelope."
-                        )
-                        return emptyList()
-                    }
-                }
-                // (c) inline `components`, when present, must be a list.
+                // (b) inline `components`, when present, must be a list.
                 val inlineComponents = createSurface["components"]
                 if (inlineComponents != null && inlineComponents !is List<*>) {
                     println(
@@ -1029,7 +1009,7 @@ class A2UIProtocolAdapter {
                     )
                     return emptyList()
                 }
-                // (d) inline `dataModel`, when present, must be a map
+                // (c) inline `dataModel`, when present, must be a map
                 //     (per v1.0 spec dataModel root must be a dictionary).
                 val inlineDataModel = createSurface["dataModel"]
                 if (inlineDataModel != null && inlineDataModel !is Map<*, *>) {
@@ -1536,8 +1516,7 @@ class A2UIProtocolAdapter {
         templateIndexStack.clear()
         // PR-8: forget any per-stream catalog resolution so the next
         // stream starts from a clean slate.
-        currentDefaultCatalogId = null
-        currentCatalogsSet = emptySet()
+        currentCatalogId = null
         componentCatalogIds.clear()
         // Cancel every pending RPC so renderer-originated callbacks
         // resolve with SURFACE_CLOSED and the pending table doesn't
@@ -1959,10 +1938,10 @@ class A2UIProtocolAdapter {
      *      updateDataModel messages inside the SAME batch, so the surface
      *      is renderable from a single envelope (per v1.0 spec
      *      §"Single-envelope surface creation").
-     *   3. `defaultCatalogId` / `catalogs` are plumbed through
-     *      [A2UISurfaceConfig] for use by the component mapper when
-     *      resolving per-component `@catalogId` overrides (full support
-     *      lands in PR-8 — this PR just wires the data).
+     *   3. `catalogId` is plumbed through [A2UISurfaceConfig] for use by
+     *      the component mapper when resolving per-component `@catalogId`
+     *      overrides (full support lands in PR-8 — this PR just wires the
+     *      data).
      */
     private fun handleCreateSurfaceV10(data: Map<String, Any?>): List<A2UIMessage> {
         val surfaceId = data["surfaceId"] as? String ?: return emptyList()
@@ -1971,35 +1950,20 @@ class A2UIProtocolAdapter {
         // sendDataModel semantics unchanged from v0.9.
         sendDataModel = data["sendDataModel"] as? Boolean ?: false
 
-        // ---- catalogs / defaultCatalogId -----------------------------
-        @Suppress("UNCHECKED_CAST")
-        val catalogsRaw = data["catalogs"] as? List<Any?>
-        val catalogs: List<String>? = catalogsRaw?.mapNotNull { it as? String }
-            ?.takeIf { it.isNotEmpty() }
-        val defaultCatalogId = data["defaultCatalogId"] as? String
+        // ---- catalogId -----------------------------------------------
+        // Per A2UI v1.0 spec (§createSurface), the surface-level catalog
+        // field is `catalogId` — a plain string identifier, not a
+        // resolvable URI. No aliases, no `catalogs` allow-list: the field
+        // set is exactly `surfaceId, catalogId, sendDataModel,
+        // components, dataModel, metadata`.
+        val catalogId = data["catalogId"] as? String
 
-        if (strictV10 && defaultCatalogId != null && catalogs != null &&
-            defaultCatalogId !in catalogs
-        ) {
-            // Enforced here (not in convertMessageV10) because it needs
-            // the parsed/normalised catalogs list — easier to reason
-            // about once we already hold both fields.
-            println(
-                "[A2UI] error: v1.0 strict: defaultCatalogId='$defaultCatalogId' " +
-                    "is not listed in catalogs=$catalogs; createSurface aborted."
-            )
-            return emptyList()
-        }
-
-        // ---- PR-8: expose resolved catalogs/defaultCatalogId to
-        //      downstream handlers (handleUpdateComponents /
-        //      evaluateFunctionCall / evaluateFunctionCallWithScope).
-        //      Trusting any catalogId the server attaches to a
-        //      component / FunctionCall site, including ones outside
-        //      the advertised list, per v1.0 spec "catalogs
-        //      advertisement is optional".
-        currentDefaultCatalogId = defaultCatalogId
-        currentCatalogsSet = catalogs?.toSet() ?: emptySet()
+        // ---- PR-8: expose the resolved catalogId to downstream handlers
+        //      (handleUpdateComponents / evaluateFunctionCall /
+        //      evaluateFunctionCallWithScope). Any catalogId the server
+        //      attaches to a component / FunctionCall site is trusted as
+        //      sent.
+        currentCatalogId = catalogId
         componentCatalogIds.clear()
 
         // Emit the CREATE_SURFACE message first so downstream consumers
@@ -2012,8 +1976,7 @@ class A2UIProtocolAdapter {
                     width = 0f, // Will be set by the platform layer
                     height = 0f,
                     incrementalRender = true,
-                    defaultCatalogId = defaultCatalogId,
-                    catalogs = catalogs
+                    catalogId = catalogId
                 )
             )
         )
@@ -2033,6 +1996,10 @@ class A2UIProtocolAdapter {
         }
 
         // ---- Inline dataModel --------------------------------------
+        // Per A2UI v1.0 spec (§createSurface), the field is `dataModel`.
+        // No alias is read — the schema property set is exact and this
+        // renderer has no shipped payloads to stay compatible with.
+        //
         // Treated as a single root-level `updateDataModel` with
         // `path = "/"`. The `@@xxx` key-unescape is applied by
         // handleUpdateDataModel itself.
@@ -2070,7 +2037,7 @@ class A2UIProtocolAdapter {
         // ---- PR-8: pre-pass \u2014 resolve each component's catalogId -----
         // Reads the `@catalogId` mixin key (bare `catalogId` also tolerated
         // under lenient v1.0 just like other `@`-prefixed keys) and falls
-        // back to the surface-level defaultCatalogId captured by
+        // back to the surface-level catalogId captured by
         // [handleCreateSurfaceV10]. Under v1.0 strict mode a component that
         // ends up with no resolved catalogId is skipped and reported via
         // the standard `[A2UI] error:` channel \u2014 the rest of the batch
@@ -2091,14 +2058,14 @@ class A2UIProtocolAdapter {
             if (resolved != null) {
                 componentCatalogIds[id] = resolved
             } else if (isStrict) {
-                // v1.0 strict: no `@catalogId`, no `defaultCatalogId` \u2014
+                // v1.0 strict: no `@catalogId`, no surface `catalogId` —
                 // we cannot know which catalog's schema to validate this
                 // component against. Skip it instead of rendering with
                 // ambiguous semantics.
                 println(
                     "[A2UI] error: v1.0 strict: UNRESOLVED_CATALOG: " +
-                        "component '$id' has no @catalogId and no " +
-                        "defaultCatalogId is set; component skipped."
+                        "component '$id' has no @catalogId and the surface " +
+                        "has no catalogId; component skipped."
                 )
                 catalogSkipIds.add(id)
             }
@@ -4549,7 +4516,7 @@ class A2UIProtocolAdapter {
         // v1.0 evolution_guide.md §"Reserved @ prefix" clarification).
         // Passing it to the custom-function lookup lets same-named
         // functions from different catalogs coexist in the same process.
-        val fcCatalogId = funcCall["catalogId"] as? String ?: currentDefaultCatalogId
+        val fcCatalogId = funcCall["catalogId"] as? String ?: currentCatalogId
 
         return when (call) {
             "formatDate" -> evaluateFormatDate(args)
@@ -5930,7 +5897,7 @@ class A2UIProtocolAdapter {
 
         // PR-8: v1.0 FunctionCall sites may carry a bare `catalogId`
         // field — same semantics as the non-scope evaluator above.
-        val fcCatalogId = funcCall["catalogId"] as? String ?: currentDefaultCatalogId
+        val fcCatalogId = funcCall["catalogId"] as? String ?: currentCatalogId
 
         return when (call) {
             "formatDate" -> evaluateFormatDate(resolvedArgs)

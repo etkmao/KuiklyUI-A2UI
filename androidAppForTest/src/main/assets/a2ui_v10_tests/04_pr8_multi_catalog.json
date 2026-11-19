@@ -1,13 +1,13 @@
 {
   "name": "PR-8 Multi-Catalog Composition",
-  "description": "A2UI v1.0 multi-catalog composition. defaultCatalogId points at the basic catalog, while two individual components opt into a custom catalog via the @catalogId component mixin. Demonstrates that lookup disambiguates custom functions / component descriptors per catalog with fallback to the global (name-only) scope.",
+  "description": "A2UI v1.0 multi-catalog composition. catalogId points at the basic catalog, while two individual components opt into a custom catalog via the @catalogId component mixin. Demonstrates that lookup disambiguates custom functions / component descriptors per catalog with fallback to the global (name-only) scope.",
   "messages": [
     {
       "version": "1.0",
       "createSurface": {
         "surfaceId": "pr8-multi-catalog-surface",
-        "defaultCatalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
-        "initialDataModel": {
+        "catalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
+        "dataModel": {
           "user": {
             "name": "Alice",
             "totalScore": 128

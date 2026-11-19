@@ -43,7 +43,7 @@ import org.json.JSONObject
  * self-contained and demonstrates one of:
  *
  *  1. PR-2 Mixin keys (@path / @call / @accessibility)
- *  2. PR-3 createSurface.initialDataModel + v1.0 defaultCatalogId + @index
+ *  2. PR-3 createSurface.dataModel + surface catalogId + @index
  *  3. PR-6 Bidirectional RPC (callRendererFunction + agentFunctionResponse)
  *  4. PR-8 Multi-Catalog (@catalogId + @call.catalogId)
  *  5. PR-9 Small fields (Video.posterUrl / TextField.placeholder / Slider.steps / action.userMessage)

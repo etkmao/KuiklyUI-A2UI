@@ -22,7 +22,7 @@
 
 v1.0 移除 `createSurface.theme`（含 `primaryColor` / `iconUrl` / `agentDisplayName`）。宿主要染色请走 `styles` 或内嵌的 host-driven 主题管道，protocol 层不再承载。
 
-### 2.2 内联 `initialDataModel`（替代 `sendDataModel: true` + 后续 `updateDataModel`）
+### 2.2 内联 `dataModel`（替代 `sendDataModel: true` + 后续 `updateDataModel`）
 
 **v0.9：**
 ```json
@@ -34,17 +34,22 @@ v1.0 移除 `createSurface.theme`（含 `primaryColor` / `iconUrl` / `agentDispl
 ```json
 {"version":"1.0", "createSurface": {
   "surfaceId": "s1",
-  "defaultCatalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
-  "initialDataModel": {"user": {"name": "Alice"}}
+  "catalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
+  "dataModel": {"user": {"name": "Alice"}}
 }}
 ```
 
-### 2.3 新增 `defaultCatalogId` URL
+> 字段名是 **`dataModel`**。当同一条 `createSurface` 同时带 `dataModel` 与 `components` 时，renderer **先应用 `dataModel`**，组件首次求值即可绑定到初始数据。
 
-v1.0 的 catalog URL 改成 **完整 schema URL**：
-- `https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json`
-- `https://a2ui.org/specification/v1_0/catalogs/custom_components/catalog.json`
-- `https://a2ui.org/specification/v1_0/catalogs/custom_functions/catalog.json`
+### 2.3 新增 surface 级 `catalogId`
+
+v1.0 的 surface 级 catalog 字段名是 **`catalogId`**（不是 `defaultCatalogId`）：
+
+- 类型是**纯字符串标识符**，不是"必须可下载的 URL"。惯例上用 URI 形式避免跨组织重名，但**不需要**真的能解析到某个部署资源；renderer 只做字符串比对。
+- `createSurface` 的完整属性集合并**只有**：`surfaceId`（必填）、`catalogId`、`sendDataModel`、`components`、`dataModel`、`metadata`。**协议里没有 `catalogs` 字段**。
+- 组件级覆盖用 `@catalogId`，函数调用点覆盖用 `@call.catalogId`；未显式指定的走 surface 级默认值。
+
+> **本 renderer 只认官方字段名，不提供别名。** 早期实现曾读 `defaultCatalogId` / `initialDataModel`，并自行引入 `catalogs` allow-list；这三个都不是 v1.0 schema 的一部分，已全部删除（该功能无线上业务接入，无需兼容旧报文）。发错字段名的报文会被当作"未提供"处理。
 
 v0.9 的短 ID（`"catalogId": "https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json"`）仍可被 renderer 识别，但新报文请只用 v1.0 URL。
 
@@ -180,7 +185,7 @@ Agent 回包：
 v1.0 允许同一 surface 在不同组件 / 不同 `@call` 调用点切换 catalog：
 
 ```json
-// createSurface.defaultCatalogId = basic
+// createSurface.catalogId = basic
 {
   "id": "custom-badge",
   "component": "A2UIBadge",
@@ -202,8 +207,8 @@ v1.0 允许同一 surface 在不同组件 / 不同 `@call` 调用点切换 catal
 
 - [ ] `"version": "v0.9"` → `"version": "1.0"`
 - [ ] `createSurface.theme` 字段**整段删除**
-- [ ] `createSurface.sendDataModel: true` + 分离的 `updateDataModel` → `createSurface.initialDataModel` 内联
-- [ ] catalog ID 换成 v1.0 完整 schema URL
+- [ ] `createSurface.sendDataModel: true` + 分离的 `updateDataModel` → `createSurface.dataModel` 内联
+- [ ] surface 级 catalog 字段用 `catalogId`（不要发 `defaultCatalogId`，也不要发 `catalogs`，两者都不被识别）
 - [ ] 所有 `{"path": ...}` → `{"@path": ...}`
 - [ ] 所有 `{"call": ...}` → `{"@call": ...}`
 - [ ] `{"path": "@index"}` → `{"@index": {}}`

@@ -13,9 +13,9 @@
 | 文件 | 覆盖 PR | 关键字段 / 场景 |
 |---|---|---|
 | `01_pr2_mixin_keys.json` | PR-2 Mixin keys | `version:"1.0"` · `@path` · `@call` · `@accessibility`（挂到组件顶层） |
-| `02_pr3_createsurface_inline_datamodel.json` | PR-3 / PR-4 | `createSurface.initialDataModel` 内联初始数据 · `defaultCatalogId` 指向 v1.0 basic catalog URL · List 内 `@index` |
+| `02_pr3_createsurface_inline_datamodel.json` | PR-3 / PR-4 | `createSurface.dataModel` 内联初始数据 · surface 级 `catalogId` · List 内 `@index` |
 | `03_pr6_rpc_bidirectional.json` | PR-6 双向 RPC | `callRendererFunction` 入站包 · `agentFunctionResponse` 出站回包 · 组件内 `action.callAgentFunction` |
-| `04_pr8_multi_catalog.json` | PR-8 多 Catalog | `defaultCatalogId` = basic + 组件级 `@catalogId` 切 custom_components · `@call.catalogId` 切 custom_functions |
+| `04_pr8_multi_catalog.json` | PR-8 多 Catalog | surface 级 `catalogId` = basic + 组件级 `@catalogId` 切 custom_components · `@call.catalogId` 切 custom_functions |
 | `05_pr9_small_fields_video_poster.json` | PR-9 小字段 | `Video.posterUrl` · `TextField.placeholder` · `Slider.steps` · `action.event.userMessage` |
 
 ## 命名规范
@@ -28,7 +28,7 @@
 
 ## 回归方式
 
-- **解析侧回归**：commonTest `A2UIV10SamplesParseTest`（如果存在）会以字符串形式直接复用这 5 个样本的核心片段，经 `A2UIProtocolAdapter.consumeMessage(...)` 跑一遍，断言不崩溃、`onError` 不触发。
+- **解析侧回归**：commonTest `A2UIV10SamplesParseTest` 会以字符串形式直接复用这 5 个样本的核心片段，经 `A2UIStreamParser` / `A2UIProtocolAdapter` 跑一遍，断言不崩溃、`onError` 不触发；其中 `createSurface_readsOfficialV10FieldNames` 正向断言 `catalogId` 与 `dataModel` 这两个**官方字段名**确实落到了 surface 配置与数据模型上。
 - **目视回归**：真机跑 Demo App，依次打开 5 个入口，按 `description` 字段预期做人眼断言（PR-9 视频 cover 首帧退场、TextField placeholder 显示、Slider 吸附到四等分位、Button 按下触发 agent 事件 + userMessage）。
 
 ## 迁移速查

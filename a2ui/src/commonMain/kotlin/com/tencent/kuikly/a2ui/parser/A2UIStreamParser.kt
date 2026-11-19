@@ -265,17 +265,16 @@ class A2UIStreamParser {
         if (value == null) return null
         @Suppress("UNCHECKED_CAST")
         val map = value as? Map<String, Any?> ?: return null
-        @Suppress("UNCHECKED_CAST")
-        val catalogs = (map["catalogs"] as? List<Any?>)
-            ?.mapNotNull { it as? String }
-            ?.takeIf { it.isNotEmpty() }
         return A2UISurfaceConfig(
             width = (map["width"] as? Number)?.toFloat() ?: 0f,
             height = (map["height"] as? Number)?.toFloat() ?: 0f,
             backgroundColor = map["backgroundColor"] as? String,
             incrementalRender = map["incrementalRender"] as? Boolean ?: true,
-            defaultCatalogId = map["defaultCatalogId"] as? String,
-            catalogs = catalogs
+            // Per A2UI v1.0 spec (§createSurface), the surface-level catalog
+            // field is `catalogId`. No alias is read: the v1.0 property set
+            // is exact and this renderer has no shipped payloads to keep
+            // compatible with.
+            catalogId = map["catalogId"] as? String
         )
     }
 
