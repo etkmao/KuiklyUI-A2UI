@@ -34,16 +34,15 @@
           {
             "id": "avatar",
             "component": "Image",
-            "url": { "path": "/mirror/iconUrl" },
-            "width": 32,
-            "height": 32
+            "url": {"path":"/mirror/iconUrl"},
+            "variant": "avatar"
           },
           {
             "id": "name",
             "component": "Text",
             "text": { "path": "/mirror/agentDisplayName" }
           },
-          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary" },
+          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary", "action": {"event":{"name":"themeTestClick"}} },
           { "id": "btn_lbl", "component": "Text", "text": "Primary Button（背景应为青 #009688）" }
         ]
       }

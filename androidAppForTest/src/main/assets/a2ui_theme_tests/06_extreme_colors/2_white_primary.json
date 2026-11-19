@@ -29,7 +29,7 @@
             "text": "theme.primaryColor=#FFFFFF（纯白）——极端边界。Primary Button 白底白字几乎不可读、Slider 进度色难辨。此用例用于让业务侧感知主题色对比度不当的后果，不代表实现缺陷。",
             "variant": "caption"
           },
-          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary" },
+          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary", "action": {"event":{"name":"themeTestClick"}} },
           { "id": "btn_lbl", "component": "Text", "text": "Primary Button（白底 · 对比度极低）" },
           {
             "id": "slider",

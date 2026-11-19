@@ -34,10 +34,10 @@
           {
             "id": "name",
             "component": "Text",
-            "text": { "path": "/mirror/agentDisplayName" },
-            "variant": "title"
+            "text": {"path":"/mirror/agentDisplayName"},
+            "variant": "h2"
           },
-          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary" },
+          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary", "action": {"event":{"name":"themeTestClick"}} },
           { "id": "btn_lbl", "component": "Text", "text": "Primary Button（背景应为紫 #673AB7）" }
         ]
       }

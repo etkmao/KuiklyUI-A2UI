@@ -29,11 +29,11 @@
             "text": "theme.primaryColor=#E91E63。仅 variant=primary 的按钮背景应为品红，default 与 borderless 应保持中性外观，不被主题色误染。",
             "variant": "caption"
           },
-          { "id": "btn_primary", "component": "Button", "child": "btn_primary_lbl", "variant": "primary" },
+          { "id": "btn_primary", "component": "Button", "child": "btn_primary_lbl", "variant": "primary", "action": {"event":{"name":"themeTestClick"}} },
           { "id": "btn_primary_lbl", "component": "Text", "text": "primary（背景应为品红）" },
-          { "id": "btn_default", "component": "Button", "child": "btn_default_lbl", "variant": "default" },
+          { "id": "btn_default", "component": "Button", "child": "btn_default_lbl", "variant": "default", "action": {"event":{"name":"themeTestClick"}} },
           { "id": "btn_default_lbl", "component": "Text", "text": "default（不应被主题色染背景）" },
-          { "id": "btn_borderless", "component": "Button", "child": "btn_borderless_lbl", "variant": "borderless" },
+          { "id": "btn_borderless", "component": "Button", "child": "btn_borderless_lbl", "variant": "borderless", "action": {"event":{"name":"themeTestClick"}} },
           { "id": "btn_borderless_lbl", "component": "Text", "text": "borderless（不应被主题色染背景）" }
         ]
       }

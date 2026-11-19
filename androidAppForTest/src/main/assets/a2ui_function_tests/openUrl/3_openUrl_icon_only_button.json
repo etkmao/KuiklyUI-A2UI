@@ -36,8 +36,7 @@
           {
             "id": "btn",
             "component": "Button",
-            "child": "btn_lbl",
-            "iconLeading": "openInNew",
+            "child": "btn_icon",
             "variant": "borderless",
             "action": {
               "functionCall": {
@@ -50,9 +49,9 @@
             }
           },
           {
-            "id": "btn_lbl",
-            "component": "Text",
-            "text": "外链"
+            "id": "btn_icon",
+            "component": "Icon",
+            "name": "arrowForward"
           }
         ]
       }

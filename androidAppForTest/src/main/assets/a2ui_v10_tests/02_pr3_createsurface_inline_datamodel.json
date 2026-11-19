@@ -44,7 +44,7 @@
           {
             "id": "title",
             "component": "Text",
-            "variant": "h2",
+            "variant": "body",
             "text": {
               "@path": "/cart/title"
             }
@@ -52,10 +52,7 @@
           {
             "id": "items-list",
             "component": "List",
-            "items": {
-              "@path": "/cart/items"
-            },
-            "template": "item-row"
+            "children": {"componentId":"item-row","path":"/cart/items"}
           },
           {
             "id": "item-row",
@@ -69,9 +66,7 @@
           {
             "id": "item-index",
             "component": "Text",
-            "text": {
-              "@index": {}
-            }
+            "text": {"@call":"@index","args":{"offset":1}}
           },
           {
             "id": "item-name",

@@ -28,7 +28,7 @@
           {
             "id": "title",
             "component": "Text",
-            "variant": "h2",
+            "variant": "body",
             "text": "PR-9 small fields"
           },
           {
@@ -44,10 +44,9 @@
           {
             "id": "query",
             "component": "TextField",
-            "text": {
-              "@path": "/searchQuery"
-            },
-            "placeholder": "Type something to search\u2026"
+            "placeholder": "Type something to search…",
+            "label": "Search",
+            "value": {"@path":"/searchQuery"}
           },
           {
             "id": "vol",

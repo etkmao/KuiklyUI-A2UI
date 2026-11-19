@@ -26,7 +26,7 @@
           {
             "id": "greeting",
             "component": "Text",
-            "variant": "h1",
+            "variant": "body",
             "text": {
               "@path": "/userName"
             },
@@ -48,16 +48,7 @@
           {
             "id": "grade-line",
             "component": "Text",
-            "text": {
-              "@call": {
-                "name": "formatGrade",
-                "args": {
-                  "score": {
-                    "@path": "/score"
-                  }
-                }
-              }
-            },
+            "text": { "@call": "formatString", "args": { "value": "score=${/score}" } },
             "@accessibility": {
               "description": "Letter grade derived from the score via a host-registered custom function"
             }

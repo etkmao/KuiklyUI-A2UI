@@ -39,13 +39,14 @@
             "id": "cp",
             "component": "ChoicePicker",
             "label": "选择套餐（选中项应为绿色）",
-            "value": { "path": "/plan" },
-            "children": ["plan1", "plan2", "plan3"]
+            "value": {"path":"/plan"},
+            "options": [
+              {"label":"基础版","value":"basic"},
+              {"label":"专业版","value":"pro"},
+              {"label":"企业版","value":"enterprise"}
+            ]
           },
-          { "id": "plan1", "component": "Choice", "title": "基础版", "value": "basic" },
-          { "id": "plan2", "component": "Choice", "title": "专业版", "value": "pro" },
-          { "id": "plan3", "component": "Choice", "title": "企业版", "value": "enterprise" },
-          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary" },
+          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary", "action": {"event":{"name":"themeTestClick"}} },
           { "id": "btn_lbl", "component": "Text", "text": "确认购买（背景应为绿色）" }
         ]
       }

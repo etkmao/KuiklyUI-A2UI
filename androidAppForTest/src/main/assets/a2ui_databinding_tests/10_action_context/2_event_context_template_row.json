@@ -32,15 +32,9 @@
             "id": "row-btn",
             "component": "Button",
             "child": "row-btn-lbl",
-            "variant": "secondary",
+            "variant": "default",
             "action": {
-              "event": {
-                "name": "row_selected",
-                "context": {
-                  "id": { "path": "id" },
-                  "label": { "path": "label" }
-                }
-              }
+              "event": {"name":"row_selected","context":{"id":{"path":"id"},"label":{"path":"label"}}}
             }
           },
           { "id": "row-btn-lbl", "component": "Text", "text": "选择" }

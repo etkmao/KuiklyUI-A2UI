@@ -29,7 +29,7 @@
             "text": "theme.primaryColor='#GGGGGG' 含非 hex 字符，规范要求 [0-9a-fA-F]。引擎应回退默认 #00BFFF（浅蓝），不应崩溃或渲染成黑色。",
             "variant": "caption"
           },
-          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary" },
+          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary", "action": {"event":{"name":"themeTestClick"}} },
           { "id": "btn_lbl", "component": "Text", "text": "Primary Button（应显示默认浅蓝 #00BFFF）" }
         ]
       }

@@ -29,7 +29,7 @@
             "text": "theme.primaryColor='#E91E63' 是合法 6 位大写 hex，应被接受。下方 Primary Button 背景应为品红 #E91E63，而不是默认浅蓝。",
             "variant": "caption"
           },
-          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary" },
+          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary", "action": {"event":{"name":"themeTestClick"}} },
           { "id": "btn_lbl", "component": "Text", "text": "Primary Button（背景应为品红 #E91E63）" }
         ]
       }

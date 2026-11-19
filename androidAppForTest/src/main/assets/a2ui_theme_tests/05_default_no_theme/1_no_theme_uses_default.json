@@ -26,7 +26,7 @@
             "text": "createSurface 未携带 theme。primaryColor 应走协议默认值 #00BFFF（浅蓝），Primary 按钮与 Slider 进度色应为浅蓝。",
             "variant": "caption"
           },
-          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary" },
+          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary", "action": {"event":{"name":"themeTestClick"}} },
           { "id": "btn_lbl", "component": "Text", "text": "Primary Button（默认浅蓝 #00BFFF）" },
           {
             "id": "slider",

@@ -42,7 +42,7 @@
               "returnType": "string"
             }
           },
-          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary" },
+          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary", "action": {"event":{"name":"themeTestClick"}} },
           { "id": "btn_lbl", "component": "Text", "text": "Primary 按钮（背景应为橙 #F39C12）" }
         ]
       }

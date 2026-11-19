@@ -1,6 +1,6 @@
 {
   "name": "PR-6 Bidirectional RPC",
-  "description": "A2UI v1.0 bidirectional RPC showcase. The agent (1) renders a button whose action is 'callAgentFunction:fetchUser' and (2) immediately asks the renderer to run 'openPage' via callRendererFunction. In the matching test harness, the host inspects both envelopes and replies with rendererFunctionResponse / agentFunctionResponse to close each loop.",
+  "description": "A2UI v1.0 bidirectional RPC showcase. The agent (1) renders a button whose action is 'callAgentFunction:fetchUser' and (2) immediately asks the renderer to run 'openUrl' via callRendererFunction. In the matching test harness, the host inspects both envelopes and replies with rendererFunctionResponse / agentFunctionResponse to close each loop.",
   "messages": [
     {
       "version": "1.0",
@@ -25,7 +25,7 @@
           {
             "id": "title",
             "component": "Text",
-            "variant": "h2",
+            "variant": "body",
             "text": "PR-6 bidirectional RPC"
           },
           {
@@ -44,15 +44,7 @@
             "id": "fetch-btn",
             "component": "Button",
             "child": "fetch-btn-text",
-            "action": {
-              "callAgentFunction": {
-                "name": "fetchUser",
-                "args": {
-                  "id": 42
-                },
-                "timeoutMs": 5000
-              }
-            }
+            "action": {"event":{"name":"fetchUser","context":{"id":42}}}
           }
         ]
       }
@@ -61,20 +53,21 @@
       "version": "1.0",
       "callRendererFunction": {
         "surfaceId": "pr6-rpc-surface",
-        "requestId": "demo-req-openpage-0001",
-        "name": "openPage",
-        "args": {
-          "route": "/profile"
-        },
-        "timeoutMs": 3000
+        "functionCallId": "demo-req-openpage-0001",
+        "callFunction": {
+          "@call": "openUrl",
+          "catalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
+          "args": {
+            "url": "https://a2ui.org/profile"
+          }
+        }
       }
     },
     {
       "version": "1.0",
       "agentFunctionResponse": {
-        "surfaceId": "pr6-rpc-surface",
-        "requestId": "demo-req-fetchuser-reply-0001",
-        "result": {
+        "functionCallId": "demo-req-fetchuser-reply-0001",
+        "value": {
           "name": "Alice",
           "level": "gold"
         }

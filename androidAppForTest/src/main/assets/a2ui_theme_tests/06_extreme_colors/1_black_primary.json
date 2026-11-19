@@ -29,7 +29,7 @@
             "text": "theme.primaryColor=#000000（纯黑）。目视验证：Primary Button 背景黑、文字仍可读；Slider progressColor 黑色，与浅色轨道对比清晰。",
             "variant": "caption"
           },
-          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary" },
+          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary", "action": {"event":{"name":"themeTestClick"}} },
           { "id": "btn_lbl", "component": "Text", "text": "Primary Button（黑底白字应可读）" },
           {
             "id": "slider",

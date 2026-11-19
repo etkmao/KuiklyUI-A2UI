@@ -39,9 +39,8 @@
           {
             "id": "id_icon",
             "component": "Image",
-            "url": { "path": "/mirror/iconUrl" },
-            "width": 32,
-            "height": 32
+            "url": {"path":"/mirror/iconUrl"},
+            "variant": "icon"
           },
           {
             "id": "id_name",
@@ -53,7 +52,7 @@
             },
             "variant": "h5"
           },
-          { "id": "primary_btn", "component": "Button", "child": "primary_btn_lbl", "variant": "primary" },
+          { "id": "primary_btn", "component": "Button", "child": "primary_btn_lbl", "variant": "primary", "action": {"event":{"name":"openProfile"}} },
           { "id": "primary_btn_lbl", "component": "Text", "text": "primaryColor=#6C5CE7 主按钮" }
         ]
       }

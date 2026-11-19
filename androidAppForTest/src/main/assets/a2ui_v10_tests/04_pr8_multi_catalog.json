@@ -28,7 +28,7 @@
           {
             "id": "name-line",
             "component": "Text",
-            "variant": "h2",
+            "variant": "body",
             "text": {
               "@path": "/user/name"
             }
@@ -38,15 +38,9 @@
             "component": "A2UIBadge",
             "@catalogId": "https://a2ui.org/specification/v1_0/catalogs/custom_components/catalog.json",
             "label": {
-              "@call": {
-                "catalogId": "https://a2ui.org/specification/v1_0/catalogs/custom_functions/catalog.json",
-                "name": "describeTier",
-                "args": {
-                  "score": {
-                    "@path": "/user/totalScore"
-                  }
-                }
-              }
+              "@call": "describeTier",
+              "catalogId": "https://a2ui.org/specification/v1_0/catalogs/custom_functions/catalog.json",
+              "args": {"score":{"@path":"/user/totalScore"}}
             }
           },
           {

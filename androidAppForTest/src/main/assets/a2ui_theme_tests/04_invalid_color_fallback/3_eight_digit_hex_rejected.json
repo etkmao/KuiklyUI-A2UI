@@ -29,7 +29,7 @@
             "text": "theme.primaryColor='#FF00FFAA' 是 8 位 hex（含 alpha），规范要求 6 位。引擎应回退默认 #00BFFF（浅蓝），下方按钮应为浅蓝而非半透明品红。",
             "variant": "caption"
           },
-          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary" },
+          { "id": "btn", "component": "Button", "child": "btn_lbl", "variant": "primary", "action": {"event":{"name":"themeTestClick"}} },
           { "id": "btn_lbl", "component": "Text", "text": "Primary Button（应显示默认浅蓝 #00BFFF）" }
         ]
       }
