@@ -38,7 +38,7 @@ import com.tencent.kuikly.core.render.android.expand.component.KRVideoPlayState
 import com.tencent.kuikly.core.render.android.expand.component.KRVideoViewContentMode
 
 /**
- * Video player adapter for the A2UI demo, backing the A2UI v0.9 "Video" component.
+ * Video player adapter for the A2UI demo, backing the A2UI v1.0 "Video" component.
  *
  * KRVideoView (created by A2UISurfaceView) delegates the actual playback surface to
  * this adapter via [createVideoView]. The A2UI Video catalog entry only specifies a

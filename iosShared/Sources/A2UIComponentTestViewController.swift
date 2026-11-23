@@ -133,7 +133,7 @@ class A2UIComponentTestViewController: UIViewController, A2UISurfaceViewDelegate
             }
 
             let versionDirectory = rootDir.components(separatedBy: "/").first ?? ""
-            let allowedVersions: Set<String>? = versionDirectory == "v1_0" ? ["1.0", "v1.0"] : versionDirectory == "v0_9" ? ["v0.9", "v0.9.1"] : nil
+            let allowedVersions: Set<String>? = versionDirectory == "v0_9" ? ["v0.9", "v0.9.1"] : ["1.0"]
             if let allowed = allowedVersions, messages.isEmpty || !messages.allSatisfy({ allowed.contains($0["version"] as? String ?? "") }) {
                 showEmptyState(reason: "\(fileName)：样本版本与目录不一致，或缺少显式 version")
                 continue
@@ -196,8 +196,8 @@ class A2UIComponentTestViewController: UIViewController, A2UISurfaceViewDelegate
                 surfaceView.bottomAnchor.constraint(equalTo: cardContainer.bottomAnchor)
             ])
 
-            let config = versionDirectory == "v1_0" ? "{\"protocolVersion\":\"1.0\",\"strictV10\":true}"
-                : versionDirectory == "v0_9" ? "{\"protocolVersion\":\"0.9\",\"strictV10\":false}" : "{}"
+            let config = versionDirectory == "v0_9" ? "{\"protocolVersion\":\"0.9\",\"strictV10\":false}"
+                : "{\"protocolVersion\":\"1.0\",\"strictV10\":true}"
             surfaceView.initSurface(configJson: config)
             surfaceView.surfaceListener = self
             A2UIDemoStreamUtil.writeMessages(surfaceView, messagesStr)

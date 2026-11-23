@@ -326,6 +326,25 @@ export function registerA2UICustomFunction(
   }
 }
 
+export function registerA2UICatalogFunction(
+  name: string,
+  catalogId: string,
+  definitionJson: string,
+  handler: A2UICustomFunctionHandler | null = null
+): void {
+  if (name.length === 0 || catalogId.length === 0) return;
+  const definition = JSON.parse(definitionJson) as Record<string, Object>;
+  definition.catalogId = catalogId;
+  definition.name = name;
+  const spec = JSON.stringify(definition);
+  if (handler !== null) a2uiCustomFunctionHandlers.set(name, handler);
+  a2uiCustomFunctionDescriptors.set(`${catalogId}::${name}`, spec);
+  a2uiNativeManager.registerA2UICustomFunctionInKmp(name, spec);
+  for (const controller of a2uiLiveControllers) {
+    controller.dispatchRegisterCustomFunction(name, spec);
+  }
+}
+
 /**
  * Reverse of [registerA2UICustomFunction]. Safe to call for unknown names.
  */

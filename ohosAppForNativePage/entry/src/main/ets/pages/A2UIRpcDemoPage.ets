@@ -60,7 +60,7 @@ import {
  *
  * #### Inbound (agent → renderer)
  *
- *  1. Tapping "Mock agent → openPage" synthesises a `callRendererFunction`
+ *  1. Tapping "Mock agent → getGreeting" synthesises a `callRendererFunction`
  *     envelope locally and feeds it into [A2UISurfaceViewController.writeStream]
  *     — the demo's stand-in for "the agent transport just delivered a
  *     frame to the core".
@@ -105,11 +105,8 @@ struct A2UIRpcDemoPage {
    * tree, so we keep this deliberately tiny.
    */
   private readonly initialCreateSurfaceEnvelope: string = (
-    '{"version":"1.0","createSurface":{"surfaceId":"rpc-demo-native-ohos",' +
-    '"components":[{"id":"root","component":"Column","styles":{"padding":8},' +
-    '"children":[{"id":"hint","component":"Text",' +
-    '"text":"Tap a button below to trigger an RPC.",' +
-    '"styles":{"fontSize":13,"color":"#334155"}}]}]}}'
+    '{"version":"1.0","createSurface":{"surfaceId":"rpc-demo-native-ohos","catalogId":"custom_functions_catalog_v1_0.json"}}\n' +
+    '{"version":"1.0","updateComponents":{"surfaceId":"rpc-demo-native-ohos","components":[{"id":"root","component":"Column","children":["hint"]},{"id":"hint","component":"Text","text":"Tap a button below to trigger an RPC."}]}}\n'
   );
 
   /** Rolling log cap — matches the Android / iOS demos. */
@@ -205,14 +202,16 @@ struct A2UIRpcDemoPage {
       version: '1.0',
       callRendererFunction: {
         surfaceId: this.surfaceId,
-        requestId: requestId,
-        name: 'openPage',
-        args: { path: '/profile' },
-        timeoutMs: 5_000
+        functionCallId: requestId,
+        callFunction: {
+          '@call': 'getGreeting',
+          catalogId: 'custom_functions_catalog_v1_0.json',
+          args: { name: 'Ada' }
+        }
       }
     };
     const json = JSON.stringify(envelope);
-    this.setStatus('Mock agent -> callRendererFunction openPage');
+    this.setStatus('Mock agent -> callRendererFunction getGreeting');
     this.log(`agent → ${json}`);
     this.controller.writeStream(json);
   }
@@ -220,7 +219,8 @@ struct A2UIRpcDemoPage {
   /**
    * Called by the Kotlin dispatcher — through the reverse
    * `napi_threadsafe_function` — for every inbound
-   * `callRendererFunction` on this surface. Payload shape:
+   * `callRendererFunction` on this surface. Library host callback fields
+   * remain requestId/name/args; these are not official wire properties:
    *
    * ```
    *   { "surfaceId":"...", "requestId":"...",
@@ -243,11 +243,11 @@ struct A2UIRpcDemoPage {
     const requestId = (req.requestId as string) ?? '';
     const name = (req.name as string) ?? '';
     const args = req.args as Record<string, Object> | undefined;
-    if (name === 'openPage') {
-      const path = (args?.path as string) ?? '';
-      this.setStatus(`Inbound openPage(path="${path}") → ok`);
+    if (name === 'getGreeting') {
+      const recipient = (args?.name as string) ?? '';
+      this.setStatus(`Inbound getGreeting(name="${recipient}") → ok`);
       this.log(`→ host responding ok for requestId=${requestId}`);
-      const resultJson = JSON.stringify({ status: 'ok', pushed: path });
+      const resultJson = JSON.stringify(`Hello, ${recipient}!`);
       this.controller.respondToRpc(reqSurfaceId, requestId, resultJson);
       return;
     }
@@ -291,14 +291,12 @@ struct A2UIRpcDemoPage {
       return;
     }
     // Mock backend: pretend we processed fetchUser(id=42) and reply.
-    const reqSurfaceId = (call.surfaceId as string) ?? this.surfaceId;
-    const requestId = (call.requestId as string) ?? '';
+    const requestId = (call.functionCallId as string) ?? '';
     const response: Record<string, Object> = {
       version: '1.0',
       agentFunctionResponse: {
-        surfaceId: reqSurfaceId,
-        requestId: requestId,
-        result: { id: 42, name: 'Alice', role: 'admin' }
+        functionCallId: requestId,
+        value: { id: 42, name: 'Alice', role: 'admin' }
       }
     };
     const respJson = JSON.stringify(response);
@@ -348,7 +346,7 @@ struct A2UIRpcDemoPage {
         .width('100%')
         .alignItems(VerticalAlign.Center)
 
-        Text('宿主：Native ArkUI + A2UISurfaceView\n演示 PR-6d 的 renderer→agent v1.0 RPC 回路')
+        Text('宿主：Native ArkUI + A2UISurfaceView\n演示 PR-6d 的 renderer→agent RPC 回路')
           .fontSize(11)
           .fontColor('#C8D8F0')
           .margin({ top: 4 })
@@ -372,6 +370,7 @@ struct A2UIRpcDemoPage {
         // with a tiny createSurface envelope then.
         Column() {
           A2UISurfaceView({
+            configJson: '{"protocolVersion":"1.0","strictV10":true}',
             onReady: (ctrl: A2UISurfaceViewController): void => {
               this.controller = ctrl;
               this.instanceId = ctrl.getInstanceId();
@@ -427,7 +426,7 @@ struct A2UIRpcDemoPage {
           .onClick(() => this.invokeAgentFetchUser())
 
         // ---------- Inbound: agent → renderer ----------
-        Button('Mock agent → openPage("/profile")')
+        Button('Mock agent → getGreeting("Ada")')
           .width('100%')
           .height(42)
           .margin({ top: 8 })

@@ -231,6 +231,14 @@ class A2UISurfaceView @JvmOverloads constructor(
             )
         }
 
+        @JvmStatic
+        @JvmOverloads
+        fun registerCatalogFunction(name: String, catalogId: String, definitionJson: String, handler: Handler? = null) {
+            ensureCustomFunctionListenerInstalled()
+            A2UIAndroidCustomFunctionRegistry.registerCatalog(name, catalogId, definitionJson,
+                handler?.let { callback -> A2UIAndroidCustomFunctionRegistry.Handler { args -> callback.invoke(args) } })
+        }
+
         /**
          * Reverse of [registerCustomFunction]. Safe to call for names that
          * were never registered.

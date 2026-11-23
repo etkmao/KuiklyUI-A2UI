@@ -16,12 +16,15 @@
 package com.tencent.kuikly.a2ui.demo.pages
 
 import com.tencent.kuikly.a2ui.bridge.A2UIBridgeManager
+import com.tencent.kuikly.a2ui.function.A2UICustomFunctionRegistry
 import com.tencent.kuikly.a2ui.dsl.embed.A2UISurface
 import com.tencent.kuikly.a2ui.dsl.embed.A2UISurfaceDSLView
+import com.tencent.kuikly.a2ui.protocol.A2UIProtocolVersion
 import com.tencent.kuikly.core.annotations.Page
 import com.tencent.kuikly.core.base.Color
 import com.tencent.kuikly.core.base.ViewBuilder
 import com.tencent.kuikly.core.directives.vfor
+import com.tencent.kuikly.core.nvi.serialization.json.JSONArray
 import com.tencent.kuikly.core.nvi.serialization.json.JSONObject
 import com.tencent.kuikly.core.pager.Pager
 import com.tencent.kuikly.core.reactive.handler.observable
@@ -45,7 +48,7 @@ import com.tencent.kuikly.core.views.layout.Column
  *     the way a real agent transport would deliver it. The host-registered
  *     JSON handler (installed via
  *     [A2UIBridgeManager.setRendererFunctionJsonHandler]) intercepts the
- *     request, pattern-matches on `name == "openPage"`, and calls
+ *     request, pattern-matches on `name == "getGreeting"`, and calls
  *     [A2UIBridgeManager.respondToAgentJson] to close the loop. The response
  *     envelope is picked up by the Kotlin core and emitted back through
  *     `methodId=108 SEND_RPC_ENVELOPE` (which, in Kuikly-embedded mode,
@@ -71,7 +74,7 @@ import com.tencent.kuikly.core.views.layout.Column
  *   │ │  "Tap a button below ..."       │   │  ← rendered from createSurface
  *   │ ╰─────────────────────────────────╯   │
  *   ├────────────────────────────────────────┤
- *   │ [ Mock agent -> openPage(/profile) ]   │  ← inbound RPC
+ *   │ [ Mock agent -> getGreeting(Ada) ]   │  ← inbound RPC
  *   │ [ Fetch user from agent (id=42)    ]   │  ← outbound RPC
  *   ├────────────────────────────────────────┤
  *   │ Event log                              │
@@ -122,7 +125,9 @@ class A2UIRpcDemoPager : Pager() {
 
     override fun created() {
         super.created()
-        // Nothing to pre-init; the RPC handler is installed on the A2UI
+        A2UICustomFunctionRegistry.register("getGreeting", """{"catalogId":"custom_functions_catalog_v1_0.json","returnType":"string","allowedCallers":"rendererOrAgent","args":{"properties":{"name":{"type":"string"}},"required":["name"],"additionalProperties":false}}""")
+        A2UICustomFunctionRegistry.register("fetchUser", """{"catalogId":"custom_functions_catalog_v1_0.json","returnType":"object","allowedCallers":"agentOnly","args":{"properties":{"id":{"type":"number"}},"required":["id"],"additionalProperties":false}}""")
+        // The RPC handler is installed on the A2UI
         // surface *after* its didInit completes, because
         // setRendererFunctionJsonHandler looks up the dslBridgeMap by
         // instanceId — which only exists once the DSL view has registered
@@ -172,6 +177,7 @@ class A2UIRpcDemoPager : Pager() {
             // --- The A2UI v1.0 surface --------------------------------
             A2UISurface {
                 attr {
+                    protocolConfig(A2UIProtocolVersion.V1_0, strict = true)
                     marginBottom(10f)
                     backgroundColor(Color(0xFFF2F6FBL))
                     borderRadius(6f)
@@ -225,7 +231,7 @@ class A2UIRpcDemoPager : Pager() {
                         backgroundColor(Color(0xFF1A73E8L))
                         borderRadius(6f)
                         titleAttr {
-                            text("Mock agent → openPage(\"/profile\")")
+                            text("Mock agent → getGreeting(\"Ada\")")
                             color(Color.WHITE)
                             fontSize(14f)
                         }
@@ -308,12 +314,11 @@ class A2UIRpcDemoPager : Pager() {
 
     /**
      * Called by [A2UIBridgeManager] for every `callRendererFunction`
-     * arriving on this surface's instance. The `requestJson` payload shape
-     * matches the on-wire protocol (minus the enclosing `callRendererFunction`
-     * key, which the dispatcher has already peeled off):
+     * arriving on this surface's instance. This library host callback retains
+     * the internal requestId/name/args API, not the official wire envelope:
      * ```
-     *   { "surfaceId":"...", "requestId":"...", "name":"openPage",
-     *     "args":{"path":"/profile"}, "timeoutMs":5000 }
+     *   { "surfaceId":"...", "requestId":"...", "name":"getGreeting",
+     *     "args":{"name":"Ada"} }
      * ```
      */
     private fun onInboundRendererFunction(requestJson: String) {
@@ -334,15 +339,16 @@ class A2UIRpcDemoPager : Pager() {
             return
         }
         when (name) {
-            "openPage" -> {
-                val path = args?.optString("path").orEmpty()
-                statusLine = "Inbound openPage(path=\"$path\") → ok"
+            "getGreeting" -> {
+                val recipient = args?.optString("name").orEmpty()
+                statusLine = "Inbound getGreeting(name=\"$recipient\") → ok"
                 log("→ host responding ok for requestId=$requestId")
                 A2UIBridgeManager.respondToAgentJson(
                     instanceId = instanceId,
                     surfaceId = reqSurfaceId,
                     requestId = requestId,
-                    resultJson = "{\"status\":\"ok\",\"pushed\":\"$path\"}",
+                    resultJson = JSONArray().apply { put("Hello, $recipient!") }
+                        .toString().removePrefix("[").removeSuffix("]"),
                 )
             }
             else -> {
@@ -364,7 +370,7 @@ class A2UIRpcDemoPager : Pager() {
     // ------------------------------------------------------------------
 
     /**
-     * Simulates an agent sending a `callRendererFunction("openPage", {...})`
+     * Simulates an agent sending a `callRendererFunction("getGreeting", {...})`
      * over the wire. We build the wire envelope by hand and feed it into the
      * DSL surface via [A2UISurfaceDSLView.writeStream], which routes it to
      * the Kotlin core's stream parser exactly like a real WebSocket chunk
@@ -380,13 +386,15 @@ class A2UIRpcDemoPager : Pager() {
             put("version", "1.0")
             put("callRendererFunction", JSONObject().apply {
                 put("surfaceId", surfaceId)
-                put("requestId", requestId)
-                put("name", "openPage")
-                put("args", JSONObject().apply { put("path", "/profile") })
-                put("timeoutMs", 5000)
+                put("functionCallId", requestId)
+                put("callFunction", JSONObject().apply {
+                    put("@call", "getGreeting")
+                    put("catalogId", "custom_functions_catalog_v1_0.json")
+                    put("args", JSONObject().apply { put("name", "Ada") })
+                })
             })
         }.toString()
-        statusLine = "Mock agent -> callRendererFunction openPage"
+        statusLine = "Mock agent -> callRendererFunction getGreeting"
         log("agent → $envelope")
         s.writeStream(envelope)
     }
@@ -456,9 +464,8 @@ class A2UIRpcDemoPager : Pager() {
         val response = JSONObject().apply {
             put("version", "1.0")
             put("agentFunctionResponse", JSONObject().apply {
-                put("surfaceId", surfaceId)
-                put("requestId", reqId)
-                put("result", JSONObject().apply {
+                put("functionCallId", reqId)
+                put("value", JSONObject().apply {
                     put("id", 42)
                     put("name", "Alice")
                     put("role", "admin")
@@ -494,24 +501,8 @@ class A2UIRpcDemoPager : Pager() {
          * roundtrip, not the UI tree.
          */
         private const val INITIAL_CREATE_SURFACE_ENVELOPE: String =
-            "{" +
-                "\"version\":\"1.0\"," +
-                "\"createSurface\":{" +
-                    "\"surfaceId\":\"rpc-demo-surface\"," +
-                    "\"components\":[" +
-                        "{" +
-                            "\"id\":\"root\",\"component\":\"Column\"," +
-                            "\"styles\":{\"padding\":8}," +
-                            "\"children\":[" +
-                                "{" +
-                                    "\"id\":\"hint\",\"component\":\"Text\"," +
-                                    "\"text\":\"Tap a button below to trigger an RPC.\"," +
-                                    "\"styles\":{\"fontSize\":13,\"color\":\"#334155\"}" +
-                                "}" +
-                            "]" +
-                        "}" +
-                    "]" +
-                "}" +
-            "}"
+            """{"version":"1.0","createSurface":{"surfaceId":"rpc-demo-surface","catalogId":"custom_functions_catalog_v1_0.json"}}
+{"version":"1.0","updateComponents":{"surfaceId":"rpc-demo-surface","components":[{"id":"root","component":"Column","children":["hint"]},{"id":"hint","component":"Text","text":"Tap a button below to trigger an RPC."}]}}
+"""
     }
 }

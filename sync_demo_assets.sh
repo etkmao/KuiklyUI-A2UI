@@ -86,6 +86,16 @@ sync_dirs() {
     done
 }
 
+sync_android() {
+    echo "→ Syncing Android formal assets…"
+    sync_dirs "$SRC_KUIKLYPAGE" "$SCRIPT_DIR/androidAppForNativePage/src/main/assets" "${COMPONENT_DIRS[@]}" "${ICON_DIRS[@]}"
+    for dir in "${COMPONENT_DIRS[@]}"; do
+        if [ -d "$SCRIPT_DIR/androidAppForBothPages/src/main/assets/$dir" ]; then
+            sync_dirs "$SRC_KUIKLYPAGE" "$SCRIPT_DIR/androidAppForBothPages/src/main/assets" "$dir"
+        fi
+    done
+}
+
 # ─── iOS sync ─────────────────────────────────────────────────────────────
 sync_ios() {
     echo "→ Syncing iOS assets…"
@@ -139,11 +149,12 @@ TARGET="${1:-all}"
 python3 "$SCRIPT_DIR/scripts/generate_demo_asset_manifest.py"
 
 case "$TARGET" in
+    android) sync_android ;;
     ios)  sync_ios ;;
     ohos) sync_ohos ;;
-    all)  sync_ios; sync_ohos ;;
+    all)  sync_android; sync_ios; sync_ohos ;;
     *)
-        echo "Usage: $0 [ios|ohos|all]"
+        echo "Usage: $0 [android|ios|ohos|all]"
         exit 1
         ;;
 esac

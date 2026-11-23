@@ -189,10 +189,8 @@ class A2UIRpcDemoViewController: UIViewController {
     /// component. The demo's point is the RPC roundtrip, not the UI
     /// tree, so we keep this deliberately tiny.
     private static let initialCreateSurfaceEnvelope: String = """
-    {"version":"1.0","createSurface":{"surfaceId":"rpc-demo-native-ios","components":\
-    [{"id":"root","component":"Column","styles":{"padding":8},"children":\
-    [{"id":"hint","component":"Text","text":"Tap a button below to trigger an RPC.",\
-    "styles":{"fontSize":13,"color":"#334155"}}]}]}}
+    {"version":"1.0","createSurface":{"surfaceId":"rpc-demo-native-ios","catalogId":"custom_functions_catalog_v1_0.json"}}
+    {"version":"1.0","updateComponents":{"surfaceId":"rpc-demo-native-ios","components":[{"id":"root","component":"Column","children":["hint"]},{"id":"hint","component":"Text","text":"Tap a button below to trigger an RPC."}]}}
     """
 
     // MARK: UI
@@ -243,7 +241,7 @@ class A2UIRpcDemoViewController: UIViewController {
         }
 
         // Bootstrap the Kotlin core for this surface.
-        surfaceView.initSurface()
+        surfaceView.initSurface(configJson: "{\"protocolVersion\":\"1.0\",\"strictV10\":true}")
 
         // Register the inbound callRendererFunction handler.
         if let bridge = rpcBridge {
@@ -277,10 +275,12 @@ class A2UIRpcDemoViewController: UIViewController {
             "version": "1.0",
             "callRendererFunction": [
                 "surfaceId": surfaceId,
-                "requestId": requestId,
-                "name": "openPage",
-                "args": ["path": "/profile"],
-                "timeoutMs": 5000
+                "functionCallId": requestId,
+                "callFunction": [
+                    "@call": "getGreeting",
+                    "catalogId": "custom_functions_catalog_v1_0.json",
+                    "args": ["name": "Ada"]
+                ]
             ]
         ]
         guard
@@ -290,16 +290,15 @@ class A2UIRpcDemoViewController: UIViewController {
             log("! failed to serialise inbound envelope")
             return
         }
-        setStatus("Mock agent -> callRendererFunction openPage")
+        setStatus("Mock agent -> callRendererFunction getGreeting")
         log("agent → \(json)")
         surfaceView.writeStream(json)
     }
 
     /// Called by `A2UIBridgeManager.setRendererFunctionJsonHandler`
     /// (via `A2UIRpcBridge.setHandler`) on every `callRendererFunction`
-    /// arriving on this surface's instance. Payload shape mirrors the
-    /// on-wire protocol minus the outer `callRendererFunction` key —
-    /// the Kotlin dispatcher has already peeled it off.
+    /// arriving on this surface's instance. Host callbacks retain internal
+    /// requestId/name/args fields; the stream uses official 1.0 fields.
     private func onInboundRendererFunction(_ requestJson: String) {
         log("← agent callRendererFunction: \(requestJson)")
         guard
@@ -320,11 +319,16 @@ class A2UIRpcDemoViewController: UIViewController {
             return
         }
         switch name {
-        case "openPage":
-            let path = args?["path"] as? String ?? ""
-            setStatus("Inbound openPage(path=\"\(path)\") → ok")
+        case "getGreeting":
+            let recipient = args?["name"] as? String ?? ""
+            setStatus("Inbound getGreeting(name=\"\(recipient)\") → ok")
             log("→ host responding ok for requestId=\(requestId)")
-            let result = "{\"status\":\"ok\",\"pushed\":\"\(path)\"}"
+            guard let resultData = try? JSONSerialization.data(
+                withJSONObject: "Hello, \(recipient)!", options: [.fragmentsAllowed]
+            ), let result = String(data: resultData, encoding: .utf8) else {
+                log("! failed to encode greeting response")
+                return
+            }
             bridge.respond(
                 instanceId: instanceId,
                 surfaceId: reqSurfaceId,
@@ -425,14 +429,12 @@ class A2UIRpcDemoViewController: UIViewController {
             return
         }
         // Mock backend: pretend we processed fetchUser(id=42) and reply.
-        let reqSurfaceId = call["surfaceId"] as? String ?? surfaceId
-        let requestId = call["requestId"] as? String ?? ""
+        let requestId = call["functionCallId"] as? String ?? ""
         let response: [String: Any] = [
             "version": "1.0",
             "agentFunctionResponse": [
-                "surfaceId": reqSurfaceId,
-                "requestId": requestId,
-                "result": ["id": 42, "name": "Alice", "role": "admin"]
+                "functionCallId": requestId,
+                "value": ["id": 42, "name": "Alice", "role": "admin"]
             ]
         ]
         guard
@@ -480,7 +482,7 @@ class A2UIRpcDemoViewController: UIViewController {
         stack.addArrangedSubview(surfaceView)
 
         stack.addArrangedSubview(makeButton(
-            title: "Mock agent → openPage(\"/profile\")",
+            title: "Mock agent → getGreeting(\"Ada\")",
             bg: UIColor(red: 0.10, green: 0.45, blue: 0.91, alpha: 1.0),
             action: #selector(simulateAgentCallRendererFunction)
         ))

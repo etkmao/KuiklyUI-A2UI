@@ -576,7 +576,10 @@ internal class A2UIEvaluationWorker(
             "formatCurrency" -> evaluateFormatCurrency(args) ?: ""
             "formatString" -> evaluateFormatString(args, itemData) ?: ""
             "pluralize" -> evaluatePluralize(args) ?: ""
-            else -> evaluateCustomFunctionAsString(funcName, args) ?: ""
+            else -> evaluateCustomFunctionAsString(
+                funcName, args,
+                if (_protocolVersion == A2UIProtocolVersion.V1_0) currentCatalogId else null,
+            ) ?: ""
         }
     }
 
@@ -1163,7 +1166,8 @@ internal class A2UIEvaluationWorker(
                 }
                 else -> raw.toString()
             }
-            com.tencent.kuikly.a2ui.function.A2UIFunctionReturnType.ARRAY -> raw.toString()
+            com.tencent.kuikly.a2ui.function.A2UIFunctionReturnType.ARRAY,
+            com.tencent.kuikly.a2ui.function.A2UIFunctionReturnType.OBJECT -> raw.toString()
             com.tencent.kuikly.a2ui.function.A2UIFunctionReturnType.VOID -> ""
         }
     }

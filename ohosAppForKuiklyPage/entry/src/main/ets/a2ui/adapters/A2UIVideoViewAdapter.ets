@@ -28,7 +28,7 @@ import {
 } from '@kuikly-open/render';
 
 /**
- * A2UI HarmonyOS Video adapter, backing the A2UI v0.9 "Video" component (KRVideoView).
+ * A2UI HarmonyOS Video adapter, backing the A2UI v1.0 "Video" component (KRVideoView).
  *
  * Mirrors the Android `A2UIVideoViewAdapter` and iOS `A2UIVideoViewHandler` roles:
  * KRVideoView (auto-registered by core-render-ohos) delegates the actual playback

@@ -15,6 +15,7 @@
 
 package com.tencent.kuikly.a2ui.adapter
 
+import com.tencent.kuikly.a2ui.function.A2UICustomFunctionRegistry
 import com.tencent.kuikly.a2ui.protocol.A2UIProtocolVersion
 import com.tencent.kuikly.a2ui.rpc.A2UIRpcDispatcher
 import com.tencent.kuikly.a2ui.rpc.A2UIRpcError
@@ -30,6 +31,7 @@ internal class A2UIRpcAdapter(
     private val getIncomingAgentCall: () -> ((A2UIRpcRequest) -> Unit)?,
     private val getEmitWireMessage: () -> ((String) -> Unit)?,
     private val serializeToJson: (Any?) -> String?,
+    private val getCatalogId: () -> String? = { null },
 ) {
     private val currentSurfaceId: String get() = getSurfaceId()
     private val _protocolVersion: A2UIProtocolVersion get() = getProtocolVersion()
@@ -160,6 +162,21 @@ internal class A2UIRpcAdapter(
             timeoutMs = timeoutMs,
             onComplete = onComplete,
         )
+        if (strictV10) {
+            val error = if (surfaceId.isEmpty() || surfaceId != currentSurfaceId) {
+                A2UIRpcError.invalidArgs("RPC surfaceId must match the current surface")
+            } else validateCatalogCall(name, getCatalogId(), args, A2UIRpcRequest.Direction.RENDERER_TO_AGENT)
+            if (error != null) {
+                val response = A2UIRpcResponse.failure(req.direction, surfaceId, req.requestId, error)
+                val callback = rpcDispatcher.onIncomingAgentResponse(response)?.onComplete
+                try {
+                    callback?.invoke(response)
+                } catch (t: Throwable) {
+                    println("[A2UI] error: rejected RPC callback threw: ${t.message}")
+                }
+                return req.requestId
+            }
+        }
         emitCallAgentFunction(req)
         return req.requestId
     }
@@ -172,6 +189,54 @@ internal class A2UIRpcAdapter(
     ): A2UIRpcRequest? {
         if (payload == null) {
             rpcWireError(envelopeKey, "payload is not a Map")
+            return null
+        }
+        if (payload.containsKey("functionCallId") || payload.containsKey("callFunction")) {
+            val allowed = setOf("surfaceId", "functionCallId", "callFunction")
+            if (strictV10 && payload.keys.any { it !in allowed }) {
+                rpcWireError(envelopeKey, "unsupported request properties")
+                return null
+            }
+            val requestId = payload["functionCallId"] as? String
+            val call = payload["callFunction"] as? Map<*, *>
+            val name = call?.get("@call") as? String
+            val catalogId = call?.get("catalogId") as? String
+            if (requestId.isNullOrEmpty() || name.isNullOrEmpty() || catalogId.isNullOrEmpty()) {
+                rpcWireError(envelopeKey, "functionCallId, @call and catalogId must be strings")
+                return null
+            }
+            if (strictV10 && call.keys.any { it !in setOf("@call", "catalogId", "args") }) {
+                rpcWireError(envelopeKey, "unsupported callFunction properties")
+                return null
+            }
+            val surfaceId = if (payload.containsKey("surfaceId")) {
+                payload["surfaceId"] as? String ?: run {
+                    rpcWireError(envelopeKey, "surfaceId must be a string when present")
+                    return null
+                }
+            } else ""
+            if (surfaceId.isNotEmpty() && currentSurfaceId.isNotEmpty() && surfaceId != currentSurfaceId) {
+                rpcWireError(envelopeKey, "surfaceId does not match current surface")
+                return null
+            }
+            val args = call["args"]
+            if (call.containsKey("args") && args !is Map<*, *>) {
+                rpcWireError(envelopeKey, "callFunction.args must be an object")
+                return null
+            }
+            @Suppress("UNCHECKED_CAST")
+            val arguments = (args as? Map<String, Any?>) ?: emptyMap()
+            if (strictV10) {
+                val error = validateCatalogCall(name, catalogId, arguments, direction)
+                if (error != null) {
+                    emitRendererFunctionResponse(A2UIRpcResponse.failure(direction, surfaceId, requestId, error))
+                    return null
+                }
+            }
+            return A2UIRpcRequest(direction, surfaceId, requestId, name, arguments, null)
+        }
+        if (strictV10) {
+            rpcWireError(envelopeKey, "official functionCallId/callFunction request required")
             return null
         }
         val surfaceId = payload["surfaceId"] as? String
@@ -247,19 +312,28 @@ internal class A2UIRpcAdapter(
             rpcWireError(envelopeKey, "payload is not a Map")
             return null
         }
-        val surfaceId = payload["surfaceId"] as? String
-        if (surfaceId.isNullOrEmpty()) {
+        val official = payload.containsKey("functionCallId")
+        if (strictV10 && !official) {
+            rpcWireError(envelopeKey, "official functionCallId/value response required")
+            return null
+        }
+        val surfaceId = if (official) currentSurfaceId else payload["surfaceId"] as? String
+        if (surfaceId == null || (!official && surfaceId.isEmpty())) {
             rpcWireError(envelopeKey, "missing or non-string 'surfaceId'")
             return null
         }
-        val requestId = payload["requestId"] as? String
+        val requestId = payload[if (official) "functionCallId" else "requestId"] as? String
         if (requestId.isNullOrEmpty()) {
             rpcWireError(envelopeKey, "missing or non-string 'requestId'")
             return null
         }
-        val hasResult = payload.containsKey("result")
+        val hasResult = payload.containsKey(if (official) "value" else "result")
         val errorRaw = payload["error"]
-        if (hasResult == (errorRaw != null)) {
+        val errorMap = errorRaw as? Map<*, *>
+        val unsupported = strictV10 && (payload.keys.any { it !in setOf("functionCallId", "value", "error") } ||
+            (errorRaw != null && (errorMap == null || errorMap["code"] !is String ||
+                errorMap["message"] !is String || errorMap.keys.any { it !in setOf("code", "message") })))
+        if (unsupported || hasResult == payload.containsKey("error")) {
             // Both present or both absent → wire-format violation.
             rpcWireError(
                 envelopeKey,
@@ -301,9 +375,31 @@ internal class A2UIRpcAdapter(
                 direction = direction,
                 surfaceId = surfaceId,
                 requestId = requestId,
-                result = payload["result"],
+                result = payload[if (official) "value" else "result"],
             )
         }
+    }
+
+    private fun validateCatalogCall(
+        name: String,
+        catalogId: String?,
+        args: Map<String, Any?>,
+        direction: A2UIRpcRequest.Direction,
+    ): A2UIRpcError? {
+        if (catalogId.isNullOrBlank() || !A2UICustomFunctionRegistry.hasCatalog(catalogId)) {
+            return A2UIRpcError("UNKNOWN_CATALOG", "RPC catalog '$catalogId' is not registered")
+        }
+        val descriptor = A2UICustomFunctionRegistry.lookupExact(name, catalogId)
+            ?: return A2UIRpcError.unknownFunction(name)
+        val allowed = when (direction) {
+            A2UIRpcRequest.Direction.AGENT_TO_RENDERER -> descriptor.allowedCallers == "rendererOrAgent"
+            A2UIRpcRequest.Direction.RENDERER_TO_AGENT -> descriptor.allowedCallers in setOf("agentOnly", "rendererOrAgent")
+        }
+        if (!allowed) return A2UIRpcError("FUNCTION_NOT_ALLOWED", "Function '$name' is not allowed in this RPC direction")
+        if (descriptor.requiresUserActivation) {
+            return A2UIRpcError("USER_ACTIVATION_REQUIRED", "RPC cannot provide trusted user activation for '$name'")
+        }
+        return descriptor.validateArguments(args)?.let { A2UIRpcError.invalidArgs(it) }
     }
 
     private fun rpcWireError(envelopeKey: String, detail: String) {
@@ -331,6 +427,14 @@ internal class A2UIRpcAdapter(
             "args" to req.args,
         )
         req.timeoutMs?.let { payload["timeoutMs"] = it }
+        if (strictV10) {
+            payload.clear()
+            payload["surfaceId"] = req.surfaceId
+            payload["functionCallId"] = req.requestId
+            val call = mutableMapOf<String, Any?>("@call" to req.name, "args" to req.args)
+            getCatalogId()?.let { call["catalogId"] = it }
+            payload["callFunction"] = call
+        }
         val json = serializeToJson(mapOf(
             "version" to A2UIProtocolVersion.V1_0.wireValue,
             "callAgentFunction" to payload,
@@ -343,15 +447,21 @@ internal class A2UIRpcAdapter(
             "surfaceId" to resp.surfaceId,
             "requestId" to resp.requestId,
         )
+        if (strictV10) {
+            base.clear()
+            base["functionCallId"] = resp.requestId
+        }
         if (resp.isSuccess) {
-            base["result"] = resp.result
+            base[if (strictV10) "value" else "result"] = resp.result
         } else {
             val err = resp.error!!
-            val errMap = mutableMapOf<String, Any?>(
-                "code" to err.code,
-            )
-            err.message?.let { errMap["message"] = it }
-            err.details?.let { errMap["details"] = it }
+            val errMap = mutableMapOf<String, Any?>("code" to err.code)
+            if (strictV10) {
+                errMap["message"] = err.message ?: err.code
+            } else {
+                err.message?.let { errMap["message"] = it }
+                err.details?.let { errMap["details"] = it }
+            }
             base["error"] = errMap
         }
         return base

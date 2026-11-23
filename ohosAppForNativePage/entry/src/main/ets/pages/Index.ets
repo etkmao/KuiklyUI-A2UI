@@ -137,7 +137,7 @@ struct Index {
           ))
 
           this.DemoEntry(new DemoEntryParams(
-            '🔁 v1.0 RPC 回路 Demo (Native)',
+            'RPC 回路 Demo (Native)',
             '用 A2UISurfaceViewController.setRpcEnvelopeOutboundHandler + a2uiInvokeAgentFunction 跑一遍 callAgentFunction 外送回路（PR-6d outbound 半边）',
             '🔁',
             '#1A73E8',
@@ -149,7 +149,7 @@ struct Index {
 
           this.DemoEntry(new DemoEntryParams(
             '组件展示',
-            '展示 A2UI v0.9 协议语义化组件：Text、Row、Column、Card 等 18 个组件',
+            '展示 A2UI v1.0 协议语义化组件：Text、Row、Column、Card 等 18 个组件',
             '🔧',
             '#F39C12',
             () => { router.pushUrl({ url: 'pages/ComponentDemoPage' }); }

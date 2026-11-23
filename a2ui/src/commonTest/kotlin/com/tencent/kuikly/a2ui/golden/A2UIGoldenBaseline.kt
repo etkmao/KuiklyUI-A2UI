@@ -16,7 +16,7 @@
 package com.tencent.kuikly.a2ui.golden
 
 /**
- * 由 ka2ui golden --accept 生成，共 266 条全字段快照。
+ * 由 ka2ui golden --accept 生成，共 370 条全字段快照。
  * 记录既有行为，不代表规范正确性；更新前必须核对行为差异。
  */
 internal object A2UIGoldenBaseline {
@@ -22318,6 +22318,6183 @@ internal object A2UIGoldenBaseline {
 #state dataModel "{\"tempHigh\":72,\"tempLow\":58,\"location\":\"Austin, TX\",\"description\":\"Clear skies with light breeze\",\"forecast\":[{\"date\":\"2025-12-16\",\"icon\":\"☀️\",\"temp\":74},{\"date\":\"2025-12-17\",\"icon\":\"☀️\",\"temp\":76},{\"date\":\"2025-12-18\",\"icon\":\"⛅\",\"temp\":71},{\"date\":\"2025-12-19\",\"icon\":\"☀️\",\"temp\":73},{\"date\":\"2025-12-20\",\"icon\":\"☀️\",\"temp\":75}]}"
 #state actions {}
 """,
+        """v1_0.formal.component.audioplayer.1_audioplayer_literal_url""" to """#0 createSurface surface="test-audio-literal"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-audio-literal" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-audio-literal" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-audio-literal" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Sample audio track"
+#4 createComponent surface="test-audio-literal" tag=2 parent=3 index=1 view="KRAudioView"
+  props:
+    "alignSelf" = "stretch"
+    "height" = 64
+    "src" = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.audioplayer.2_audioplayer_url_binding""" to """#0 createSurface surface="test-audio-binding"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-audio-binding" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-audio-binding" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-audio-binding" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = ""
+#4 createComponent surface="test-audio-binding" tag=2 parent=3 index=1 view="KRAudioView"
+  props:
+    "alignSelf" = "stretch"
+    "height" = 64
+    "src" = ""
+#5 updateData surface="test-audio-binding"
+  data:
+    "audio" = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+    "title" = "Bound Track"
+#6 updateComponent surface="test-audio-binding" tag=2 view="KRAudioView"
+  props:
+    "src" = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+#7 updateComponent surface="test-audio-binding" tag=4 view="KRRichTextView"
+  props:
+    "text" = "Bound Track"
+#state dataModel "{\"audio\":\"https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3\",\"title\":\"Bound Track\"}"
+#state actions {}
+""",
+        """v1_0.formal.component.audioplayer.3_audioplayer_in_column""" to """#0 createSurface surface="test-audio-column"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-audio-column" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-audio-column" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-audio-column" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Now Playing"
+#4 createComponent surface="test-audio-column" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### SoundHelix Song 1"
+#5 createComponent surface="test-audio-column" tag=6 parent=2 index=2 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#6 createComponent surface="test-audio-column" tag=7 parent=6 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "SoundHelix Song 1"
+#7 createComponent surface="test-audio-column" tag=5 parent=6 index=1 view="KRAudioView"
+  props:
+    "alignSelf" = "stretch"
+    "height" = 64
+    "src" = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.button.1_button_variant_default""" to """#0 createSurface surface="test-btn-default"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-btn-default" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-btn-default" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "center"
+    "backgroundColor" = "4294309365"
+    "borderColor" = "4291611852"
+    "borderRadius" = "6"
+    "borderWidth" = "1"
+    "flexDirection" = "row"
+    "justifyContent" = "center"
+    "margin" = 8
+    "padding" = 10
+    "paddingLeft" = 16
+    "paddingRight" = 16
+    "touchEnable" = 1
+#3 createComponent surface="test-btn-default" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 0
+    "text" = "Default Button"
+#state dataModel "{}"
+#state actions {"2": "{\"event\":{\"name\":\"defaultClicked\"}}"}
+""",
+        """v1_0.formal.component.button.2_button_variant_primary""" to """#0 createSurface surface="test-btn-primary"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-btn-primary" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-btn-primary" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "center"
+    "backgroundColor" = "4278239231"
+    "borderRadius" = "6"
+    "flexDirection" = "row"
+    "justifyContent" = "center"
+    "margin" = 8
+    "padding" = 10
+    "paddingLeft" = 16
+    "paddingRight" = 16
+    "touchEnable" = 1
+#3 createComponent surface="test-btn-primary" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 0
+    "text" = "Primary Action"
+#state dataModel "{}"
+#state actions {"2": "{\"event\":{\"name\":\"primaryClicked\"}}"}
+""",
+        """v1_0.formal.component.button.3_button_variant_borderless""" to """#0 createSurface surface="test-btn-borderless"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-btn-borderless" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-btn-borderless" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "center"
+    "borderRadius" = "6"
+    "flexDirection" = "row"
+    "justifyContent" = "center"
+    "margin" = 8
+    "padding" = 10
+    "paddingLeft" = 16
+    "paddingRight" = 16
+    "touchEnable" = 1
+#3 createComponent surface="test-btn-borderless" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 0
+    "text" = "Link Style"
+#state dataModel "{}"
+#state actions {"2": "{\"event\":{\"name\":\"linkClicked\"}}"}
+""",
+        """v1_0.formal.component.button.4_button_icon_only""" to """#0 createSurface surface="test-btn-icon"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-btn-icon" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-btn-icon" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "space-evenly"
+#3 createComponent surface="test-btn-icon" tag=3 parent=2 index=0 view="KRView"
+  props:
+    "alignItems" = "center"
+    "borderRadius" = "6"
+    "flexDirection" = "row"
+    "justifyContent" = "center"
+    "margin" = 8
+    "padding" = 10
+    "paddingLeft" = 16
+    "paddingRight" = 16
+    "touchEnable" = 1
+#4 createComponent surface="test-btn-icon" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "🔗"
+    "textAlign" = "center"
+    "width" = 24
+#5 createComponent surface="test-btn-icon" tag=5 parent=2 index=1 view="KRView"
+  props:
+    "alignItems" = "center"
+    "backgroundColor" = "4294309365"
+    "borderColor" = "4291611852"
+    "borderRadius" = "6"
+    "borderWidth" = "1"
+    "flexDirection" = "row"
+    "justifyContent" = "center"
+    "margin" = 8
+    "padding" = 10
+    "paddingLeft" = 16
+    "paddingRight" = 16
+    "touchEnable" = 1
+#6 createComponent surface="test-btn-icon" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "❤"
+    "textAlign" = "center"
+    "width" = 24
+#7 createComponent surface="test-btn-icon" tag=7 parent=2 index=2 view="KRView"
+  props:
+    "alignItems" = "center"
+    "backgroundColor" = "4278239231"
+    "borderRadius" = "6"
+    "flexDirection" = "row"
+    "justifyContent" = "center"
+    "margin" = 8
+    "padding" = 10
+    "paddingLeft" = 16
+    "paddingRight" = 16
+    "touchEnable" = 1
+#8 createComponent surface="test-btn-icon" tag=8 parent=7 index=0 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "🗑"
+    "textAlign" = "center"
+    "width" = 24
+#state dataModel "{}"
+#state actions {"3": "{\"event\":{\"name\":\"shareClicked\"}}", "5": "{\"event\":{\"name\":\"favClicked\"}}", "7": "{\"event\":{\"name\":\"deleteClicked\"}}"}
+""",
+        """v1_0.formal.component.button.5_button_action_with_context""" to """#0 createSurface surface="test-btn-context"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-btn-context" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-btn-context" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "center"
+    "backgroundColor" = "4278239231"
+    "borderRadius" = "6"
+    "flexDirection" = "row"
+    "justifyContent" = "center"
+    "margin" = 8
+    "padding" = 10
+    "paddingLeft" = 16
+    "paddingRight" = 16
+    "touchEnable" = 1
+#3 createComponent surface="test-btn-context" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 0
+    "text" = "Buy Now"
+#state dataModel "{}"
+#state actions {"2": "{\"event\":{\"name\":\"buyItem\",\"context\":{\"itemId\":\"SKU-001\",\"quantity\":2}}}"}
+""",
+        """v1_0.formal.component.card.1_card_single_text_child""" to """#0 createSurface surface="test-card-single-text"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-card-single-text" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-card-single-text" tag=2 parent=1 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Card with a single Text child"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.card.2_card_with_column""" to """#0 createSurface surface="test-card-column"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-card-column" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-card-column" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-card-column" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#### Card title"
+#4 createComponent surface="test-card-column" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Card body. Use Column to host multiple children."
+#5 createComponent surface="test-card-column" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "footer"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.card.3_card_with_row""" to """#0 createSurface surface="test-card-row"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-card-row" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-card-row" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+#3 createComponent surface="test-card-row" tag=3 parent=2 index=0 view="KRImageView"
+  props:
+    "borderRadius" = "20"
+    "height" = 40
+    "margin" = 8
+    "src" = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=300&fit=crop"
+    "width" = 40
+#4 createComponent surface="test-card-row" tag=4 parent=2 index=1 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flex" = 1
+    "flexDirection" = "column"
+#5 createComponent surface="test-card-row" tag=5 parent=4 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### John Doe"
+#6 createComponent surface="test-card-row" tag=6 parent=4 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Software Engineer"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.card.4_card_nested_cards""" to """#0 createSurface surface="test-card-nested"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-card-nested" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-card-nested" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-card-nested" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#### Outer Card"
+#4 createComponent surface="test-card-nested" tag=4 parent=2 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#5 createComponent surface="test-card-nested" tag=5 parent=4 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Inner Card A"
+#6 createComponent surface="test-card-nested" tag=6 parent=2 index=2 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#7 createComponent surface="test-card-nested" tag=7 parent=6 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Inner Card B"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.checkbox.1_checkbox_value_true""" to """#0 createSurface surface="test-cb-true"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-cb-true" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-cb-true" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "margin" = 8
+#3 createComponent surface="test-cb-true" tag=2 parent=3 index=0 view="KRCheckBoxView"
+  props:
+    "__primaryColor" = "4278239231"
+    "checked" = "true"
+    "height" = 24
+    "marginRight" = 8
+    "width" = 24
+#4 createComponent surface="test-cb-true" tag=4 parent=3 index=1 view="KRRichTextView"
+  props:
+    "color" = "#1A1A1A"
+    "flex" = 1
+    "fontSize" = 16.0
+    "text" = "I agree (initially checked)"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.checkbox.2_checkbox_value_false""" to """#0 createSurface surface="test-cb-false"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-cb-false" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-cb-false" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "margin" = 8
+#3 createComponent surface="test-cb-false" tag=2 parent=3 index=0 view="KRCheckBoxView"
+  props:
+    "__primaryColor" = "4278239231"
+    "checked" = "false"
+    "height" = 24
+    "marginRight" = 8
+    "width" = 24
+#4 createComponent surface="test-cb-false" tag=4 parent=3 index=1 view="KRRichTextView"
+  props:
+    "color" = "#1A1A1A"
+    "flex" = 1
+    "fontSize" = 16.0
+    "text" = "Subscribe to newsletter"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.checkbox.3_checkbox_value_binding""" to """#0 createSurface surface="test-cb-binding"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-cb-binding" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-cb-binding" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-cb-binding" tag=5 parent=2 index=0 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "margin" = 8
+#4 createComponent surface="test-cb-binding" tag=3 parent=5 index=0 view="KRCheckBoxView"
+  props:
+    "__checkBoxBindingPath" = "dark"
+    "__primaryColor" = "4278239231"
+    "checked" = ""
+    "height" = 24
+    "marginRight" = 8
+    "width" = 24
+#5 createComponent surface="test-cb-binding" tag=6 parent=5 index=1 view="KRRichTextView"
+  props:
+    "color" = "#1A1A1A"
+    "flex" = 1
+    "fontSize" = 16.0
+    "text" = "Enable dark mode"
+#6 createComponent surface="test-cb-binding" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Dark mode is: "
+#7 updateData surface="test-cb-binding"
+  data:
+    "dark" = false
+#8 updateComponent surface="test-cb-binding" tag=4 view="KRRichTextView"
+  props:
+    "text" = "Dark mode is: false"
+#9 updateComponent surface="test-cb-binding" tag=3 view="KRCheckBoxView"
+  props:
+    "checked" = false
+#state dataModel "{\"dark\":false}"
+#state actions {}
+""",
+        """v1_0.formal.component.checkbox.4_checkbox_multiple""" to """#0 createSurface surface="test-cb-multi"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-cb-multi" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-cb-multi" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-cb-multi" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### Preferences"
+#4 createComponent surface="test-cb-multi" tag=7 parent=2 index=1 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "margin" = 8
+#5 createComponent surface="test-cb-multi" tag=4 parent=7 index=0 view="KRCheckBoxView"
+  props:
+    "__primaryColor" = "4278239231"
+    "checked" = "true"
+    "height" = 24
+    "marginRight" = 8
+    "width" = 24
+#6 createComponent surface="test-cb-multi" tag=8 parent=7 index=1 view="KRRichTextView"
+  props:
+    "color" = "#1A1A1A"
+    "flex" = 1
+    "fontSize" = 16.0
+    "text" = "Receive email"
+#7 createComponent surface="test-cb-multi" tag=9 parent=2 index=2 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "margin" = 8
+#8 createComponent surface="test-cb-multi" tag=5 parent=9 index=0 view="KRCheckBoxView"
+  props:
+    "__primaryColor" = "4278239231"
+    "checked" = "false"
+    "height" = 24
+    "marginRight" = 8
+    "width" = 24
+#9 createComponent surface="test-cb-multi" tag=10 parent=9 index=1 view="KRRichTextView"
+  props:
+    "color" = "#1A1A1A"
+    "flex" = 1
+    "fontSize" = 16.0
+    "text" = "Receive SMS"
+#10 createComponent surface="test-cb-multi" tag=11 parent=2 index=3 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "margin" = 8
+#11 createComponent surface="test-cb-multi" tag=6 parent=11 index=0 view="KRCheckBoxView"
+  props:
+    "__primaryColor" = "4278239231"
+    "checked" = "true"
+    "height" = 24
+    "marginRight" = 8
+    "width" = 24
+#12 createComponent surface="test-cb-multi" tag=12 parent=11 index=1 view="KRRichTextView"
+  props:
+    "color" = "#1A1A1A"
+    "flex" = 1
+    "fontSize" = 16.0
+    "text" = "Receive push"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.choicepicker.1_choicepicker_mutually_exclusive_checkbox""" to """#0 createSurface surface="test-cp-mut-cb"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-cp-mut-cb" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-cp-mut-cb" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-cp-mut-cb" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Size"
+#4 createComponent surface="test-cp-mut-cb" tag=2 parent=3 index=1 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "displayStyle" = "checkbox"
+    "flexDirection" = "column"
+    "label" = "Size"
+    "options" = [{"label": "Small", "value": "S"}, {"label": "Medium", "value": "M"}, {"label": "Large", "value": "L"}]
+    "value" = ["M"]
+    "variant" = "mutuallyExclusive"
+#5 createComponent surface="test-cp-mut-cb" tag=5 parent=2 index=0 view="KRView"
+  props:
+    "__choiceOptionValue" = "S"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "mutuallyExclusive"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+    "paddingTop" = 8.0
+    "touchEnable" = 1
+#6 createComponent surface="test-cp-mut-cb" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "color" = "#999999"
+    "fontSize" = 18.0
+    "marginRight" = 8.0
+    "text" = "○"
+#7 createComponent surface="test-cp-mut-cb" tag=7 parent=5 index=1 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "text" = "Small"
+#8 createComponent surface="test-cp-mut-cb" tag=8 parent=2 index=1 view="KRView"
+  props:
+    "__choiceOptionValue" = "M"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "mutuallyExclusive"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+    "paddingTop" = 8.0
+    "touchEnable" = 1
+#9 createComponent surface="test-cp-mut-cb" tag=9 parent=8 index=0 view="KRRichTextView"
+  props:
+    "color" = "#00BFFF"
+    "fontSize" = 18.0
+    "marginRight" = 8.0
+    "text" = "●"
+#10 createComponent surface="test-cp-mut-cb" tag=10 parent=8 index=1 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "text" = "Medium"
+#11 createComponent surface="test-cp-mut-cb" tag=11 parent=2 index=2 view="KRView"
+  props:
+    "__choiceOptionValue" = "L"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "mutuallyExclusive"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+    "paddingTop" = 8.0
+    "touchEnable" = 1
+#12 createComponent surface="test-cp-mut-cb" tag=12 parent=11 index=0 view="KRRichTextView"
+  props:
+    "color" = "#999999"
+    "fontSize" = 18.0
+    "marginRight" = 8.0
+    "text" = "○"
+#13 createComponent surface="test-cp-mut-cb" tag=13 parent=11 index=1 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "text" = "Large"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.choicepicker.2_choicepicker_multiple_selection_checkbox""" to """#0 createSurface surface="test-cp-multi-cb"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-cp-multi-cb" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-cp-multi-cb" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-cp-multi-cb" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Languages I speak"
+#4 createComponent surface="test-cp-multi-cb" tag=2 parent=3 index=1 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "displayStyle" = "checkbox"
+    "flexDirection" = "column"
+    "label" = "Languages I speak"
+    "options" = [{"label": "English", "value": "en"}, {"label": "中文", "value": "zh"}, {"label": "Français", "value": "fr"}, {"label": "Deutsch", "value": "de"}, {"label": "Español", "value": "es"}]
+    "value" = ["en", "zh"]
+    "variant" = "multipleSelection"
+#5 createComponent surface="test-cp-multi-cb" tag=5 parent=2 index=0 view="KRView"
+  props:
+    "__choiceOptionValue" = "en"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "multipleSelection"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+    "paddingTop" = 8.0
+    "touchEnable" = 1
+#6 createComponent surface="test-cp-multi-cb" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "color" = "#00BFFF"
+    "fontSize" = 18.0
+    "marginRight" = 8.0
+    "text" = "☑"
+#7 createComponent surface="test-cp-multi-cb" tag=7 parent=5 index=1 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "text" = "English"
+#8 createComponent surface="test-cp-multi-cb" tag=8 parent=2 index=1 view="KRView"
+  props:
+    "__choiceOptionValue" = "zh"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "multipleSelection"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+    "paddingTop" = 8.0
+    "touchEnable" = 1
+#9 createComponent surface="test-cp-multi-cb" tag=9 parent=8 index=0 view="KRRichTextView"
+  props:
+    "color" = "#00BFFF"
+    "fontSize" = 18.0
+    "marginRight" = 8.0
+    "text" = "☑"
+#10 createComponent surface="test-cp-multi-cb" tag=10 parent=8 index=1 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "text" = "中文"
+#11 createComponent surface="test-cp-multi-cb" tag=11 parent=2 index=2 view="KRView"
+  props:
+    "__choiceOptionValue" = "fr"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "multipleSelection"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+    "paddingTop" = 8.0
+    "touchEnable" = 1
+#12 createComponent surface="test-cp-multi-cb" tag=12 parent=11 index=0 view="KRRichTextView"
+  props:
+    "color" = "#999999"
+    "fontSize" = 18.0
+    "marginRight" = 8.0
+    "text" = "□"
+#13 createComponent surface="test-cp-multi-cb" tag=13 parent=11 index=1 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "text" = "Français"
+#14 createComponent surface="test-cp-multi-cb" tag=14 parent=2 index=3 view="KRView"
+  props:
+    "__choiceOptionValue" = "de"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "multipleSelection"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+    "paddingTop" = 8.0
+    "touchEnable" = 1
+#15 createComponent surface="test-cp-multi-cb" tag=15 parent=14 index=0 view="KRRichTextView"
+  props:
+    "color" = "#999999"
+    "fontSize" = 18.0
+    "marginRight" = 8.0
+    "text" = "□"
+#16 createComponent surface="test-cp-multi-cb" tag=16 parent=14 index=1 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "text" = "Deutsch"
+#17 createComponent surface="test-cp-multi-cb" tag=17 parent=2 index=4 view="KRView"
+  props:
+    "__choiceOptionValue" = "es"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "multipleSelection"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+    "paddingTop" = 8.0
+    "touchEnable" = 1
+#18 createComponent surface="test-cp-multi-cb" tag=18 parent=17 index=0 view="KRRichTextView"
+  props:
+    "color" = "#999999"
+    "fontSize" = 18.0
+    "marginRight" = 8.0
+    "text" = "□"
+#19 createComponent surface="test-cp-multi-cb" tag=19 parent=17 index=1 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "text" = "Español"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.choicepicker.3_choicepicker_mutually_exclusive_chips""" to """#0 createSurface surface="test-cp-mut-chips"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-cp-mut-chips" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-cp-mut-chips" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-cp-mut-chips" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Plan"
+#4 createComponent surface="test-cp-mut-chips" tag=2 parent=3 index=1 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "flex-start"
+    "alignSelf" = "stretch"
+    "displayStyle" = "chips"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "label" = "Plan"
+    "options" = [{"label": "Free", "value": "free"}, {"label": "Pro", "value": "pro"}, {"label": "Team", "value": "team"}]
+    "value" = ["pro"]
+    "variant" = "mutuallyExclusive"
+#5 createComponent surface="test-cp-mut-chips" tag=5 parent=2 index=0 view="KRView"
+  props:
+    "__choiceOptionValue" = "free"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "mutuallyExclusive"
+    "alignItems" = "center"
+    "alignSelf" = "flex-start"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = 16.0
+    "justifyContent" = "center"
+    "marginBottom" = 8.0
+    "marginRight" = 8.0
+    "paddingBottom" = 6.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 6.0
+    "touchEnable" = 1
+#6 createComponent surface="test-cp-mut-chips" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "color" = "4281545523"
+    "fontSize" = 14.0
+    "text" = "Free"
+#7 createComponent surface="test-cp-mut-chips" tag=7 parent=2 index=1 view="KRView"
+  props:
+    "__choiceOptionValue" = "pro"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "mutuallyExclusive"
+    "alignItems" = "center"
+    "alignSelf" = "flex-start"
+    "backgroundColor" = "4278239231"
+    "borderRadius" = 16.0
+    "justifyContent" = "center"
+    "marginBottom" = 8.0
+    "marginRight" = 8.0
+    "paddingBottom" = 6.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 6.0
+    "touchEnable" = 1
+#8 createComponent surface="test-cp-mut-chips" tag=8 parent=7 index=0 view="KRRichTextView"
+  props:
+    "color" = "4294967295"
+    "fontSize" = 14.0
+    "text" = "Pro"
+#9 createComponent surface="test-cp-mut-chips" tag=9 parent=2 index=2 view="KRView"
+  props:
+    "__choiceOptionValue" = "team"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "mutuallyExclusive"
+    "alignItems" = "center"
+    "alignSelf" = "flex-start"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = 16.0
+    "justifyContent" = "center"
+    "marginBottom" = 8.0
+    "marginRight" = 8.0
+    "paddingBottom" = 6.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 6.0
+    "touchEnable" = 1
+#10 createComponent surface="test-cp-mut-chips" tag=10 parent=9 index=0 view="KRRichTextView"
+  props:
+    "color" = "4281545523"
+    "fontSize" = 14.0
+    "text" = "Team"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.choicepicker.4_choicepicker_multiple_selection_chips""" to """#0 createSurface surface="test-cp-multi-chips"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-cp-multi-chips" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-cp-multi-chips" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-cp-multi-chips" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Tags"
+#4 createComponent surface="test-cp-multi-chips" tag=2 parent=3 index=1 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "flex-start"
+    "alignSelf" = "stretch"
+    "displayStyle" = "chips"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "label" = "Tags"
+    "options" = [{"label": "Kotlin", "value": "kotlin"}, {"label": "Swift", "value": "swift"}, {"label": "ArkTS", "value": "arkts"}, {"label": "JS", "value": "js"}, {"label": "Compose", "value": "compose"}]
+    "value" = ["kotlin", "compose"]
+    "variant" = "multipleSelection"
+#5 createComponent surface="test-cp-multi-chips" tag=5 parent=2 index=0 view="KRView"
+  props:
+    "__choiceOptionValue" = "kotlin"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "multipleSelection"
+    "alignItems" = "center"
+    "alignSelf" = "flex-start"
+    "backgroundColor" = "4278239231"
+    "borderRadius" = 16.0
+    "justifyContent" = "center"
+    "marginBottom" = 8.0
+    "marginRight" = 8.0
+    "paddingBottom" = 6.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 6.0
+    "touchEnable" = 1
+#6 createComponent surface="test-cp-multi-chips" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "color" = "4294967295"
+    "fontSize" = 14.0
+    "text" = "Kotlin"
+#7 createComponent surface="test-cp-multi-chips" tag=7 parent=2 index=1 view="KRView"
+  props:
+    "__choiceOptionValue" = "swift"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "multipleSelection"
+    "alignItems" = "center"
+    "alignSelf" = "flex-start"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = 16.0
+    "justifyContent" = "center"
+    "marginBottom" = 8.0
+    "marginRight" = 8.0
+    "paddingBottom" = 6.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 6.0
+    "touchEnable" = 1
+#8 createComponent surface="test-cp-multi-chips" tag=8 parent=7 index=0 view="KRRichTextView"
+  props:
+    "color" = "4281545523"
+    "fontSize" = 14.0
+    "text" = "Swift"
+#9 createComponent surface="test-cp-multi-chips" tag=9 parent=2 index=2 view="KRView"
+  props:
+    "__choiceOptionValue" = "arkts"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "multipleSelection"
+    "alignItems" = "center"
+    "alignSelf" = "flex-start"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = 16.0
+    "justifyContent" = "center"
+    "marginBottom" = 8.0
+    "marginRight" = 8.0
+    "paddingBottom" = 6.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 6.0
+    "touchEnable" = 1
+#10 createComponent surface="test-cp-multi-chips" tag=10 parent=9 index=0 view="KRRichTextView"
+  props:
+    "color" = "4281545523"
+    "fontSize" = 14.0
+    "text" = "ArkTS"
+#11 createComponent surface="test-cp-multi-chips" tag=11 parent=2 index=3 view="KRView"
+  props:
+    "__choiceOptionValue" = "js"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "multipleSelection"
+    "alignItems" = "center"
+    "alignSelf" = "flex-start"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = 16.0
+    "justifyContent" = "center"
+    "marginBottom" = 8.0
+    "marginRight" = 8.0
+    "paddingBottom" = 6.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 6.0
+    "touchEnable" = 1
+#12 createComponent surface="test-cp-multi-chips" tag=12 parent=11 index=0 view="KRRichTextView"
+  props:
+    "color" = "4281545523"
+    "fontSize" = 14.0
+    "text" = "JS"
+#13 createComponent surface="test-cp-multi-chips" tag=13 parent=2 index=4 view="KRView"
+  props:
+    "__choiceOptionValue" = "compose"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "multipleSelection"
+    "alignItems" = "center"
+    "alignSelf" = "flex-start"
+    "backgroundColor" = "4278239231"
+    "borderRadius" = 16.0
+    "justifyContent" = "center"
+    "marginBottom" = 8.0
+    "marginRight" = 8.0
+    "paddingBottom" = 6.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 6.0
+    "touchEnable" = 1
+#14 createComponent surface="test-cp-multi-chips" tag=14 parent=13 index=0 view="KRRichTextView"
+  props:
+    "color" = "4294967295"
+    "fontSize" = 14.0
+    "text" = "Compose"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.choicepicker.5_choicepicker_filterable""" to """#0 createSurface surface="test-cp-filterable"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-cp-filterable" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-cp-filterable" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-cp-filterable" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Country"
+#4 createComponent surface="test-cp-filterable" tag=5 parent=3 index=1 view="KRTextFieldView"
+  props:
+    "__choicePickerFilterId" = "cp"
+    "alignSelf" = "stretch"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = 8.0
+    "fontSize" = 14.0
+    "height" = 36.0
+    "marginBottom" = 8.0
+    "paddingLeft" = 10.0
+    "paddingRight" = 10.0
+    "placeholder" = ""
+#5 createComponent surface="test-cp-filterable" tag=2 parent=3 index=2 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "displayStyle" = "checkbox"
+    "filterable" = true
+    "flexDirection" = "column"
+    "label" = "Country"
+    "options" = [{"label": "China", "value": "china"}, {"label": "United States", "value": "united states"}, {"label": "Japan", "value": "japan"}, {"label": "France", "value": "france"}, {"label": "Germany", "value": "germany"}, {"label": "India", "value": "india"}, {"label": "Brazil", "value": "brazil"}, {"label": "Australia", "value": "australia"}]
+    "value" = ["china"]
+    "variant" = "mutuallyExclusive"
+#6 createComponent surface="test-cp-filterable" tag=6 parent=2 index=0 view="KRView"
+  props:
+    "__choiceOptionValue" = "china"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "mutuallyExclusive"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+    "paddingTop" = 8.0
+    "touchEnable" = 1
+#7 createComponent surface="test-cp-filterable" tag=7 parent=6 index=0 view="KRRichTextView"
+  props:
+    "color" = "#00BFFF"
+    "fontSize" = 18.0
+    "marginRight" = 8.0
+    "text" = "●"
+#8 createComponent surface="test-cp-filterable" tag=8 parent=6 index=1 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "text" = "China"
+#9 createComponent surface="test-cp-filterable" tag=9 parent=2 index=1 view="KRView"
+  props:
+    "__choiceOptionValue" = "united states"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "mutuallyExclusive"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+    "paddingTop" = 8.0
+    "touchEnable" = 1
+#10 createComponent surface="test-cp-filterable" tag=10 parent=9 index=0 view="KRRichTextView"
+  props:
+    "color" = "#999999"
+    "fontSize" = 18.0
+    "marginRight" = 8.0
+    "text" = "○"
+#11 createComponent surface="test-cp-filterable" tag=11 parent=9 index=1 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "text" = "United States"
+#12 createComponent surface="test-cp-filterable" tag=12 parent=2 index=2 view="KRView"
+  props:
+    "__choiceOptionValue" = "japan"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "mutuallyExclusive"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+    "paddingTop" = 8.0
+    "touchEnable" = 1
+#13 createComponent surface="test-cp-filterable" tag=13 parent=12 index=0 view="KRRichTextView"
+  props:
+    "color" = "#999999"
+    "fontSize" = 18.0
+    "marginRight" = 8.0
+    "text" = "○"
+#14 createComponent surface="test-cp-filterable" tag=14 parent=12 index=1 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "text" = "Japan"
+#15 createComponent surface="test-cp-filterable" tag=15 parent=2 index=3 view="KRView"
+  props:
+    "__choiceOptionValue" = "france"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "mutuallyExclusive"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+    "paddingTop" = 8.0
+    "touchEnable" = 1
+#16 createComponent surface="test-cp-filterable" tag=16 parent=15 index=0 view="KRRichTextView"
+  props:
+    "color" = "#999999"
+    "fontSize" = 18.0
+    "marginRight" = 8.0
+    "text" = "○"
+#17 createComponent surface="test-cp-filterable" tag=17 parent=15 index=1 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "text" = "France"
+#18 createComponent surface="test-cp-filterable" tag=18 parent=2 index=4 view="KRView"
+  props:
+    "__choiceOptionValue" = "germany"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "mutuallyExclusive"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+    "paddingTop" = 8.0
+    "touchEnable" = 1
+#19 createComponent surface="test-cp-filterable" tag=19 parent=18 index=0 view="KRRichTextView"
+  props:
+    "color" = "#999999"
+    "fontSize" = 18.0
+    "marginRight" = 8.0
+    "text" = "○"
+#20 createComponent surface="test-cp-filterable" tag=20 parent=18 index=1 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "text" = "Germany"
+#21 createComponent surface="test-cp-filterable" tag=21 parent=2 index=5 view="KRView"
+  props:
+    "__choiceOptionValue" = "india"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "mutuallyExclusive"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+    "paddingTop" = 8.0
+    "touchEnable" = 1
+#22 createComponent surface="test-cp-filterable" tag=22 parent=21 index=0 view="KRRichTextView"
+  props:
+    "color" = "#999999"
+    "fontSize" = 18.0
+    "marginRight" = 8.0
+    "text" = "○"
+#23 createComponent surface="test-cp-filterable" tag=23 parent=21 index=1 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "text" = "India"
+#24 createComponent surface="test-cp-filterable" tag=24 parent=2 index=6 view="KRView"
+  props:
+    "__choiceOptionValue" = "brazil"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "mutuallyExclusive"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+    "paddingTop" = 8.0
+    "touchEnable" = 1
+#25 createComponent surface="test-cp-filterable" tag=25 parent=24 index=0 view="KRRichTextView"
+  props:
+    "color" = "#999999"
+    "fontSize" = 18.0
+    "marginRight" = 8.0
+    "text" = "○"
+#26 createComponent surface="test-cp-filterable" tag=26 parent=24 index=1 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "text" = "Brazil"
+#27 createComponent surface="test-cp-filterable" tag=27 parent=2 index=7 view="KRView"
+  props:
+    "__choiceOptionValue" = "australia"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "mutuallyExclusive"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+    "paddingTop" = 8.0
+    "touchEnable" = 1
+#28 createComponent surface="test-cp-filterable" tag=28 parent=27 index=0 view="KRRichTextView"
+  props:
+    "color" = "#999999"
+    "fontSize" = 18.0
+    "marginRight" = 8.0
+    "text" = "○"
+#29 createComponent surface="test-cp-filterable" tag=29 parent=27 index=1 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "text" = "Australia"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.choicepicker.6_choicepicker_value_binding""" to """#0 createSurface surface="test-cp-binding"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-cp-binding" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-cp-binding" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-cp-binding" tag=5 parent=2 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#4 createComponent surface="test-cp-binding" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Topics"
+#5 createComponent surface="test-cp-binding" tag=3 parent=5 index=1 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "flex-start"
+    "alignSelf" = "stretch"
+    "displayStyle" = "chips"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "label" = "Topics"
+    "options" = [{"label": "Sports", "value": "sports"}, {"label": "News", "value": "news"}, {"label": "Tech", "value": "tech"}, {"label": "Movies", "value": "movies"}]
+    "value" = ""
+    "variant" = "multipleSelection"
+#6 createComponent surface="test-cp-binding" tag=7 parent=3 index=0 view="KRView"
+  props:
+    "__choiceOptionValue" = "sports"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "multipleSelection"
+    "alignItems" = "center"
+    "alignSelf" = "flex-start"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = 16.0
+    "justifyContent" = "center"
+    "marginBottom" = 8.0
+    "marginRight" = 8.0
+    "paddingBottom" = 6.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 6.0
+    "touchEnable" = 1
+#7 createComponent surface="test-cp-binding" tag=8 parent=7 index=0 view="KRRichTextView"
+  props:
+    "color" = "4281545523"
+    "fontSize" = 14.0
+    "text" = "Sports"
+#8 createComponent surface="test-cp-binding" tag=9 parent=3 index=1 view="KRView"
+  props:
+    "__choiceOptionValue" = "news"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "multipleSelection"
+    "alignItems" = "center"
+    "alignSelf" = "flex-start"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = 16.0
+    "justifyContent" = "center"
+    "marginBottom" = 8.0
+    "marginRight" = 8.0
+    "paddingBottom" = 6.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 6.0
+    "touchEnable" = 1
+#9 createComponent surface="test-cp-binding" tag=10 parent=9 index=0 view="KRRichTextView"
+  props:
+    "color" = "4281545523"
+    "fontSize" = 14.0
+    "text" = "News"
+#10 createComponent surface="test-cp-binding" tag=11 parent=3 index=2 view="KRView"
+  props:
+    "__choiceOptionValue" = "tech"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "multipleSelection"
+    "alignItems" = "center"
+    "alignSelf" = "flex-start"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = 16.0
+    "justifyContent" = "center"
+    "marginBottom" = 8.0
+    "marginRight" = 8.0
+    "paddingBottom" = 6.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 6.0
+    "touchEnable" = 1
+#11 createComponent surface="test-cp-binding" tag=12 parent=11 index=0 view="KRRichTextView"
+  props:
+    "color" = "4281545523"
+    "fontSize" = 14.0
+    "text" = "Tech"
+#12 createComponent surface="test-cp-binding" tag=13 parent=3 index=3 view="KRView"
+  props:
+    "__choiceOptionValue" = "movies"
+    "__choicePickerParentId" = "cp"
+    "__choicePickerVariant" = "multipleSelection"
+    "alignItems" = "center"
+    "alignSelf" = "flex-start"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = 16.0
+    "justifyContent" = "center"
+    "marginBottom" = 8.0
+    "marginRight" = 8.0
+    "paddingBottom" = 6.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 6.0
+    "touchEnable" = 1
+#13 createComponent surface="test-cp-binding" tag=14 parent=13 index=0 view="KRRichTextView"
+  props:
+    "color" = "4281545523"
+    "fontSize" = 14.0
+    "text" = "Movies"
+#14 createComponent surface="test-cp-binding" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Selected: "
+#15 updateData surface="test-cp-binding"
+  data:
+    "picked" = ["tech", "movies"]
+#16 updateComponent surface="test-cp-binding" tag=4 view="KRRichTextView"
+  props:
+    "text" = "Selected: [\"tech\",\"movies\"]"
+#17 updateComponent surface="test-cp-binding" tag=7 view="KRView"
+  props:
+    "backgroundColor" = "#FFFFFF"
+    "border" = "1 solid 4291611852"
+#18 updateComponent surface="test-cp-binding" tag=8 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+#19 updateComponent surface="test-cp-binding" tag=9 view="KRView"
+  props:
+    "backgroundColor" = "#FFFFFF"
+    "border" = "1 solid 4291611852"
+#20 updateComponent surface="test-cp-binding" tag=10 view="KRRichTextView"
+  props:
+    "color" = "#333333"
+#21 updateComponent surface="test-cp-binding" tag=11 view="KRView"
+  props:
+    "backgroundColor" = "#00BFFF"
+    "border" = "0 solid 0"
+#22 updateComponent surface="test-cp-binding" tag=12 view="KRRichTextView"
+  props:
+    "color" = "#FFFFFF"
+#23 updateComponent surface="test-cp-binding" tag=13 view="KRView"
+  props:
+    "backgroundColor" = "#00BFFF"
+    "border" = "0 solid 0"
+#24 updateComponent surface="test-cp-binding" tag=14 view="KRRichTextView"
+  props:
+    "color" = "#FFFFFF"
+#state dataModel "{\"picked\":[\"tech\",\"movies\"]}"
+#state actions {}
+""",
+        """v1_0.formal.component.column.1_column_justify_start""" to """#0 createSurface surface="test-col-just-start"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-col-just-start" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-col-just-start" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "justifyContent" = "flex-start"
+#3 createComponent surface="test-col-just-start" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "A — first item"
+#4 createComponent surface="test-col-just-start" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "B — second item"
+#5 createComponent surface="test-col-just-start" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "C — third item"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.column.2_column_justify_center""" to """#0 createSurface surface="test-col-just-center"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-col-just-center" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-col-just-center" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "justifyContent" = "center"
+#3 createComponent surface="test-col-just-center" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "A — first item"
+#4 createComponent surface="test-col-just-center" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "B — second item"
+#5 createComponent surface="test-col-just-center" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "C — third item"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.column.3_column_justify_end""" to """#0 createSurface surface="test-col-just-end"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-col-just-end" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-col-just-end" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "justifyContent" = "flex-end"
+#3 createComponent surface="test-col-just-end" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "A — first item"
+#4 createComponent surface="test-col-just-end" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "B — second item"
+#5 createComponent surface="test-col-just-end" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "C — third item"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.column.4_column_justify_spaceBetween""" to """#0 createSurface surface="test-col-just-between"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-col-just-between" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-col-just-between" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "justifyContent" = "space-between"
+#3 createComponent surface="test-col-just-between" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "A — first item"
+#4 createComponent surface="test-col-just-between" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "B — second item"
+#5 createComponent surface="test-col-just-between" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "C — third item"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.column.5_column_align_start""" to """#0 createSurface surface="test-col-align-start"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-col-align-start" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-col-align-start" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-col-align-start" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Short"
+#4 createComponent surface="test-col-align-start" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Longer text in column"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.column.6_column_align_center""" to """#0 createSurface surface="test-col-align-center"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-col-align-center" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-col-align-center" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-col-align-center" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Short"
+#4 createComponent surface="test-col-align-center" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Longer text in column"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.column.7_column_align_end""" to """#0 createSurface surface="test-col-align-end"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-col-align-end" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-col-align-end" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "flex-end"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-col-align-end" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "end"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Short"
+#4 createComponent surface="test-col-align-end" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "end"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Longer text in column"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.column.8_column_template_children""" to """#0 createSurface surface="test-col-template"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-col-template" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-col-template" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 updateData surface="test-col-template"
+  data:
+    "items" = [{"text": "1. First item from /items"}, {"text": "2. Second item from /items"}, {"text": "3. Third item from /items"}, {"text": "4. Fourth item from /items"}]
+#4 createComponent surface="test-col-template" tag=4 parent=2 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = ""
+#5 createComponent surface="test-col-template" tag=5 parent=2 index=1 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = ""
+#6 createComponent surface="test-col-template" tag=6 parent=2 index=2 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = ""
+#7 createComponent surface="test-col-template" tag=7 parent=2 index=3 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = ""
+#state dataModel "{\"items\":[{\"text\":\"1. First item from /items\"},{\"text\":\"2. Second item from /items\"},{\"text\":\"3. Third item from /items\"},{\"text\":\"4. Fourth item from /items\"}]}"
+#state actions {}
+""",
+        """v1_0.formal.component.datetimeinput.1_datetimeinput_date_only""" to """#0 createSurface surface="test-dt-date"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-dt-date" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-dt-date" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-dt-date" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Birthday"
+#4 createComponent surface="test-dt-date" tag=2 parent=3 index=1 view="KRDateTimeInputView"
+  props:
+    "alignSelf" = "stretch"
+    "enableDate" = true
+    "enableTime" = false
+    "label" = "Birthday"
+    "value" = "1990-01-15"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.datetimeinput.2_datetimeinput_time_only""" to """#0 createSurface surface="test-dt-time"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-dt-time" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-dt-time" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-dt-time" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Reminder time"
+#4 createComponent surface="test-dt-time" tag=2 parent=3 index=1 view="KRDateTimeInputView"
+  props:
+    "alignSelf" = "stretch"
+    "enableDate" = false
+    "enableTime" = true
+    "label" = "Reminder time"
+    "value" = "09:00:00"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.datetimeinput.3_datetimeinput_date_time""" to """#0 createSurface surface="test-dt-datetime"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-dt-datetime" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-dt-datetime" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-dt-datetime" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Meeting"
+#4 createComponent surface="test-dt-datetime" tag=2 parent=3 index=1 view="KRDateTimeInputView"
+  props:
+    "alignSelf" = "stretch"
+    "enableDate" = true
+    "enableTime" = true
+    "label" = "Meeting"
+    "value" = "2026-01-15T14:30:00"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.datetimeinput.4_datetimeinput_min_max_constraints""" to """#0 createSurface surface="test-dt-range"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-dt-range" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-dt-range" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-dt-range" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Booking date"
+#4 createComponent surface="test-dt-range" tag=2 parent=3 index=1 view="KRDateTimeInputView"
+  props:
+    "alignSelf" = "stretch"
+    "enableDate" = true
+    "enableTime" = false
+    "label" = "Booking date"
+    "max" = "2026-12-31"
+    "min" = "2026-06-01"
+    "value" = "2026-06-20"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.datetimeinput.5_datetimeinput_empty_value""" to """#0 createSurface surface="test-dt-empty"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-dt-empty" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-dt-empty" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-dt-empty" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Pick a date"
+#4 createComponent surface="test-dt-empty" tag=2 parent=3 index=1 view="KRDateTimeInputView"
+  props:
+    "alignSelf" = "stretch"
+    "enableDate" = true
+    "enableTime" = false
+    "label" = "Pick a date"
+    "value" = ""
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.datetimeinput.6_datetimeinput_value_binding""" to """#0 createSurface surface="test-dt-binding"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-dt-binding" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-dt-binding" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-dt-binding" tag=5 parent=2 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#4 createComponent surface="test-dt-binding" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Departure"
+#5 createComponent surface="test-dt-binding" tag=3 parent=5 index=1 view="KRDateTimeInputView"
+  props:
+    "__dateTimeBindingPath" = "departure"
+    "alignSelf" = "stretch"
+    "enableDate" = true
+    "enableTime" = true
+    "label" = "Departure"
+    "value" = ""
+#6 createComponent surface="test-dt-binding" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "ISO: "
+#7 updateData surface="test-dt-binding"
+  data:
+    "departure" = "2026-12-24T08:00:00"
+#8 updateComponent surface="test-dt-binding" tag=4 view="KRRichTextView"
+  props:
+    "text" = "ISO: 2026-12-24T08:00:00"
+#9 updateComponent surface="test-dt-binding" tag=3 view="KRDateTimeInputView"
+  props:
+    "value" = "2026-12-24T08:00:00"
+#10 updateComponent surface="test-dt-binding" tag=6 view="KRRichTextView"
+  props:
+    "text" = "Departure"
+#state dataModel "{\"departure\":\"2026-12-24T08:00:00\"}"
+#state actions {}
+""",
+        """v1_0.formal.component.divider.1_divider_horizontal_default""" to """#0 createSurface surface="test-divider-h"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-divider-h" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-divider-h" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-divider-h" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Above the line"
+#4 createComponent surface="test-divider-h" tag=4 parent=2 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4292927712"
+    "height" = 1
+    "marginBottom" = 8
+    "marginTop" = 8
+#5 createComponent surface="test-divider-h" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Below the line"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.divider.2_divider_vertical_in_row""" to """#0 createSurface surface="test-divider-v"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-divider-v" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-divider-v" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+#3 createComponent surface="test-divider-v" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Left"
+#4 createComponent surface="test-divider-v" tag=4 parent=2 index=1 view="KRView"
+  props:
+    "__verticalDividerFollowParent" = true
+    "backgroundColor" = "4292927712"
+    "height" = 40
+    "marginLeft" = 8
+    "marginRight" = 8
+    "width" = 1
+#5 createComponent surface="test-divider-v" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Right"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.divider.3_divider_multiple_in_column""" to """#0 createSurface surface="test-divider-multi"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-divider-multi" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-divider-multi" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-divider-multi" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### Section 1"
+#4 createComponent surface="test-divider-multi" tag=4 parent=2 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4292927712"
+    "height" = 1
+    "marginBottom" = 8
+    "marginTop" = 8
+#5 createComponent surface="test-divider-multi" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### Section 2"
+#6 createComponent surface="test-divider-multi" tag=6 parent=2 index=3 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4292927712"
+    "height" = 1
+    "marginBottom" = 8
+    "marginTop" = 8
+#7 createComponent surface="test-divider-multi" tag=7 parent=2 index=4 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### Section 3"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.icon.1_icon_common_set_1""" to """#0 createSurface surface="test-icon-set1"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-icon-set1" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-icon-set1" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-icon-set1" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Icons: home, search, settings, favorite, star"
+#4 createComponent surface="test-icon-set1" tag=4 parent=2 index=1 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "space-between"
+#5 createComponent surface="test-icon-set1" tag=5 parent=4 index=0 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "🏠"
+    "textAlign" = "center"
+    "width" = 24
+#6 createComponent surface="test-icon-set1" tag=6 parent=4 index=1 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "🔍"
+    "textAlign" = "center"
+    "width" = 24
+#7 createComponent surface="test-icon-set1" tag=7 parent=4 index=2 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "⚙"
+    "textAlign" = "center"
+    "width" = 24
+#8 createComponent surface="test-icon-set1" tag=8 parent=4 index=3 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "❤"
+    "textAlign" = "center"
+    "width" = 24
+#9 createComponent surface="test-icon-set1" tag=9 parent=4 index=4 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "★"
+    "textAlign" = "center"
+    "width" = 24
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.icon.2_icon_common_set_2""" to """#0 createSurface surface="test-icon-set2"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-icon-set2" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-icon-set2" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-icon-set2" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Icons: add, close, check, menu, share"
+#4 createComponent surface="test-icon-set2" tag=4 parent=2 index=1 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "space-between"
+#5 createComponent surface="test-icon-set2" tag=5 parent=4 index=0 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "+"
+    "textAlign" = "center"
+    "width" = 24
+#6 createComponent surface="test-icon-set2" tag=6 parent=4 index=1 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "✕"
+    "textAlign" = "center"
+    "width" = 24
+#7 createComponent surface="test-icon-set2" tag=7 parent=4 index=2 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "✓"
+    "textAlign" = "center"
+    "width" = 24
+#8 createComponent surface="test-icon-set2" tag=8 parent=4 index=3 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "☰"
+    "textAlign" = "center"
+    "width" = 24
+#9 createComponent surface="test-icon-set2" tag=9 parent=4 index=4 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "🔗"
+    "textAlign" = "center"
+    "width" = 24
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.icon.3_icon_media_icons""" to """#0 createSurface surface="test-icon-media"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-icon-media" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-icon-media" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-icon-media" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Icons: play, pause, stop, skipNext, skipPrevious, volumeUp, volumeMute"
+#4 createComponent surface="test-icon-media" tag=4 parent=2 index=1 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "space-between"
+#5 createComponent surface="test-icon-media" tag=5 parent=4 index=0 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "▶"
+    "textAlign" = "center"
+    "width" = 24
+#6 createComponent surface="test-icon-media" tag=6 parent=4 index=1 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "⏸"
+    "textAlign" = "center"
+    "width" = 24
+#7 createComponent surface="test-icon-media" tag=7 parent=4 index=2 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "⏹"
+    "textAlign" = "center"
+    "width" = 24
+#8 createComponent surface="test-icon-media" tag=8 parent=4 index=3 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "⏭"
+    "textAlign" = "center"
+    "width" = 24
+#9 createComponent surface="test-icon-media" tag=9 parent=4 index=4 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "⏮"
+    "textAlign" = "center"
+    "width" = 24
+#10 createComponent surface="test-icon-media" tag=10 parent=4 index=5 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "🔊"
+    "textAlign" = "center"
+    "width" = 24
+#11 createComponent surface="test-icon-media" tag=11 parent=4 index=6 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "🔇"
+    "textAlign" = "center"
+    "width" = 24
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.icon.4_icon_communication_icons""" to """#0 createSurface surface="test-icon-comm"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-icon-comm" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-icon-comm" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-icon-comm" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Icons: mail, phone, call, send, notifications"
+#4 createComponent surface="test-icon-comm" tag=4 parent=2 index=1 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "space-between"
+#5 createComponent surface="test-icon-comm" tag=5 parent=4 index=0 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "✉"
+    "textAlign" = "center"
+    "width" = 24
+#6 createComponent surface="test-icon-comm" tag=6 parent=4 index=1 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "📱"
+    "textAlign" = "center"
+    "width" = 24
+#7 createComponent surface="test-icon-comm" tag=7 parent=4 index=2 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "📞"
+    "textAlign" = "center"
+    "width" = 24
+#8 createComponent surface="test-icon-comm" tag=8 parent=4 index=3 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "✈"
+    "textAlign" = "center"
+    "width" = 24
+#9 createComponent surface="test-icon-comm" tag=9 parent=4 index=4 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "🔔"
+    "textAlign" = "center"
+    "width" = 24
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.icon.5_icon_svg_path""" to """#0 createSurface surface="test-icon-svg"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-icon-svg" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-icon-svg" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-icon-svg" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Custom SVG path icons (heart, lightning, smile)"
+#4 createComponent surface="test-icon-svg" tag=4 parent=2 index=1 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "space-evenly"
+#5 createComponent surface="test-icon-svg" tag=5 parent=4 index=0 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "●"
+    "textAlign" = "center"
+    "width" = 24
+#6 createComponent surface="test-icon-svg" tag=6 parent=4 index=1 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "●"
+    "textAlign" = "center"
+    "width" = 24
+#7 createComponent surface="test-icon-svg" tag=7 parent=4 index=2 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = "●"
+    "textAlign" = "center"
+    "width" = 24
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.icon.6_icon_name_binding""" to """#0 createSurface surface="test-icon-binding"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-icon-binding" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-icon-binding" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "space-evenly"
+#3 createComponent surface="test-icon-binding" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = ""
+    "textAlign" = "center"
+    "width" = 24
+#4 createComponent surface="test-icon-binding" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = ""
+    "textAlign" = "center"
+    "width" = 24
+#5 createComponent surface="test-icon-binding" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "fontSize" = 20.0
+    "margin" = 8
+    "text" = ""
+    "textAlign" = "center"
+    "width" = 24
+#6 updateData surface="test-icon-binding"
+  data:
+    "icon1" = "lockOpen"
+    "icon2" = "visibility"
+    "icon3" = "favorite"
+#7 updateComponent surface="test-icon-binding" tag=3 view="KRRichTextView"
+  props:
+    "text" = "🔓"
+#8 updateComponent surface="test-icon-binding" tag=4 view="KRRichTextView"
+  props:
+    "text" = "👁"
+#9 updateComponent surface="test-icon-binding" tag=5 view="KRRichTextView"
+  props:
+    "text" = "❤"
+#state dataModel "{\"icon1\":\"lockOpen\",\"icon2\":\"visibility\",\"icon3\":\"favorite\"}"
+#state actions {}
+""",
+        """v1_0.formal.component.image.1_image_variant_icon""" to """#0 createSurface surface="test-image-icon"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-image-icon" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-image-icon" tag=2 parent=1 index=0 view="KRImageView"
+  props:
+    "height" = 24
+    "margin" = 0
+    "src" = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=300&fit=crop"
+    "width" = 24
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.image.2_image_variant_avatar""" to """#0 createSurface surface="test-image-avatar"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-image-avatar" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-image-avatar" tag=2 parent=1 index=0 view="KRImageView"
+  props:
+    "borderRadius" = "20"
+    "height" = 40
+    "margin" = 8
+    "src" = "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=300&fit=crop"
+    "width" = 40
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.image.3_image_variant_smallFeature""" to """#0 createSurface surface="test-image-small"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-image-small" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-image-small" tag=2 parent=1 index=0 view="KRImageView"
+  props:
+    "__featureAutoSizeMaxHeightDp" = 100
+    "__featureAutoSizeMaxWidthDp" = 100
+    "height" = 1
+    "margin" = 8
+    "resizeMode" = "cover"
+    "src" = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=300&fit=crop"
+    "width" = 1
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.image.4_image_variant_mediumFeature""" to """#0 createSurface surface="test-image-medium"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-image-medium" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-image-medium" tag=2 parent=1 index=0 view="KRImageView"
+  props:
+    "__featureAutoSizeMaxHeightDp" = 200
+    "__featureAutoSizeMaxWidthDp" = 300
+    "alignSelf" = "stretch"
+    "height" = 1
+    "margin" = 8
+    "resizeMode" = "cover"
+    "src" = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=300&fit=crop"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.image.5_image_variant_largeFeature""" to """#0 createSurface surface="test-image-large"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-image-large" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-image-large" tag=2 parent=1 index=0 view="KRImageView"
+  props:
+    "__featureAutoSizeMaxHeightDp" = 400
+    "alignSelf" = "stretch"
+    "height" = 1
+    "margin" = 8
+    "resizeMode" = "cover"
+    "src" = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=300&fit=crop"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.image.6_image_variant_header""" to """#0 createSurface surface="test-image-header"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-image-header" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-image-header" tag=2 parent=1 index=0 view="KRImageView"
+  props:
+    "__featureAutoSizeHeader" = true
+    "__featureAutoSizeMaxHeightDp" = 200
+    "alignSelf" = "stretch"
+    "height" = 1
+    "margin" = 8
+    "resizeMode" = "cover"
+    "src" = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=300&fit=crop"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.image.7_image_fit_modes""" to """#0 createSurface surface="test-image-fit"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-image-fit" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-image-fit" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-image-fit" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "fit=contain"
+#4 createComponent surface="test-image-fit" tag=4 parent=2 index=1 view="KRImageView"
+  props:
+    "__featureAutoSizeMaxHeightDp" = 100
+    "__featureAutoSizeMaxWidthDp" = 100
+    "height" = 1
+    "margin" = 8
+    "resizeMode" = "contain"
+    "src" = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=300&fit=crop"
+    "width" = 1
+#5 createComponent surface="test-image-fit" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "fit=cover"
+#6 createComponent surface="test-image-fit" tag=6 parent=2 index=3 view="KRImageView"
+  props:
+    "__featureAutoSizeMaxHeightDp" = 100
+    "__featureAutoSizeMaxWidthDp" = 100
+    "height" = 1
+    "margin" = 8
+    "resizeMode" = "cover"
+    "src" = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=300&fit=crop"
+    "width" = 1
+#7 createComponent surface="test-image-fit" tag=7 parent=2 index=4 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "fit=fill (default)"
+#8 createComponent surface="test-image-fit" tag=8 parent=2 index=5 view="KRImageView"
+  props:
+    "__featureAutoSizeMaxHeightDp" = 100
+    "__featureAutoSizeMaxWidthDp" = 100
+    "height" = 1
+    "margin" = 8
+    "resizeMode" = "stretch"
+    "src" = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=300&fit=crop"
+    "width" = 1
+#9 createComponent surface="test-image-fit" tag=9 parent=2 index=6 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "fit=none"
+#10 createComponent surface="test-image-fit" tag=10 parent=2 index=7 view="KRImageView"
+  props:
+    "__featureAutoSizeMaxHeightDp" = 100
+    "__featureAutoSizeMaxWidthDp" = 100
+    "height" = 1
+    "margin" = 8
+    "resizeMode" = "contain"
+    "src" = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=300&fit=crop"
+    "width" = 1
+#11 createComponent surface="test-image-fit" tag=11 parent=2 index=8 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "fit=scaleDown"
+#12 createComponent surface="test-image-fit" tag=12 parent=2 index=9 view="KRImageView"
+  props:
+    "__featureAutoSizeMaxHeightDp" = 100
+    "__featureAutoSizeMaxWidthDp" = 100
+    "height" = 1
+    "margin" = 8
+    "resizeMode" = "contain"
+    "src" = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=300&fit=crop"
+    "width" = 1
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.image.8_image_url_path_binding""" to """#0 createSurface surface="test-image-binding"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-image-binding" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-image-binding" tag=2 parent=1 index=0 view="KRImageView"
+  props:
+    "__accessibility" = ""
+    "__featureAutoSizeMaxHeightDp" = 200
+    "__featureAutoSizeMaxWidthDp" = 300
+    "alignSelf" = "stretch"
+    "height" = 1
+    "margin" = 8
+    "resizeMode" = "cover"
+    "src" = ""
+#3 updateData surface="test-image-binding"
+  data:
+    "alt" = "Bound image alt"
+    "photoUrl" = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=300&fit=crop"
+#4 updateComponent surface="test-image-binding" tag=2 view="KRImageView"
+  props:
+    "__accessibility" = "Bound image alt"
+    "src" = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=300&fit=crop"
+#state dataModel "{\"photoUrl\":\"https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=300&fit=crop\",\"alt\":\"Bound image alt\"}"
+#state actions {}
+""",
+        """v1_0.formal.component.list.2_list_direction_horizontal""" to """#0 createSurface surface="test-list-horizontal"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-list-horizontal" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-list-horizontal" tag=2 parent=1 index=0 view="KRScrollView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+#3 createComponent surface="test-list-horizontal" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#1"
+#4 createComponent surface="test-list-horizontal" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#2"
+#5 createComponent surface="test-list-horizontal" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#3"
+#6 createComponent surface="test-list-horizontal" tag=6 parent=2 index=3 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#4"
+#7 createComponent surface="test-list-horizontal" tag=7 parent=2 index=4 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#5"
+#8 createComponent surface="test-list-horizontal" tag=8 parent=2 index=5 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#6"
+#9 createComponent surface="test-list-horizontal" tag=9 parent=2 index=6 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#7"
+#10 createComponent surface="test-list-horizontal" tag=10 parent=2 index=7 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#8"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.list.3_list_direction_vertical_long""" to """#0 createSurface surface="test-list-vertical"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-list-vertical" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-list-vertical" tag=2 parent=1 index=0 view="KRScrollView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-list-vertical" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 1"
+#4 createComponent surface="test-list-vertical" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 2"
+#5 createComponent surface="test-list-vertical" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 3"
+#6 createComponent surface="test-list-vertical" tag=6 parent=2 index=3 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 4"
+#7 createComponent surface="test-list-vertical" tag=7 parent=2 index=4 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 5"
+#8 createComponent surface="test-list-vertical" tag=8 parent=2 index=5 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 6"
+#9 createComponent surface="test-list-vertical" tag=9 parent=2 index=6 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 7"
+#10 createComponent surface="test-list-vertical" tag=10 parent=2 index=7 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 8"
+#11 createComponent surface="test-list-vertical" tag=11 parent=2 index=8 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 9"
+#12 createComponent surface="test-list-vertical" tag=12 parent=2 index=9 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 10"
+#13 createComponent surface="test-list-vertical" tag=13 parent=2 index=10 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 11"
+#14 createComponent surface="test-list-vertical" tag=14 parent=2 index=11 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 12"
+#15 createComponent surface="test-list-vertical" tag=15 parent=2 index=12 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 13"
+#16 createComponent surface="test-list-vertical" tag=16 parent=2 index=13 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 14"
+#17 createComponent surface="test-list-vertical" tag=17 parent=2 index=14 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 15"
+#18 createComponent surface="test-list-vertical" tag=18 parent=2 index=15 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 16"
+#19 createComponent surface="test-list-vertical" tag=19 parent=2 index=16 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 17"
+#20 createComponent surface="test-list-vertical" tag=20 parent=2 index=17 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 18"
+#21 createComponent surface="test-list-vertical" tag=21 parent=2 index=18 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 19"
+#22 createComponent surface="test-list-vertical" tag=22 parent=2 index=19 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 20"
+#23 createComponent surface="test-list-vertical" tag=23 parent=2 index=20 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 21"
+#24 createComponent surface="test-list-vertical" tag=24 parent=2 index=21 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 22"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.list.4_list_direction_horizontal_long""" to """#0 createSurface surface="test-list-horizontal"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-list-horizontal" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-list-horizontal" tag=2 parent=1 index=0 view="KRScrollView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+#3 createComponent surface="test-list-horizontal" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#1"
+#4 createComponent surface="test-list-horizontal" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#2"
+#5 createComponent surface="test-list-horizontal" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#3"
+#6 createComponent surface="test-list-horizontal" tag=6 parent=2 index=3 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#4"
+#7 createComponent surface="test-list-horizontal" tag=7 parent=2 index=4 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#5"
+#8 createComponent surface="test-list-horizontal" tag=8 parent=2 index=5 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#6"
+#9 createComponent surface="test-list-horizontal" tag=9 parent=2 index=6 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#7"
+#10 createComponent surface="test-list-horizontal" tag=10 parent=2 index=7 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#8"
+#11 createComponent surface="test-list-horizontal" tag=11 parent=2 index=8 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#9"
+#12 createComponent surface="test-list-horizontal" tag=12 parent=2 index=9 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#10"
+#13 createComponent surface="test-list-horizontal" tag=13 parent=2 index=10 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#11"
+#14 createComponent surface="test-list-horizontal" tag=14 parent=2 index=11 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#12"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.list.5_list_align_start""" to """#0 createSurface surface="test-list-align-start"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-list-align-start" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-list-align-start" tag=2 parent=1 index=0 view="KRScrollView"
+  props:
+    "alignItems" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-list-align-start" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Short"
+#4 createComponent surface="test-list-align-start" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Longer item"
+#5 createComponent surface="test-list-align-start" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Even longer item text"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.list.6_list_align_center""" to """#0 createSurface surface="test-list-align-center"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-list-align-center" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-list-align-center" tag=2 parent=1 index=0 view="KRScrollView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-list-align-center" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Short"
+#4 createComponent surface="test-list-align-center" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Longer item"
+#5 createComponent surface="test-list-align-center" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Even longer item text"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.list.7_list_align_end""" to """#0 createSurface surface="test-list-align-end"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-list-align-end" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-list-align-end" tag=2 parent=1 index=0 view="KRScrollView"
+  props:
+    "alignItems" = "flex-end"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-list-align-end" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Short"
+#4 createComponent surface="test-list-align-end" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Longer item"
+#5 createComponent surface="test-list-align-end" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Even longer item text"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.list.8_list_align_stretch""" to """#0 createSurface surface="test-list-align-stretch"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-list-align-stretch" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-list-align-stretch" tag=2 parent=1 index=0 view="KRScrollView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-list-align-stretch" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Short"
+#4 createComponent surface="test-list-align-stretch" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Longer item"
+#5 createComponent surface="test-list-align-stretch" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Even longer item text"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.list.9_list_template_children""" to """#0 createSurface surface="test-list-template"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-list-template" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-list-template" tag=2 parent=1 index=0 view="KRScrollView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 updateData surface="test-list-template"
+  data:
+    "people" = [{"avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=300&fit=crop", "name": "Alice", "role": "Engineer"}, {"avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=300&fit=crop", "name": "Bob", "role": "Designer"}, {"avatar": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=300&fit=crop", "name": "Carol", "role": "Manager"}]
+#4 createComponent surface="test-list-template" tag=8 parent=2 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+#5 createComponent surface="test-list-template" tag=9 parent=8 index=0 view="KRImageView"
+  props:
+    "borderRadius" = "20"
+    "height" = 40
+    "margin" = 8
+    "src" = ""
+    "width" = 40
+#6 createComponent surface="test-list-template" tag=10 parent=8 index=1 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flex" = 1
+    "flexDirection" = "column"
+#7 createComponent surface="test-list-template" tag=11 parent=10 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### "
+#8 createComponent surface="test-list-template" tag=12 parent=10 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = ""
+#9 createComponent surface="test-list-template" tag=13 parent=2 index=1 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+#10 createComponent surface="test-list-template" tag=14 parent=13 index=0 view="KRImageView"
+  props:
+    "borderRadius" = "20"
+    "height" = 40
+    "margin" = 8
+    "src" = ""
+    "width" = 40
+#11 createComponent surface="test-list-template" tag=15 parent=13 index=1 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flex" = 1
+    "flexDirection" = "column"
+#12 createComponent surface="test-list-template" tag=16 parent=15 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### "
+#13 createComponent surface="test-list-template" tag=17 parent=15 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = ""
+#14 createComponent surface="test-list-template" tag=18 parent=2 index=2 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+#15 createComponent surface="test-list-template" tag=19 parent=18 index=0 view="KRImageView"
+  props:
+    "borderRadius" = "20"
+    "height" = 40
+    "margin" = 8
+    "src" = ""
+    "width" = 40
+#16 createComponent surface="test-list-template" tag=20 parent=18 index=1 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flex" = 1
+    "flexDirection" = "column"
+#17 createComponent surface="test-list-template" tag=21 parent=20 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### "
+#18 createComponent surface="test-list-template" tag=22 parent=20 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = ""
+#state dataModel "{\"people\":[{\"avatar\":\"https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=300&fit=crop\",\"name\":\"Alice\",\"role\":\"Engineer\"},{\"avatar\":\"https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=300&fit=crop\",\"name\":\"Bob\",\"role\":\"Designer\"},{\"avatar\":\"https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&h=300&fit=crop\",\"name\":\"Carol\",\"role\":\"Manager\"}]}"
+#state actions {}
+""",
+        """v1_0.formal.component.modal.1_modal_basic""" to """#0 createSurface surface="test-modal-basic"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-modal-basic" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-modal-basic" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-modal-basic" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Click 'Open' to show the modal"
+#4 createComponent surface="test-modal-basic" tag=5 parent=2 index=1 view="KRView"
+  props:
+    "__modalTriggerId" = "modal"
+    "alignItems" = "center"
+    "backgroundColor" = "4278239231"
+    "borderRadius" = "6"
+    "flexDirection" = "row"
+    "justifyContent" = "center"
+    "margin" = 8
+    "padding" = 10
+    "paddingLeft" = 16
+    "paddingRight" = 16
+    "touchEnable" = 1
+#5 createComponent surface="test-modal-basic" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 0
+    "text" = "Open"
+#state dataModel "{}"
+#state actions {"5": "{\"event\":{\"name\":\"openModal\"}}"}
+""",
+        """v1_0.formal.component.modal.2_modal_with_form""" to """#0 createSurface surface="test-modal-form"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-modal-form" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-modal-form" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-modal-form" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Open settings modal"
+#4 createComponent surface="test-modal-form" tag=5 parent=2 index=1 view="KRView"
+  props:
+    "__modalTriggerId" = "modal"
+    "alignItems" = "center"
+    "backgroundColor" = "4294309365"
+    "borderColor" = "4291611852"
+    "borderRadius" = "6"
+    "borderWidth" = "1"
+    "flexDirection" = "row"
+    "justifyContent" = "center"
+    "margin" = 8
+    "padding" = 10
+    "paddingLeft" = 16
+    "paddingRight" = 16
+    "touchEnable" = 1
+#5 createComponent surface="test-modal-form" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 0
+    "text" = "Settings"
+#state dataModel "{}"
+#state actions {"5": "{\"event\":{\"name\":\"openSettings\"}}"}
+""",
+        """v1_0.formal.component.row.1_row_justify_start""" to """#0 createSurface surface="test-row-justify-start"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-row-justify-start" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-row-justify-start" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "flex-start"
+#3 createComponent surface="test-row-justify-start" tag=3 parent=2 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#4 createComponent surface="test-row-justify-start" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "A"
+#5 createComponent surface="test-row-justify-start" tag=5 parent=2 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#6 createComponent surface="test-row-justify-start" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "B"
+#7 createComponent surface="test-row-justify-start" tag=7 parent=2 index=2 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#8 createComponent surface="test-row-justify-start" tag=8 parent=7 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "C"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.row.10_row_template_children""" to """#0 createSurface surface="test-row-template"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-row-template" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-row-template" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "flex-start"
+#3 updateData surface="test-row-template"
+  data:
+    "tags" = [{"label": "Kotlin"}, {"label": "Compose"}, {"label": "iOS"}, {"label": "A2UI"}]
+#4 createComponent surface="test-row-template" tag=4 parent=2 index=0 view="KRRichTextView"
+  props:
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = ""
+#5 createComponent surface="test-row-template" tag=5 parent=2 index=1 view="KRRichTextView"
+  props:
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = ""
+#6 createComponent surface="test-row-template" tag=6 parent=2 index=2 view="KRRichTextView"
+  props:
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = ""
+#7 createComponent surface="test-row-template" tag=7 parent=2 index=3 view="KRRichTextView"
+  props:
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = ""
+#state dataModel "{\"tags\":[{\"label\":\"Kotlin\"},{\"label\":\"Compose\"},{\"label\":\"iOS\"},{\"label\":\"A2UI\"}]}"
+#state actions {}
+""",
+        """v1_0.formal.component.row.2_row_justify_center""" to """#0 createSurface surface="test-row-justify-center"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-row-justify-center" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-row-justify-center" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "center"
+#3 createComponent surface="test-row-justify-center" tag=3 parent=2 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#4 createComponent surface="test-row-justify-center" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "A"
+#5 createComponent surface="test-row-justify-center" tag=5 parent=2 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#6 createComponent surface="test-row-justify-center" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "B"
+#7 createComponent surface="test-row-justify-center" tag=7 parent=2 index=2 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#8 createComponent surface="test-row-justify-center" tag=8 parent=7 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "C"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.row.3_row_justify_end""" to """#0 createSurface surface="test-row-justify-end"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-row-justify-end" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-row-justify-end" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "flex-end"
+#3 createComponent surface="test-row-justify-end" tag=3 parent=2 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#4 createComponent surface="test-row-justify-end" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "A"
+#5 createComponent surface="test-row-justify-end" tag=5 parent=2 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#6 createComponent surface="test-row-justify-end" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "B"
+#7 createComponent surface="test-row-justify-end" tag=7 parent=2 index=2 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#8 createComponent surface="test-row-justify-end" tag=8 parent=7 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "C"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.row.4_row_justify_spaceBetween""" to """#0 createSurface surface="test-row-justify-between"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-row-justify-between" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-row-justify-between" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "space-between"
+#3 createComponent surface="test-row-justify-between" tag=3 parent=2 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#4 createComponent surface="test-row-justify-between" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "A"
+#5 createComponent surface="test-row-justify-between" tag=5 parent=2 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#6 createComponent surface="test-row-justify-between" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "B"
+#7 createComponent surface="test-row-justify-between" tag=7 parent=2 index=2 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#8 createComponent surface="test-row-justify-between" tag=8 parent=7 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "C"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.row.5_row_justify_spaceAround""" to """#0 createSurface surface="test-row-justify-around"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-row-justify-around" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-row-justify-around" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "space-around"
+#3 createComponent surface="test-row-justify-around" tag=3 parent=2 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#4 createComponent surface="test-row-justify-around" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "A"
+#5 createComponent surface="test-row-justify-around" tag=5 parent=2 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#6 createComponent surface="test-row-justify-around" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "B"
+#7 createComponent surface="test-row-justify-around" tag=7 parent=2 index=2 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#8 createComponent surface="test-row-justify-around" tag=8 parent=7 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "C"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.row.6_row_justify_spaceEvenly""" to """#0 createSurface surface="test-row-justify-evenly"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-row-justify-evenly" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-row-justify-evenly" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "space-evenly"
+#3 createComponent surface="test-row-justify-evenly" tag=3 parent=2 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#4 createComponent surface="test-row-justify-evenly" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "A"
+#5 createComponent surface="test-row-justify-evenly" tag=5 parent=2 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#6 createComponent surface="test-row-justify-evenly" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "B"
+#7 createComponent surface="test-row-justify-evenly" tag=7 parent=2 index=2 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 8
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#8 createComponent surface="test-row-justify-evenly" tag=8 parent=7 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "C"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.row.7_row_align_start""" to """#0 createSurface surface="test-row-align-start"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-row-align-start" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-row-align-start" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "space-evenly"
+#3 createComponent surface="test-row-align-start" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### Tall\nText\nA"
+#4 createComponent surface="test-row-align-start" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "B"
+#5 createComponent surface="test-row-align-start" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "C"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.row.8_row_align_center""" to """#0 createSurface surface="test-row-align-center"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-row-align-center" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-row-align-center" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "space-evenly"
+#3 createComponent surface="test-row-align-center" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### Tall\nText\nA"
+#4 createComponent surface="test-row-align-center" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "B"
+#5 createComponent surface="test-row-align-center" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "C"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.row.9_row_align_end""" to """#0 createSurface surface="test-row-align-end"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-row-align-end" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-row-align-end" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "flex-end"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "space-evenly"
+#3 createComponent surface="test-row-align-end" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### Tall\nText\nA"
+#4 createComponent surface="test-row-align-end" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "B"
+#5 createComponent surface="test-row-align-end" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "C"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.slider.1_slider_default_min_max""" to """#0 createSurface surface="test-sl-default"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-sl-default" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-sl-default" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-sl-default" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Volume"
+#4 createComponent surface="test-sl-default" tag=2 parent=3 index=1 view="KRSliderView"
+  props:
+    "alignSelf" = "stretch"
+    "height" = 40
+    "max" = 100
+    "min" = 0
+    "progressColor" = "4278239231"
+    "value" = 30
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.slider.2_slider_min_omitted""" to """#0 createSurface surface="test-sl-omit-min"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-sl-omit-min" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-sl-omit-min" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-sl-omit-min" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Brightness"
+#4 createComponent surface="test-sl-omit-min" tag=2 parent=3 index=1 view="KRSliderView"
+  props:
+    "alignSelf" = "stretch"
+    "height" = 40
+    "max" = 10
+    "progressColor" = "4278239231"
+    "value" = 7
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.slider.3_slider_negative_range""" to """#0 createSurface surface="test-sl-neg"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-sl-neg" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-sl-neg" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-sl-neg" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Temperature (°C)"
+#4 createComponent surface="test-sl-neg" tag=2 parent=3 index=1 view="KRSliderView"
+  props:
+    "alignSelf" = "stretch"
+    "height" = 40
+    "max" = 40
+    "min" = -20
+    "progressColor" = "4278239231"
+    "value" = 22
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.slider.4_slider_value_binding""" to """#0 createSurface surface="test-sl-binding"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-sl-binding" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-sl-binding" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-sl-binding" tag=5 parent=2 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#4 createComponent surface="test-sl-binding" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Progress"
+#5 createComponent surface="test-sl-binding" tag=3 parent=5 index=1 view="KRSliderView"
+  props:
+    "__sliderBindingPath" = "progress"
+    "alignSelf" = "stretch"
+    "height" = 40
+    "max" = 100
+    "min" = 0
+    "progressColor" = "4278239231"
+    "value" = ""
+#6 createComponent surface="test-sl-binding" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Progress: %"
+#7 updateData surface="test-sl-binding"
+  data:
+    "progress" = 45
+#8 updateComponent surface="test-sl-binding" tag=4 view="KRRichTextView"
+  props:
+    "text" = "Progress: 45%"
+#9 updateComponent surface="test-sl-binding" tag=3 view="KRSliderView"
+  props:
+    "value" = 45
+#10 updateComponent surface="test-sl-binding" tag=6 view="KRRichTextView"
+  props:
+    "text" = "Progress"
+#state dataModel "{\"progress\":45}"
+#state actions {}
+""",
+        """v1_0.formal.component.slider.5_slider_no_label""" to """#0 createSurface surface="test-sl-nolabel"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-sl-nolabel" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-sl-nolabel" tag=2 parent=1 index=0 view="KRSliderView"
+  props:
+    "alignSelf" = "stretch"
+    "height" = 40
+    "margin" = 8
+    "max" = 1
+    "min" = 0
+    "progressColor" = "4278239231"
+    "value" = 0.5
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.tabs.1_tabs_two_tabs""" to """#0 createSurface surface="test-tabs-two"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-tabs-two" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-tabs-two" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-tabs-two" tag=5 parent=2 index=0 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+#4 createComponent surface="test-tabs-two" tag=6 parent=5 index=0 view="KRView"
+  props:
+    "__tabIndex" = 0
+    "__tabsParentId" = "tabs"
+    "alignItems" = "center"
+    "flex" = 1
+    "justifyContent" = "center"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 10.0
+    "touchEnable" = 1
+#5 createComponent surface="test-tabs-two" tag=7 parent=6 index=0 view="KRRichTextView"
+  props:
+    "color" = "4278239231"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "text" = "Overview"
+#6 createComponent surface="test-tabs-two" tag=8 parent=6 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4278239231"
+    "height" = 2.5
+    "marginTop" = 8.0
+#7 createComponent surface="test-tabs-two" tag=9 parent=5 index=1 view="KRView"
+  props:
+    "__tabIndex" = 1
+    "__tabsParentId" = "tabs"
+    "alignItems" = "center"
+    "flex" = 1
+    "justifyContent" = "center"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 10.0
+    "touchEnable" = 1
+#8 createComponent surface="test-tabs-two" tag=10 parent=9 index=0 view="KRRichTextView"
+  props:
+    "color" = "4284900966"
+    "fontSize" = 14.0
+    "fontWeight" = "normal"
+    "text" = "Details"
+#9 createComponent surface="test-tabs-two" tag=11 parent=9 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "0"
+    "height" = 2.5
+    "marginTop" = 8.0
+#10 createComponent surface="test-tabs-two" tag=12 parent=2 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flex" = 1
+    "flexDirection" = "column"
+    "overflow" = "hidden"
+#11 createComponent surface="test-tabs-two" tag=13 parent=2 index=2 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "height" = 0.0
+    "overflow" = "hidden"
+#12 createComponent surface="test-tabs-two" tag=3 parent=12 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Tab 1: Overview content. Lorem ipsum..."
+#13 createComponent surface="test-tabs-two" tag=4 parent=13 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Tab 2: Details content. Different from tab 1."
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.tabs.2_tabs_three_tabs""" to """#0 createSurface surface="test-tabs-three"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-tabs-three" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-tabs-three" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-tabs-three" tag=6 parent=2 index=0 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+#4 createComponent surface="test-tabs-three" tag=7 parent=6 index=0 view="KRView"
+  props:
+    "__tabIndex" = 0
+    "__tabsParentId" = "tabs"
+    "alignItems" = "center"
+    "flex" = 1
+    "justifyContent" = "center"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 10.0
+    "touchEnable" = 1
+#5 createComponent surface="test-tabs-three" tag=8 parent=7 index=0 view="KRRichTextView"
+  props:
+    "color" = "4278239231"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "text" = "Photos"
+#6 createComponent surface="test-tabs-three" tag=9 parent=7 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4278239231"
+    "height" = 2.5
+    "marginTop" = 8.0
+#7 createComponent surface="test-tabs-three" tag=10 parent=6 index=1 view="KRView"
+  props:
+    "__tabIndex" = 1
+    "__tabsParentId" = "tabs"
+    "alignItems" = "center"
+    "flex" = 1
+    "justifyContent" = "center"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 10.0
+    "touchEnable" = 1
+#8 createComponent surface="test-tabs-three" tag=11 parent=10 index=0 view="KRRichTextView"
+  props:
+    "color" = "4284900966"
+    "fontSize" = 14.0
+    "fontWeight" = "normal"
+    "text" = "Videos"
+#9 createComponent surface="test-tabs-three" tag=12 parent=10 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "0"
+    "height" = 2.5
+    "marginTop" = 8.0
+#10 createComponent surface="test-tabs-three" tag=13 parent=6 index=2 view="KRView"
+  props:
+    "__tabIndex" = 2
+    "__tabsParentId" = "tabs"
+    "alignItems" = "center"
+    "flex" = 1
+    "justifyContent" = "center"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 10.0
+    "touchEnable" = 1
+#11 createComponent surface="test-tabs-three" tag=14 parent=13 index=0 view="KRRichTextView"
+  props:
+    "color" = "4284900966"
+    "fontSize" = 14.0
+    "fontWeight" = "normal"
+    "text" = "Audio"
+#12 createComponent surface="test-tabs-three" tag=15 parent=13 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "0"
+    "height" = 2.5
+    "marginTop" = 8.0
+#13 createComponent surface="test-tabs-three" tag=16 parent=2 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flex" = 1
+    "flexDirection" = "column"
+    "overflow" = "hidden"
+#14 createComponent surface="test-tabs-three" tag=17 parent=2 index=2 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "height" = 0.0
+    "overflow" = "hidden"
+#15 createComponent surface="test-tabs-three" tag=18 parent=2 index=3 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "height" = 0.0
+    "overflow" = "hidden"
+#16 createComponent surface="test-tabs-three" tag=3 parent=16 index=0 view="KRImageView"
+  props:
+    "__featureAutoSizeMaxHeightDp" = 200
+    "__featureAutoSizeMaxWidthDp" = 300
+    "alignSelf" = "stretch"
+    "height" = 1
+    "margin" = 8
+    "resizeMode" = "cover"
+    "src" = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=600&h=300&fit=crop"
+#17 createComponent surface="test-tabs-three" tag=4 parent=17 index=0 view="KRVideoView"
+  props:
+    "alignSelf" = "stretch"
+    "height" = 200
+    "margin" = 8
+    "src" = "https://www.w3schools.com/html/mov_bbb.mp4"
+#18 createComponent surface="test-tabs-three" tag=19 parent=18 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#19 createComponent surface="test-tabs-three" tag=20 parent=19 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Audio tab"
+#20 createComponent surface="test-tabs-three" tag=5 parent=19 index=1 view="KRAudioView"
+  props:
+    "alignSelf" = "stretch"
+    "height" = 64
+    "src" = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.tabs.3_tabs_complex_children""" to """#0 createSurface surface="test-tabs-complex"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-tabs-complex" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-tabs-complex" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-tabs-complex" tag=9 parent=2 index=0 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+#4 createComponent surface="test-tabs-complex" tag=10 parent=9 index=0 view="KRView"
+  props:
+    "__tabIndex" = 0
+    "__tabsParentId" = "tabs"
+    "alignItems" = "center"
+    "flex" = 1
+    "justifyContent" = "center"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 10.0
+    "touchEnable" = 1
+#5 createComponent surface="test-tabs-complex" tag=11 parent=10 index=0 view="KRRichTextView"
+  props:
+    "color" = "4278239231"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "text" = "Profile"
+#6 createComponent surface="test-tabs-complex" tag=12 parent=10 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4278239231"
+    "height" = 2.5
+    "marginTop" = 8.0
+#7 createComponent surface="test-tabs-complex" tag=13 parent=9 index=1 view="KRView"
+  props:
+    "__tabIndex" = 1
+    "__tabsParentId" = "tabs"
+    "alignItems" = "center"
+    "flex" = 1
+    "justifyContent" = "center"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 10.0
+    "touchEnable" = 1
+#8 createComponent surface="test-tabs-complex" tag=14 parent=13 index=0 view="KRRichTextView"
+  props:
+    "color" = "4284900966"
+    "fontSize" = 14.0
+    "fontWeight" = "normal"
+    "text" = "Settings"
+#9 createComponent surface="test-tabs-complex" tag=15 parent=13 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "0"
+    "height" = 2.5
+    "marginTop" = 8.0
+#10 createComponent surface="test-tabs-complex" tag=16 parent=2 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flex" = 1
+    "flexDirection" = "column"
+    "overflow" = "hidden"
+#11 createComponent surface="test-tabs-complex" tag=17 parent=2 index=2 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "height" = 0.0
+    "overflow" = "hidden"
+#12 createComponent surface="test-tabs-complex" tag=3 parent=16 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#13 createComponent surface="test-tabs-complex" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### Name: Alex Chen"
+#14 createComponent surface="test-tabs-complex" tag=5 parent=3 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Role: Senior Engineer"
+#15 createComponent surface="test-tabs-complex" tag=6 parent=17 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#16 createComponent surface="test-tabs-complex" tag=7 parent=6 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### Theme: Dark"
+#17 createComponent surface="test-tabs-complex" tag=8 parent=6 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Language: English"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.tabs.4_tabs_title_binding""" to """#0 createSurface surface="test-tabs-binding"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-tabs-binding" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-tabs-binding" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-tabs-binding" tag=5 parent=2 index=0 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "paddingLeft" = 4.0
+    "paddingRight" = 4.0
+#4 createComponent surface="test-tabs-binding" tag=6 parent=5 index=0 view="KRView"
+  props:
+    "__tabIndex" = 0
+    "__tabsParentId" = "tabs"
+    "alignItems" = "center"
+    "flex" = 1
+    "justifyContent" = "center"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 10.0
+    "touchEnable" = 1
+#5 createComponent surface="test-tabs-binding" tag=7 parent=6 index=0 view="KRRichTextView"
+  props:
+    "color" = "4278239231"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "text" = "Tab 1"
+#6 createComponent surface="test-tabs-binding" tag=8 parent=6 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4278239231"
+    "height" = 2.5
+    "marginTop" = 8.0
+#7 createComponent surface="test-tabs-binding" tag=9 parent=5 index=1 view="KRView"
+  props:
+    "__tabIndex" = 1
+    "__tabsParentId" = "tabs"
+    "alignItems" = "center"
+    "flex" = 1
+    "justifyContent" = "center"
+    "paddingBottom" = 8.0
+    "paddingLeft" = 12.0
+    "paddingRight" = 12.0
+    "paddingTop" = 10.0
+    "touchEnable" = 1
+#8 createComponent surface="test-tabs-binding" tag=10 parent=9 index=0 view="KRRichTextView"
+  props:
+    "color" = "4284900966"
+    "fontSize" = 14.0
+    "fontWeight" = "normal"
+    "text" = "Tab 2"
+#9 createComponent surface="test-tabs-binding" tag=11 parent=9 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "0"
+    "height" = 2.5
+    "marginTop" = 8.0
+#10 createComponent surface="test-tabs-binding" tag=12 parent=2 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flex" = 1
+    "flexDirection" = "column"
+    "overflow" = "hidden"
+#11 createComponent surface="test-tabs-binding" tag=13 parent=2 index=2 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "height" = 0.0
+    "overflow" = "hidden"
+#12 createComponent surface="test-tabs-binding" tag=3 parent=12 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Content for tab 1"
+#13 createComponent surface="test-tabs-binding" tag=4 parent=13 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Content for tab 2"
+#14 updateData surface="test-tabs-binding"
+  data:
+    "tab1" = "Bound A"
+    "tab2" = "Bound B"
+#15 updateComponent surface="test-tabs-binding" tag=7 view="KRRichTextView"
+  props:
+    "color" = "4278239231"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "text" = "Bound A"
+#16 updateComponent surface="test-tabs-binding" tag=10 view="KRRichTextView"
+  props:
+    "color" = "4284900966"
+    "fontSize" = 14.0
+    "fontWeight" = "normal"
+    "text" = "Bound B"
+#state dataModel "{\"tab1\":\"Bound A\",\"tab2\":\"Bound B\"}"
+#state actions {}
+""",
+        """v1_0.formal.component.text.1_text_h1""" to """#0 createSurface surface="test-text-h1"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-text-h1" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-text-h1" tag=2 parent=1 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "# Heading 1 - Largest Title"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.text.2_text_h2""" to """#0 createSurface surface="test-text-h2"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-text-h2" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-text-h2" tag=2 parent=1 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "## Heading 2 - Section Title"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.text.3_text_h3_h4_h5""" to """#0 createSurface surface="test-text-h345"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-text-h345" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-text-h345" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-text-h345" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "### Heading 3 (28dp)"
+#4 createComponent surface="test-text-h345" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#### Heading 4 (24dp)"
+#5 createComponent surface="test-text-h345" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### Heading 5 (20dp)"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.text.5_text_caption""" to """#0 createSurface surface="test-text-caption"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-text-caption" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-text-caption" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-text-caption" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "POSTED"
+#4 createComponent surface="test-text-caption" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#### Article Title"
+#5 createComponent surface="test-text-caption" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "by John Doe • 5 min read"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.text.7_text_function_formatString""" to """#0 createSurface surface="test-text-format-string"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-text-format-string" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-text-format-string" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-text-format-string" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#### Hello,  !"
+#4 createComponent surface="test-text-format-string" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "You have  unread messages and  new notifications."
+#5 updateData surface="test-text-format-string"
+  data:
+    "firstName" = "Alex"
+    "lastName" = "Chen"
+    "notifications" = 12
+    "unread" = 5
+#6 updateComponent surface="test-text-format-string" tag=3 view="KRRichTextView"
+  props:
+    "text" = "#### Hello, Alex Chen!"
+#7 updateComponent surface="test-text-format-string" tag=4 view="KRRichTextView"
+  props:
+    "text" = "You have 5 unread messages and 12 new notifications."
+#state dataModel "{\"firstName\":\"Alex\",\"lastName\":\"Chen\",\"unread\":5,\"notifications\":12}"
+#state actions {}
+""",
+        """v1_0.formal.component.text.8_text_function_formatDate""" to """#0 createSurface surface="test-text-format-date"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-text-format-date" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-text-format-date" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-text-format-date" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "PUBLISHED"
+#4 createComponent surface="test-text-format-date" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### "
+#5 createComponent surface="test-text-format-date" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = ""
+#6 updateData surface="test-text-format-date"
+  data:
+    "publishedAt" = "2025-12-15T17:30:00Z"
+#7 updateComponent surface="test-text-format-date" tag=4 view="KRRichTextView"
+  props:
+    "text" = "##### Dec 15, 2025"
+#8 updateComponent surface="test-text-format-date" tag=5 view="KRRichTextView"
+  props:
+    "text" = "2025/12/15"
+#state dataModel "{\"publishedAt\":\"2025-12-15T17:30:00Z\"}"
+#state actions {}
+""",
+        """v1_0.formal.component.textfield.1_textfield_variant_shortText""" to """#0 createSurface surface="test-tf-short"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-tf-short" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-tf-short" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-tf-short" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Username"
+#4 createComponent surface="test-tf-short" tag=2 parent=3 index=1 view="KRTextFieldView"
+  props:
+    "alignSelf" = "stretch"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = "4"
+    "height" = 44
+    "padding" = 8
+    "text" = ""
+    "variant" = "shortText"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.textfield.2_textfield_variant_longText""" to """#0 createSurface surface="test-tf-long"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-tf-long" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-tf-long" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-tf-long" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Bio"
+#4 createComponent surface="test-tf-long" tag=2 parent=3 index=1 view="KRTextAreaView"
+  props:
+    "alignSelf" = "stretch"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = "4"
+    "minHeight" = 88
+    "padding" = 8
+    "text" = ""
+    "variant" = "longText"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.textfield.3_textfield_variant_number""" to """#0 createSurface surface="test-tf-number"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-tf-number" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-tf-number" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-tf-number" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Age"
+#4 createComponent surface="test-tf-number" tag=2 parent=3 index=1 view="KRTextFieldView"
+  props:
+    "alignSelf" = "stretch"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = "4"
+    "height" = 44
+    "padding" = 8
+    "text" = ""
+    "variant" = "number"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.textfield.4_textfield_variant_obscured""" to """#0 createSurface surface="test-tf-obscured"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-tf-obscured" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-tf-obscured" tag=3 parent=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#3 createComponent surface="test-tf-obscured" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Password"
+#4 createComponent surface="test-tf-obscured" tag=2 parent=3 index=1 view="KRTextFieldView"
+  props:
+    "alignSelf" = "stretch"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = "4"
+    "height" = 44
+    "padding" = 8
+    "text" = ""
+    "variant" = "obscured"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.textfield.5_textfield_value_binding""" to """#0 createSurface surface="test-tf-binding"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-tf-binding" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-tf-binding" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-tf-binding" tag=5 parent=2 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#4 createComponent surface="test-tf-binding" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Your name"
+#5 createComponent surface="test-tf-binding" tag=3 parent=5 index=1 view="KRTextFieldView"
+  props:
+    "__textFieldBindingPath" = "name"
+    "alignSelf" = "stretch"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = "4"
+    "height" = 44
+    "padding" = 8
+    "text" = ""
+#6 createComponent surface="test-tf-binding" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Hello, !"
+#7 updateData surface="test-tf-binding"
+  data:
+    "name" = "World"
+#8 updateComponent surface="test-tf-binding" tag=4 view="KRRichTextView"
+  props:
+    "text" = "Hello, World!"
+#9 updateComponent surface="test-tf-binding" tag=3 view="KRTextFieldView"
+  props:
+    "text" = "World"
+#10 updateComponent surface="test-tf-binding" tag=6 view="KRRichTextView"
+  props:
+    "text" = "Your name"
+#state dataModel "{\"name\":\"World\"}"
+#state actions {}
+""",
+        """v1_0.formal.component.textfield.6_textfield_email_checks_vs_legacy_regexp""" to """#0 createSurface surface="test-tf-regexp"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-tf-regexp" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-tf-regexp" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-tf-regexp" tag=5 parent=2 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#4 createComponent surface="test-tf-regexp" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Email (email via @checks)"
+#5 createComponent surface="test-tf-regexp" tag=3 parent=5 index=1 view="KRTextFieldView"
+  props:
+    "__textFieldBindingPath" = "email"
+    "alignSelf" = "stretch"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = "4"
+    "height" = 44
+    "padding" = 8
+    "text" = ""
+    "variant" = "shortText"
+#6 createComponent surface="test-tf-regexp" tag=7 parent=5 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#D32F2F"
+    "fontSize" = 12.0
+    "height" = 0.0
+    "marginLeft" = 4.0
+    "marginTop" = 4.0
+    "opacity" = 0.0
+    "text" = ""
+#7 createComponent surface="test-tf-regexp" tag=8 parent=2 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#8 createComponent surface="test-tf-regexp" tag=9 parent=8 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Email (regex via @checks)"
+#9 createComponent surface="test-tf-regexp" tag=4 parent=8 index=1 view="KRTextFieldView"
+  props:
+    "__textFieldBindingPath" = "tf_validation_value"
+    "alignSelf" = "stretch"
+    "border" = "1 solid 4292030255"
+    "borderRadius" = "4"
+    "height" = 44
+    "padding" = 8
+    "text" = ""
+    "variant" = "shortText"
+#10 createComponent surface="test-tf-regexp" tag=10 parent=8 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#D32F2F"
+    "fontSize" = 12.0
+    "marginLeft" = 4.0
+    "marginTop" = 4.0
+    "text" = "Please enter a value matching the required pattern"
+#11 updateData surface="test-tf-regexp"
+  data:
+    "email" = ""
+    "tf_validation_value" = ""
+#12 updateComponent surface="test-tf-regexp" tag=3 view="KRTextFieldView"
+  props:
+    "border" = "1 solid 4291611852"
+    "text" = ""
+#13 updateComponent surface="test-tf-regexp" tag=6 view="KRRichTextView"
+  props:
+    "text" = "Email (email via @checks)"
+#14 updateComponent surface="test-tf-regexp" tag=4 view="KRTextFieldView"
+  props:
+    "border" = "1 solid 4291611852"
+    "text" = ""
+#15 updateComponent surface="test-tf-regexp" tag=9 view="KRRichTextView"
+  props:
+    "text" = "Email (regex via @checks)"
+#16 updateComponent surface="test-tf-regexp" tag=7 view="KRRichTextView"
+  props:
+    "height" = 0.0
+    "opacity" = 0.0
+    "text" = ""
+#17 updateComponent surface="test-tf-regexp" tag=10 view="KRRichTextView"
+  props:
+    "height" = 0.0
+    "opacity" = 0.0
+    "text" = ""
+#state dataModel "{\"email\":\"\",\"tf_validation_value\":\"\"}"
+#state actions {}
+""",
+        """v1_0.formal.component.video.1_video_literal_url""" to """#0 createSurface surface="test-video-literal"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-video-literal" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-video-literal" tag=2 parent=1 index=0 view="KRVideoView"
+  props:
+    "alignSelf" = "stretch"
+    "height" = 200
+    "margin" = 8
+    "src" = "https://www.w3schools.com/html/mov_bbb.mp4"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.component.video.2_video_url_binding""" to """#0 createSurface surface="test-video-binding"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-video-binding" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-video-binding" tag=2 parent=1 index=0 view="KRVideoView"
+  props:
+    "alignSelf" = "stretch"
+    "height" = 200
+    "margin" = 8
+    "src" = ""
+#3 updateData surface="test-video-binding"
+  data:
+    "videoUrl" = "https://www.w3schools.com/html/mov_bbb.mp4"
+#4 updateComponent surface="test-video-binding" tag=2 view="KRVideoView"
+  props:
+    "src" = "https://www.w3schools.com/html/mov_bbb.mp4"
+#state dataModel "{\"videoUrl\":\"https://www.w3schools.com/html/mov_bbb.mp4\"}"
+#state actions {}
+""",
+        """v1_0.formal.component.video.3_video_in_column""" to """#0 createSurface surface="test-video-column"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-video-column" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-video-column" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-video-column" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#### Sample Video"
+#4 createComponent surface="test-video-column" tag=4 parent=2 index=1 view="KRVideoView"
+  props:
+    "alignSelf" = "stretch"
+    "height" = 200
+    "margin" = 8
+    "src" = "https://www.w3schools.com/html/mov_bbb.mp4"
+#5 createComponent surface="test-video-column" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Big Buck Bunny - test clip"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.extension.01_string_return.1_custom_greeting""" to """#0 createSurface surface="cf-str-1"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="custom_functions_catalog_v1_0.json"
+#1 createComponent surface="cf-str-1" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="cf-str-1" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="cf-str-1" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "getGreeting(name) → String"
+#4 createComponent surface="cf-str-1" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "### Hello, World!"
+#5 updateData surface="cf-str-1"
+  data:
+    "userName" = "Kuikly"
+#6 updateComponent surface="cf-str-1" tag=4 view="KRRichTextView"
+  props:
+    "text" = "### Hello, Kuikly!"
+#state dataModel "{\"userName\":\"Kuikly\"}"
+#state actions {}
+""",
+        """v1_0.formal.extension.01_string_return.2_custom_format_phone""" to """#0 createSurface surface="cf-str-2"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="custom_functions_catalog_v1_0.json"
+#1 createComponent surface="cf-str-2" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="cf-str-2" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="cf-str-2" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "formatPhone(phone) → String"
+#4 createComponent surface="cf-str-2" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "#### "
+#5 updateData surface="cf-str-2"
+  data:
+    "rawPhone" = "13800001234"
+#6 updateComponent surface="cf-str-2" tag=4 view="KRRichTextView"
+  props:
+    "text" = "#### 138-0000-1234"
+#state dataModel "{\"rawPhone\":\"13800001234\"}"
+#state actions {}
+""",
+        """v1_0.formal.extension.01_web_view.1_web_source""" to """#0 createSurface surface="cc-web-1"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="custom_components_catalog_v1_0.json"
+#1 createComponent surface="cc-web-1" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="cc-web-1" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="cc-web-1" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "### A2UIWeb 组件"
+#4 createComponent surface="cc-web-1" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "通过 source 属性加载网页内容"
+#5 createComponent surface="cc-web-1" tag=5 parent=2 index=2 view="A2UIWeb"
+  props:
+    "source" = "https://framework.tds.qq.com/"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.extension.02_boolean_return.1_custom_is_vip""" to """#0 createSurface surface="cf-bool-1"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="custom_functions_catalog_v1_0.json"
+#1 createComponent surface="cf-bool-1" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="cf-bool-1" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="cf-bool-1" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "isVip(level) → Boolean；numeric → ValidationResult"
+#4 createComponent surface="cf-bool-1" tag=7 parent=2 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#5 createComponent surface="cf-bool-1" tag=5 parent=7 index=0 view="KRView"
+  props:
+    "alignItems" = "center"
+    "backgroundColor" = "4278239231"
+    "borderRadius" = "6"
+    "flexDirection" = "row"
+    "justifyContent" = "center"
+    "opacity" = 0.4
+    "padding" = 10
+    "paddingLeft" = 16
+    "paddingRight" = 16
+    "touchEnable" = 0
+#6 createComponent surface="cf-bool-1" tag=8 parent=7 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#D32F2F"
+    "fontSize" = 12.0
+    "marginLeft" = 4.0
+    "marginTop" = 4.0
+    "text" = "仅 VIP 用户（level >= 3）可进入"
+#7 createComponent surface="cf-bool-1" tag=4 parent=5 index=0 view="KRRichTextView"
+  props:
+    "color" = "4294967295"
+    "fontSize" = 16.0
+    "margin" = 0
+    "text" = "🌟 进入 VIP 专区"
+#8 createComponent surface="cf-bool-1" tag=6 parent=2 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "当前 userLevel = ，isVip 返回 false"
+#9 updateData surface="cf-bool-1"
+  data:
+    "userLevel" = 5
+#10 updateComponent surface="cf-bool-1" tag=6 view="KRRichTextView"
+  props:
+    "text" = "当前 userLevel = 5，isVip 返回 true"
+#11 updateComponent surface="cf-bool-1" tag=8 view="KRRichTextView"
+  props:
+    "height" = 0.0
+    "opacity" = 0.0
+    "text" = ""
+#12 updateComponent surface="cf-bool-1" tag=5 view="KRView"
+  props:
+    "opacity" = 1.0
+    "touchEnable" = 1
+#state dataModel "{\"userLevel\":5}"
+#state actions {"5": "{\"event\":{\"name\":\"enterVipZone\",\"context\":{\"level\":5}}}"}
+""",
+        """v1_0.formal.extension.02_my_view.1_my_view""" to """#0 createSurface surface="cc-my-1"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="custom_components_catalog_v1_0.json"
+#1 createComponent surface="cc-my-1" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="cc-my-1" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="cc-my-1" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "### MyA2UIView 组件"
+#4 createComponent surface="cc-my-1" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "自定义简单视图，支持 text 和 textColor 属性"
+#5 createComponent surface="cc-my-1" tag=5 parent=2 index=2 view="MyA2UIView"
+  props:
+    "text" = "Hello from MyA2UIView! 🎉"
+    "textColor" = "4284612846"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.formal.extension.03_number_return.1_custom_calculate_discount""" to """#0 createSurface surface="cf-num-1"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="custom_functions_catalog_v1_0.json"
+#1 createComponent surface="cf-num-1" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="cf-num-1" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="cf-num-1" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "calculateDiscount(price, rate) → Number"
+#4 createComponent surface="cf-num-1" tag=4 parent=2 index=1 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+#5 createComponent surface="cf-num-1" tag=5 parent=4 index=0 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "折后价: ¥"
+#6 createComponent surface="cf-num-1" tag=6 parent=4 index=1 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "### 0"
+#7 updateData surface="cf-num-1"
+  data:
+    "discountRate" = 0.7
+    "originalPrice" = 199
+#8 updateComponent surface="cf-num-1" tag=6 view="KRRichTextView"
+  props:
+    "text" = "### 139.3"
+#state dataModel "{\"originalPrice\":199,\"discountRate\":0.7}"
+#state actions {}
+""",
+        """v1_0.formal.extension.04_void_action.1_custom_log_event""" to """#0 createSurface surface="cf-void-1"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="custom_functions_catalog_v1_0.json"
+#1 createComponent surface="cf-void-1" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="cf-void-1" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="cf-void-1" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "logEvent(event, data) → Void"
+#4 createComponent surface="cf-void-1" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "点击按钮触发自定义 void 函数 logEvent"
+#5 createComponent surface="cf-void-1" tag=5 parent=2 index=2 view="KRView"
+  props:
+    "alignItems" = "center"
+    "backgroundColor" = "4278239231"
+    "borderRadius" = "6"
+    "flexDirection" = "row"
+    "justifyContent" = "center"
+    "margin" = 8
+    "padding" = 10
+    "paddingLeft" = 16
+    "paddingRight" = 16
+    "touchEnable" = 1
+#6 createComponent surface="cf-void-1" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 0
+    "text" = "触发 logEvent"
+#7 updateData surface="cf-void-1"
+  data:
+    "eventData" = "custom_function_demo"
+#state dataModel "{\"eventData\":\"custom_function_demo\"}"
+#state actions {"5": "{\"functionCall\":{\"@call\":\"logEvent\",\"args\":{\"event\":\"button_click\",\"data\":\"custom_function_demo\"}}}"}
+""",
+        """v1_0.formal.extension.05_args_passing.1_custom_build_summary""" to """#0 createSurface surface="cf-args-1"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="custom_functions_catalog_v1_0.json"
+#1 createComponent surface="cf-args-1" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="cf-args-1" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="cf-args-1" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "buildSummary(name, count, status) → String"
+#4 createComponent surface="cf-args-1" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "项目「Unknown」当前状态: unknown，共 0 个任务"
+#5 updateData surface="cf-args-1"
+  data:
+    "project" = {"name": "KuiklyUI", "status": "active", "taskCount": 42}
+#6 updateComponent surface="cf-args-1" tag=4 view="KRRichTextView"
+  props:
+    "text" = "项目「KuiklyUI」当前状态: active，共 42 个任务"
+#state dataModel "{\"project\":{\"name\":\"KuiklyUI\",\"taskCount\":42,\"status\":\"active\"}}"
+#state actions {}
+""",
         """v1_0.protocol.01_pr2_mixin_keys""" to """#0 createSurface surface="pr2-mixin-keys-surface"
   config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
 #1 updateData surface="pr2-mixin-keys-surface"
@@ -22470,53 +28647,6 @@ internal object A2UIGoldenBaseline {
     "text" = 4.2
 #state dataModel "{\"cart\":{\"title\":\"Your cart\",\"items\":[{\"name\":\"Espresso\",\"price\":3.5},{\"name\":\"Croissant\",\"price\":2.8},{\"name\":\"Tea latte\",\"price\":4.2}]}}"
 #state actions {}
-""",
-        """v1_0.protocol.03_pr6_rpc_bidirectional""" to """#0 createSurface surface="pr6-rpc-surface"
-  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
-#1 updateData surface="pr6-rpc-surface"
-  data:
-    "status" = "idle"
-#2 createComponent surface="pr6-rpc-surface" tag=1 index=0 view="KRView"
-  props:
-    "alignItems" = "stretch"
-    "alignSelf" = "stretch"
-    "flexDirection" = "column"
-#3 createComponent surface="pr6-rpc-surface" tag=2 parent=1 index=0 view="KRRichTextView"
-  props:
-    "alignSelf" = "stretch"
-    "color" = "4279900698"
-    "fontSize" = 16.0
-    "margin" = 8
-    "text" = "PR-6 bidirectional RPC"
-#4 createComponent surface="pr6-rpc-surface" tag=3 parent=1 index=1 view="KRRichTextView"
-  props:
-    "alignSelf" = "stretch"
-    "color" = "4279900698"
-    "fontSize" = 16.0
-    "margin" = 8
-    "text" = "idle"
-#5 createComponent surface="pr6-rpc-surface" tag=5 parent=1 index=2 view="KRView"
-  props:
-    "alignItems" = "center"
-    "backgroundColor" = "4294309365"
-    "borderColor" = "4291611852"
-    "borderRadius" = "6"
-    "borderWidth" = "1"
-    "flexDirection" = "row"
-    "justifyContent" = "center"
-    "margin" = 8
-    "padding" = 10
-    "paddingLeft" = 16
-    "paddingRight" = 16
-    "touchEnable" = 1
-#6 createComponent surface="pr6-rpc-surface" tag=4 parent=5 index=0 view="KRRichTextView"
-  props:
-    "color" = "4279900698"
-    "fontSize" = 16.0
-    "margin" = 0
-    "text" = "Fetch user from agent"
-#state dataModel "{\"status\":\"idle\"}"
-#state actions {"5": "{\"event\":{\"name\":\"fetchUser\",\"context\":{\"id\":42}}}"}
 """,
         """v1_0.protocol.05_pr9_small_fields_video_poster""" to """#0 createSurface surface="pr9-small-fields-surface"
   config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"

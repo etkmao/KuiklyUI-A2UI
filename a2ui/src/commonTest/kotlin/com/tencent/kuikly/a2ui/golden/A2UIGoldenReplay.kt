@@ -31,6 +31,17 @@ internal object A2UIGoldenReplay {
     fun run(case: A2UIGoldenCase, chunkSize: Int = Int.MAX_VALUE): Result {
         require(chunkSize > 0)
         val parser = A2UIStreamParser()
+        val host = if (case.id.startsWith("v1_0.formal.extension.") && case.sourcePath.startsWith("a2ui_custom_functions/")) {
+            A2UIFormalGoldenHost(parser)
+        } else null
+        try {
+            return replay(case, chunkSize, parser)
+        } finally {
+            host?.restore()
+        }
+    }
+
+    private fun replay(case: A2UIGoldenCase, chunkSize: Int, parser: A2UIStreamParser): Result {
         val snapshot = StringBuilder()
         val errors = mutableListOf<String>()
         var count = 0

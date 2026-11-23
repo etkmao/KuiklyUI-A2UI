@@ -62,6 +62,7 @@ class A2UIProtocolAdapter {
         getIncomingAgentCall = { onIncomingAgentCall },
         getEmitWireMessage = { emitWireMessage },
         serializeToJson = A2UIJsonValue::serializeToJson,
+        getCatalogId = { model.catalogId },
     )
 
     fun setExpectedProtocolVersion(version: A2UIProtocolVersion?) = decoder.setExpectedProtocolVersion(version)

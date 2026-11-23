@@ -66,7 +66,7 @@ class A2UIDemoListViewController: A2UIDemoBaseListViewController {
                     build: { CustomIconDemoViewController() }
                 ),
                 A2UIDemoEntry(
-                    title: "🔁 v1.0 RPC 回路 Demo (Native)",
+                    title: "RPC 回路 Demo (Native)",
                     description: "用 A2UISurfaceView.rpcEnvelopeOutboundHandler + A2UIRpcBridge 跑一遍 callAgentFunction / callRendererFunction 双向回路，验证 PR-6d native-page RPC 通道",
                     icon: "🔁",
                     color: UIColor(red: 0.10, green: 0.45, blue: 0.91, alpha: 1.0), // #1A73E8
@@ -77,7 +77,7 @@ class A2UIDemoListViewController: A2UIDemoBaseListViewController {
             A2UIDemoSection(title: "组件展示", entries: [
                 A2UIDemoEntry(
                     title: "组件展示",
-                    description: "展示 A2UI v0.9 协议语义化组件：Text、Row、Column、Card 等 18 个组件",
+                    description: "展示 A2UI v1.0 协议语义化组件：Text、Row、Column、Card 等 18 个组件",
                     icon: "🔧",
                     color: UIColor(red: 0.95, green: 0.61, blue: 0.07, alpha: 1.0), // #F39C12
                     build: { ComponentDemoViewController() }

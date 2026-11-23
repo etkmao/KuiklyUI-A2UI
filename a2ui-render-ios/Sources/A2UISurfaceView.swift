@@ -542,6 +542,28 @@ public class A2UISurfaceView: UIView {
         broadcastRegister(name: name, spec: spec)
     }
 
+    @objc(registerCatalogFunction:catalogId:definitionJson:handler:)
+    public static func registerCatalogFunction(
+        name: String,
+        catalogId: String,
+        definitionJson: String,
+        handler: Handler? = nil
+    ) {
+        guard !name.isEmpty, !catalogId.isEmpty,
+              let data = definitionJson.data(using: .utf8),
+              var definition = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] else { return }
+        definition["catalogId"] = catalogId
+        definition["name"] = name
+        guard let specData = try? JSONSerialization.data(withJSONObject: definition),
+              let spec = String(data: specData, encoding: .utf8) else { return }
+        handlersLock.lock()
+        if let handler = handler { globalHandlers[name] = handler }
+        globalDescriptors["\(catalogId)::\(name)"] = spec
+        handlersLock.unlock()
+        A2UICustomFunctionRegistryBridge.shared?.register(name: name, spec: spec)
+        broadcastRegister(name: name, spec: spec)
+    }
+
     /// Reverse of `registerCustomFunction`. Safe to call for names that
     /// were never registered.
     @objc(unregisterCustomFunction:)

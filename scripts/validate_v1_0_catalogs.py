@@ -1,195 +1,167 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Smoke-validate the v1.0 catalogs shipped in `catalogs/`.
-
-This script is the acceptance harness called out by PR-7 of the
-A2UI v1.0 upgrade (see upgrade_to_a2ui1.0.md, section "## PR-7 Catalog").
-It intentionally has ZERO third-party dependencies (no jsonschema / no
-pyyaml) so it can run in any CI with a plain `python3`.
-
-Checks performed on every `*_v1_0.json` catalog under `catalogs/`:
-
- 1. Parses as valid JSON (UTF-8).
- 2. Has `"protocolVersion": "1.0"` at the top level.
- 3. Has a non-empty `$id` and `catalogId` (and they match if both end
-    with `.json` suffix of the same filename).
- 4. No stale `v0_9` URLs are left over anywhere in the file
-    (everything must have been upgraded to `v1_0`).
- 5. If the file declares `functions`, each function:
-    * is a JSON object;
-    * carries a top-level `returnType` whose value is one of the v1.0
-      enum values (`string`, `number`, `boolean`, `validationResult`,
-      `any`, `void`);
-    * carries a top-level `allowedCallers` whose value is one of
-      `rendererOnly`, `agentOnly`, `rendererOrAgent`;
-    * if `requiresUserActivation == true`, then `allowedCallers` MUST
-      equal `rendererOnly` (v1.0 cross-field constraint from
-      catalog_definition.json);
-    * the `@call` property in `properties` is a `const` matching the
-      function key (defensive consistency check).
-
-Usage:
-    python3 scripts/validate_v1_0_catalogs.py
-
-Exits with code 0 when all v1.0 catalogs pass, non-zero on any error.
-Prints a per-file diagnostic line for human/CI consumption.
-"""
-
+"""Materialize v1.0 catalogs and validate them against the official meta-schema, offline."""
 from __future__ import annotations
 
+import argparse
+import copy
 import json
 import os
-import re
+from pathlib import Path
+import subprocess
 import sys
-from typing import Any
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-CATALOGS_DIR = os.path.join(ROOT, "catalogs")
-
-ALLOWED_RETURN_TYPES = {"string", "number", "boolean", "validationResult", "any", "void"}
-ALLOWED_CALLERS = {"rendererOnly", "agentOnly", "rendererOrAgent"}
-
-# Matches the stale v0_9 URL fragment that MUST NOT appear anywhere in a
-# v1.0 catalog file. Deliberately a substring regex so it catches both
-# `.../v0_9/catalogs/basic/catalog.json` and `.../v0_9/common_types.json`.
-_V09_URL = re.compile(r"/v0_9/")
+ROOT = Path(__file__).resolve().parents[1]
+CATALOGS_DIR = ROOT / "catalogs"
+SPEC_ROOT = Path(os.environ.get("A2UI_SPEC_ROOT", "/Users/etkm/git_a2ui/a2ui"))
 
 
-def _collect_errors(obj: Any, path: str, errors: list[str]) -> None:
-    """Walk JSON looking for stale v0_9 URLs."""
-    if isinstance(obj, str):
-        if _V09_URL.search(obj):
-            errors.append(f"{path}: stale v0_9 URL fragment: {obj!r}")
-    elif isinstance(obj, dict):
-        for k, v in obj.items():
-            _collect_errors(v, f"{path}/{k}", errors)
-    elif isinstance(obj, list):
-        for i, v in enumerate(obj):
-            _collect_errors(v, f"{path}[{i}]", errors)
+def read_json(path: Path) -> dict:
+    with path.open(encoding="utf-8") as stream:
+        return json.load(stream)
 
 
-def _validate_function(name: str, fn: dict, errors: list[str]) -> None:
-    where = f"functions.{name}"
-    if not isinstance(fn, dict):
-        errors.append(f"{where}: must be an object")
-        return
-
-    # 1) returnType (required by v1.0 catalog_definition.json)
-    rt = fn.get("returnType")
-    if rt is None:
-        errors.append(f"{where}: missing top-level `returnType`")
-    elif rt not in ALLOWED_RETURN_TYPES:
-        errors.append(
-            f"{where}: `returnType`={rt!r} not in {sorted(ALLOWED_RETURN_TYPES)}"
-        )
-
-    # 2) allowedCallers (optional per schema but we enforce explicitness
-    # so reviewers can audit who's authorised; the v1.0 schema still
-    # defaults to rendererOnly if omitted).
-    ac = fn.get("allowedCallers")
-    if ac is None:
-        errors.append(
-            f"{where}: missing top-level `allowedCallers` "
-            f"(must be one of {sorted(ALLOWED_CALLERS)})"
-        )
-    elif ac not in ALLOWED_CALLERS:
-        errors.append(
-            f"{where}: `allowedCallers`={ac!r} not in {sorted(ALLOWED_CALLERS)}"
-        )
-
-    # 3) requiresUserActivation ⇒ rendererOnly cross-field rule
-    if fn.get("requiresUserActivation") is True and ac != "rendererOnly":
-        errors.append(
-            f"{where}: requiresUserActivation=true requires "
-            f"allowedCallers=='rendererOnly', got {ac!r}"
-        )
-
-    # 4) @call const must equal the function key (defensive consistency)
-    props = fn.get("properties")
-    if isinstance(props, dict):
-        at_call = props.get("@call")
-        if isinstance(at_call, dict):
-            const_v = at_call.get("const")
-            if const_v != name:
-                errors.append(
-                    f"{where}: properties/@call/const={const_v!r} != function key {name!r}"
-                )
+def relative_refs(value):
+    if isinstance(value, list):
+        return [relative_refs(item) for item in value]
+    if not isinstance(value, dict):
+        return value
+    result = {}
+    for key, item in value.items():
+        if key == "$ref" and isinstance(item, str) and item.startswith(
+            "https://a2ui.org/specification/v1_0/common_types.json#"
+        ):
+            result[key] = item.split("/v1_0/", 1)[1]
         else:
-            errors.append(
-                f"{where}: missing properties.@call (expected const=={name!r})"
-            )
+            result[key] = relative_refs(item)
+    return result
 
 
-def validate_catalog_file(path: str) -> list[str]:
-    errors: list[str] = []
-    try:
-        with open(path, "r", encoding="utf-8") as fh:
-            data = json.load(fh)
-    except json.JSONDecodeError as e:
-        return [f"{path}: JSON parse error: {e}"]
-    except OSError as e:
-        return [f"{path}: cannot read: {e}"]
+def component_leaf(definition: dict) -> dict:
+    if "allOf" not in definition:
+        return copy.deepcopy(definition)
+    result = {key: copy.deepcopy(value) for key, value in definition.items()
+              if key not in {"allOf", "unevaluatedProperties"}}
+    result.setdefault("properties", {})["weight"] = {"$ref": "#/$defs/Weight"}
+    for branch in definition["allOf"]:
+        if "$ref" in branch:
+            if branch["$ref"] not in {
+                "common_types.json#/$defs/ComponentCommon",
+                "#/$defs/CatalogComponentCommon",
+            }:
+                raise ValueError(f"Unsupported custom component composition: {branch['$ref']}")
+            continue
+        for key, value in branch.items():
+            if key == "properties":
+                result["properties"].update(copy.deepcopy(value))
+            elif key == "required":
+                result.setdefault(key, []).extend(value)
+            else:
+                result[key] = copy.deepcopy(value)
+    return result
 
-    if not isinstance(data, dict):
-        return [f"{path}: top-level must be a JSON object"]
 
-    # 1. protocolVersion
-    if data.get("protocolVersion") != "1.0":
-        errors.append(
-            f"{path}: `protocolVersion` must be the string \"1.0\", "
-            f"got {data.get('protocolVersion')!r}"
-        )
+def close_style_objects(node) -> None:
+    if isinstance(node, list):
+        for item in node:
+            close_style_objects(item)
+    elif isinstance(node, dict):
+        if node.get("type") == "object" and "properties" in node:
+            node.setdefault("additionalProperties", False)
+        for item in node.values():
+            close_style_objects(item)
 
-    # 2. $id / catalogId presence
-    if not isinstance(data.get("$id"), str) or not data["$id"]:
-        errors.append(f"{path}: missing non-empty `$id`")
-    if not isinstance(data.get("catalogId"), str) or not data["catalogId"]:
-        errors.append(f"{path}: missing non-empty `catalogId`")
 
-    # 3. No stale v0_9 URLs
-    _collect_errors(data, "$", errors)
+def build_catalog(basic: dict, extension: dict, filename: str) -> dict:
+    extension = relative_refs(extension)
+    catalog = copy.deepcopy(basic)
+    for key in ("$schema", "$id", "title", "description", "catalogId"):
+        catalog[key] = extension[key]
+    catalog["protocolVersion"] = "1.0"
+    if filename == "kuikly_a2ui_catalog_v1_0.json":
+        catalog["description"] = "Materialized official A2UI 1.0 basic catalog with optional Kuikly styles, merged closed text-style leaves, and registered custom Icon names and sizes."
+        common = copy.deepcopy(extension["$defs"]["KuiklyCommonStyles"])
+        text = copy.deepcopy(extension["$defs"]["KuiklyTextStyles"])
+        for branch in common["properties"]["backgroundLinearGradient"]["oneOf"]:
+            if branch.get("type") == "object":
+                directions = branch["properties"]["direction"]["enum"]
+                if "to-bottom-right" not in directions:
+                    directions.append("to-bottom-right")
+        text.pop("allOf", None)
+        text_specific = {key: value for key, value in text["properties"].items()
+                         if key not in common["properties"]}
+        text["properties"] = {**copy.deepcopy(common["properties"]), **text_specific}
+        text["additionalProperties"] = False
+        close_style_objects(common)
+        close_style_objects(text)
+        catalog["$defs"].update(KuiklyCommonStyles=common, KuiklyTextStyles=text)
+        for name, definition in catalog["components"].items():
+            style = "KuiklyTextStyles" if name == "Text" else "KuiklyCommonStyles"
+            definition.setdefault("properties", {})["styles"] = {"$ref": f"#/$defs/{style}"}
+        catalog["components"]["Icon"]["properties"]["name"]["oneOf"][0].pop("enum", None)
+        catalog["components"]["Icon"]["properties"]["size"] = {"type": "number", "minimum": 0}
+    else:
+        for name, definition in extension.get("components", {}).items():
+            if name not in basic["components"]:
+                catalog["components"][name] = component_leaf(definition)
+        for name, definition in extension.get("functions", {}).items():
+            if name not in basic["functions"]:
+                definition = copy.deepcopy(definition)
+                definition.pop("unevaluatedProperties", None)
+                if name != "fetchUser":
+                    definition["allowedCallers"] = "rendererOrAgent"
+                catalog["functions"][name] = definition
+        if filename == "custom_functions_catalog_v1_0.json":
+            catalog["functions"]["fetchUser"] = {
+                "type": "object",
+                "description": "Fetches the requested user through the agent-side RPC host.",
+                "properties": {
+                    "@call": {"const": "fetchUser"},
+                    "args": {
+                        "type": "object",
+                        "properties": {"id": {"$ref": "common_types.json#/$defs/DynamicNumber"}},
+                        "required": ["id"],
+                        "unevaluatedProperties": False,
+                    },
+                },
+                "required": ["@call", "args"],
+                "returnType": "object",
+                "allowedCallers": "agentOnly",
+            }
+    for kind, entry in (("components", "anyComponent"), ("functions", "anyFunction")):
+        catalog["$defs"][entry] = {"oneOf": [{"$ref": f"#/{kind}/{name}"} for name in catalog[kind]]}
+        if kind == "components":
+            catalog["$defs"][entry]["discriminator"] = {"propertyName": "component"}
+    return catalog
 
-    # 4. functions sanity
-    funcs = data.get("functions")
-    if isinstance(funcs, dict):
-        for name, fn in funcs.items():
-            _validate_function(name, fn, errors)
 
-    return errors
+def materialize_catalogs() -> None:
+    basic = read_json(SPEC_ROOT / "catalogs/basic/v1/catalog.json")
+    products = [(file, build_catalog(basic, read_json(file), file.name))
+                for file in sorted(CATALOGS_DIR.glob("*_v1_0.json"))]
+    for file, catalog in products:
+        file.write_text(json.dumps(catalog, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(f"[BUILT] {file.relative_to(ROOT)}")
 
 
 def main() -> int:
-    if not os.path.isdir(CATALOGS_DIR):
-        print(f"[FAIL] catalogs dir not found: {CATALOGS_DIR}", file=sys.stderr)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--materialize", action="store_true", help="rebuild shipped catalogs from the local official basic catalog")
+    parser.add_argument("--self-test", action="store_true", help="also run strict offline positive and negative cases")
+    parser.add_argument("--file", type=Path, help="validate one catalog document")
+    args = parser.parse_args()
+    try:
+        if args.materialize:
+            materialize_catalogs()
+        entry = ROOT.parent / "ka2ui-harness/scripts/schema.mjs"
+        command = ["node", str(entry), "--catalogs"]
+        if args.file:
+            command.extend(["--file", str(args.file.resolve())])
+        if args.self_test:
+            command.append("--self-test")
+        return subprocess.run(command, check=False).returncode
+    except (OSError, ValueError, KeyError) as error:
+        print(f"[FAIL] {error}", file=sys.stderr)
         return 2
-
-    v1_files = sorted(
-        os.path.join(CATALOGS_DIR, name)
-        for name in os.listdir(CATALOGS_DIR)
-        if name.endswith("_v1_0.json")
-    )
-    if not v1_files:
-        print(f"[FAIL] no *_v1_0.json files found under {CATALOGS_DIR}", file=sys.stderr)
-        return 2
-
-    all_errors: list[str] = []
-    for path in v1_files:
-        errs = validate_catalog_file(path)
-        rel = os.path.relpath(path, ROOT)
-        if errs:
-            print(f"[FAIL] {rel}")
-            for e in errs:
-                print(f"       - {e}")
-            all_errors.extend(errs)
-        else:
-            print(f"[ OK ] {rel}")
-
-    if all_errors:
-        print(f"\n{len(all_errors)} issue(s) across {len(v1_files)} file(s).", file=sys.stderr)
-        return 1
-    print(f"\nAll {len(v1_files)} v1.0 catalog file(s) look good.")
-    return 0
 
 
 if __name__ == "__main__":

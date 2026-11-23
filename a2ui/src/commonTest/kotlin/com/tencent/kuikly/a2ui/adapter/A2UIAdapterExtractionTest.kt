@@ -15,6 +15,7 @@
 
 package com.tencent.kuikly.a2ui.adapter
 
+import com.tencent.kuikly.a2ui.function.A2UICustomFunctionRegistry
 import com.tencent.kuikly.a2ui.protocol.A2UIProtocolVersion
 import com.tencent.kuikly.a2ui.rpc.A2UIRpcError
 import com.tencent.kuikly.a2ui.rpc.A2UIRpcRequest
@@ -31,11 +32,13 @@ class A2UIAdapterExtractionTest {
     private fun createSurface(adapter: A2UIProtocolAdapter, id: String) {
         adapter.setExpectedProtocolVersion(A2UIProtocolVersion.V1_0)
         adapter.strictV10 = true
+        A2UICustomFunctionRegistry.register("hostFunction", """{"catalogId":"extraction_test_catalog_v1_0.json","returnType":"string","allowedCallers":"rendererOrAgent"}""")
+        A2UICustomFunctionRegistry.register("remote", """{"catalogId":"extraction_test_catalog_v1_0.json","returnType":"object","allowedCallers":"agentOnly"}""")
         adapter.convertMessage(mapOf(
             "version" to "1.0",
             "createSurface" to mapOf(
                 "surfaceId" to id,
-                "catalogId" to "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
+                "catalogId" to "extraction_test_catalog_v1_0.json",
             ),
         ))
     }
@@ -45,9 +48,12 @@ class A2UIAdapterExtractionTest {
             "version" to "1.0",
             "callRendererFunction" to mapOf(
                 "surfaceId" to surface,
-                "requestId" to request,
-                "name" to "hostFunction",
-                "args" to emptyMap<String, Any?>(),
+                "functionCallId" to request,
+                "callFunction" to mapOf(
+                    "@call" to "hostFunction",
+                    "catalogId" to "extraction_test_catalog_v1_0.json",
+                    "args" to emptyMap<String, Any?>(),
+                ),
             ),
         ))
     }
@@ -146,7 +152,11 @@ class A2UIAdapterExtractionTest {
         incoming(adapter, "s1", "first")
         assertEquals(1, firstCalls.size)
         assertEquals(1, firstWire.size)
-        assertTrue(firstWire.single().contains("\"result\":null"))
+        assertTrue(firstWire.single().contains("\"functionCallId\":\"first\""))
+        assertTrue(firstWire.single().contains("\"value\":null"))
+        assertFalse(firstWire.single().contains("surfaceId"))
+        assertFalse(firstWire.single().contains("requestId"))
+        assertFalse(firstWire.single().contains("result"))
         assertFalse(adapter.rpcDispatcher.hasPending("first"))
         adapter.emitWireMessage = { secondWire += it }
         adapter.onIncomingAgentCall = { error("host failed") }

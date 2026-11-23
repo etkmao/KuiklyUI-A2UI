@@ -15,6 +15,8 @@
 
 package com.tencent.kuikly.a2ui.function
 
+import com.tencent.kuikly.core.nvi.serialization.json.JSONObject
+
 /**
  * Return type of a custom A2UI function.
  *
@@ -27,6 +29,7 @@ enum class A2UIFunctionReturnType {
     BOOLEAN,
     NUMBER,
     ARRAY,
+    OBJECT,
     VOID;
 
     fun toWire(): String = name.lowercase()
@@ -37,6 +40,7 @@ enum class A2UIFunctionReturnType {
             "boolean", "bool" -> BOOLEAN
             "number", "int", "float", "double" -> NUMBER
             "array", "list" -> ARRAY
+            "object" -> OBJECT
             "void", "unit", "null", "none" -> VOID
             else -> null
         }
@@ -94,8 +98,38 @@ data class A2UICustomFunctionDescriptor(
      *     call sites and allows a catalog to shadow a global function
      *     without disturbing other catalogs.
      */
-    val catalogId: String? = null
+    val catalogId: String? = null,
+    val allowedCallers: String? = null,
+    val requiresUserActivation: Boolean = false,
+    val argumentTypes: Map<String, String> = emptyMap(),
+    val requiredArguments: Set<String> = emptySet(),
+    val allowAdditionalArguments: Boolean = true,
 ) {
+    fun validateArguments(args: Map<String, Any?>): String? {
+        val missing = requiredArguments.firstOrNull { !args.containsKey(it) }
+        if (missing != null) return "Missing required argument '$missing'"
+        if (!allowAdditionalArguments) {
+            val unknown = args.keys.firstOrNull { it !in argumentTypes }
+            if (unknown != null) return "Unknown argument '$unknown'"
+        }
+        for ((key, type) in argumentTypes) {
+            if (!args.containsKey(key)) continue
+            val value = args[key]
+            val valid = when (type) {
+                "string" -> value is String
+                "number" -> value is Number && value.toDouble().isFinite()
+                "integer" -> value is Number && value.toDouble().isFinite() && value.toDouble() % 1.0 == 0.0
+                "boolean" -> value is Boolean
+                "object" -> value is Map<*, *>
+                "array" -> value is List<*>
+                "null" -> value == null
+                else -> false
+            }
+            if (!valid) return "Argument '$key' must be $type"
+        }
+        return null
+    }
+
     /**
      * Encode the metadata into the wire format used across the Native ↔ Kotlin
      * boundary: `"returnType|invokeMode"`, e.g. `"string|sync"`, `"void|async"`.
@@ -113,6 +147,43 @@ data class A2UICustomFunctionDescriptor(
          * the return type token is invalid.
          */
         fun parseSpec(name: String, spec: String): A2UICustomFunctionDescriptor? {
+            if (spec.trimStart().startsWith("{")) {
+                return try {
+                    val json = JSONObject(spec)
+                    val rt = A2UIFunctionReturnType.fromWire(json.optString("returnType")) ?: return null
+                    val catalog = json.optString("catalogId").takeIf { it.isNotBlank() } ?: return null
+                    val callers = json.optString("allowedCallers").takeIf {
+                        it in setOf("rendererOnly", "agentOnly", "rendererOrAgent")
+                    } ?: return null
+                    val mode = if (rt == A2UIFunctionReturnType.VOID) {
+                        A2UIFunctionInvokeMode.fromWire(json.optString("invokeMode"))
+                    } else A2UIFunctionInvokeMode.SYNC
+                    val schema = json.optJSONObject("args")
+                    val properties = schema?.optJSONObject("properties")
+                    val types = mutableMapOf<String, String>()
+                    properties?.keys()?.forEach { key ->
+                        val type = properties.optJSONObject(key)?.optString("type") ?: return null
+                        if (type !in setOf("string", "number", "integer", "boolean", "object", "array", "null")) return null
+                        types[key] = type
+                    }
+                    val required = mutableSetOf<String>()
+                    val requiredArray = schema?.optJSONArray("required")
+                    if (requiredArray != null) {
+                        for (i in 0 until requiredArray.length()) {
+                            val key = requiredArray.optString(i) ?: return null
+                            if (key !in types) return null
+                            required += key
+                        }
+                    }
+                    val functionName = json.optString("name", name)
+                    if (name != functionName && name != "$catalog::$functionName") return null
+                    A2UICustomFunctionDescriptor(functionName, rt, mode, catalog, callers,
+                        json.optBoolean("requiresUserActivation", false), types, required,
+                        schema?.optBoolean("additionalProperties", true) ?: true)
+                } catch (_: Throwable) {
+                    null
+                }
+            }
             val parts = spec.split("|", limit = 2)
             val rt = A2UIFunctionReturnType.fromWire(parts.getOrNull(0)) ?: return null
             var mode = A2UIFunctionInvokeMode.fromWire(parts.getOrNull(1))
@@ -210,6 +281,7 @@ object A2UICustomFunctionRegistry {
             return false
         }
         val base = A2UICustomFunctionDescriptor.parseSpec(name, spec) ?: return false
+        if (base.name in RESERVED_NAMES) return false
         val desc = if (catalogId.isNullOrEmpty()) base else base.copy(catalogId = catalogId)
         functions[keyOf(desc.catalogId, desc.name)] = desc
         return true
@@ -249,6 +321,11 @@ object A2UICustomFunctionRegistry {
         // 2) Fall back to the global/name-only descriptor.
         return functions[name]
     }
+
+    fun lookupExact(name: String, catalogId: String): A2UICustomFunctionDescriptor? =
+        functions[keyOf(catalogId, name)]?.takeIf { it.catalogId == catalogId }
+
+    fun hasCatalog(catalogId: String): Boolean = functions.values.any { it.catalogId == catalogId }
 
     /**
      * Test whether the given name refers to a reserved (built-in) A2UI function.

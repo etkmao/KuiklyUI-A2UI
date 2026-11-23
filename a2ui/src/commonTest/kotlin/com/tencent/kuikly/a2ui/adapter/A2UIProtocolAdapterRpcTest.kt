@@ -15,6 +15,7 @@
 
 package com.tencent.kuikly.a2ui.adapter
 
+import com.tencent.kuikly.a2ui.function.A2UICustomFunctionRegistry
 import com.tencent.kuikly.a2ui.protocol.A2UIProtocolVersion
 import com.tencent.kuikly.a2ui.rpc.A2UIRpcError
 import com.tencent.kuikly.a2ui.rpc.A2UIRpcRequest
@@ -35,10 +36,14 @@ import kotlin.test.assertTrue
  */
 class A2UIProtocolAdapterRpcTest {
 
-    private fun newAdapter(strict: Boolean = true): A2UIProtocolAdapter {
+    private fun newAdapter(strict: Boolean = false): A2UIProtocolAdapter {
         val adapter = A2UIProtocolAdapter()
         adapter.setExpectedProtocolVersion(A2UIProtocolVersion.V1_0)
         adapter.strictV10 = strict
+        if (strict) {
+            A2UICustomFunctionRegistry.register("getGreeting", """{"catalogId":"custom_functions_catalog_v1_0.json","returnType":"string","allowedCallers":"rendererOrAgent","args":{"properties":{"name":{"type":"string"}},"required":["name"],"additionalProperties":false}}""")
+            A2UICustomFunctionRegistry.register("fetchUser", """{"catalogId":"custom_functions_catalog_v1_0.json","returnType":"object","allowedCallers":"agentOnly","args":{"properties":{"id":{"type":"number"}},"required":["id"],"additionalProperties":false}}""")
+        }
         // Seed a surface so wire-level surfaceId validation passes.
         // A minimal createSurface envelope is enough.
         adapter.convertMessage(
@@ -46,7 +51,7 @@ class A2UIProtocolAdapterRpcTest {
                 "version" to "1.0",
                 "createSurface" to mapOf(
                     "surfaceId" to "s1",
-                    "root" to mapOf("componentType" to "Div"),
+                    "catalogId" to "custom_functions_catalog_v1_0.json",
                 )
             )
         )
@@ -275,6 +280,157 @@ class A2UIProtocolAdapterRpcTest {
         assertEquals(0, adapter.rpcDispatcher.pendingCountFor())
         assertNotNull(received)
         assertEquals(A2UIRpcError.Codes.SURFACE_CLOSED, received!!.code)
+    }
+
+    @Test
+    fun strict_officialRequest_allowsSurfaceIndependentContext_andEmitsOfficialResponse() {
+        val adapter = newAdapter(strict = true)
+        val sink = WireSink()
+        adapter.emitWireMessage = sink.emitLambda
+        var received: A2UIRpcRequest? = null
+        adapter.onIncomingAgentCall = { received = it }
+        adapter.convertMessage(mapOf("version" to "1.0", "callRendererFunction" to mapOf(
+            "functionCallId" to "official-1",
+            "callFunction" to mapOf("@call" to "getGreeting",
+                "catalogId" to "custom_functions_catalog_v1_0.json", "args" to mapOf("name" to "Ada")))))
+        val request = assertNotNull(received)
+        assertEquals("", request.surfaceId)
+        adapter.respondToAgent(request.surfaceId, request.requestId, "Hello, Ada!")
+        val wire = sink.envelopes.single()
+        assertTrue(wire.contains("\"functionCallId\":\"official-1\""))
+        assertTrue(wire.contains("\"value\":\"Hello, Ada!\""))
+        assertFalse(wire.contains("surfaceId"))
+        assertFalse(wire.contains("requestId"))
+        assertFalse(wire.contains("result"))
+    }
+
+    @Test
+    fun strict_rejectsLegacyRequestAliases() {
+        val adapter = newAdapter(strict = true)
+        var called = false
+        adapter.onIncomingAgentCall = { called = true }
+        adapter.convertMessage(mapOf("version" to "1.0", "callRendererFunction" to mapOf(
+            "surfaceId" to "s1", "requestId" to "legacy", "name" to "getGreeting", "args" to emptyMap<String, Any?>())))
+        assertFalse(called)
+        assertFalse(adapter.rpcDispatcher.hasPending("legacy"))
+    }
+
+    @Test
+    fun strict_outboundOfficialCall_correlatesNullValueWithoutSurfaceId() {
+        val adapter = newAdapter(strict = true)
+        val sink = WireSink()
+        adapter.emitWireMessage = sink.emitLambda
+        var completed = false
+        val id = adapter.invokeAgentFunction("s1", "fetchUser", mapOf("id" to 42), 1000) {
+            completed = true
+            assertNull(it.result)
+            assertNull(it.error)
+        }
+        val wire = sink.envelopes.single()
+        assertTrue(wire.contains("\"functionCallId\""))
+        assertTrue(wire.contains("\"callFunction\""))
+        assertTrue(wire.contains("\"@call\":\"fetchUser\""))
+        assertFalse(wire.contains("timeoutMs"))
+        assertFalse(wire.contains("requestId"))
+        adapter.convertMessage(mapOf("version" to "1.0", "agentFunctionResponse" to mapOf(
+            "functionCallId" to id, "value" to null)))
+        assertTrue(completed)
+    }
+
+    @Test
+    fun strict_catalogGate_rejectsUnknownCatalogAndDoesNotFallbackToGlobal() {
+        val adapter = newAdapter(strict = true)
+        val sink = WireSink()
+        adapter.emitWireMessage = sink.emitLambda
+        var called = false
+        adapter.onIncomingAgentCall = { called = true }
+        A2UICustomFunctionRegistry.register("globalOnlyRpc", "string|sync")
+        fun call(name: String, catalog: String, id: String) {
+            adapter.convertMessage(mapOf("version" to "1.0", "callRendererFunction" to mapOf(
+                "functionCallId" to id, "callFunction" to mapOf("@call" to name,
+                    "catalogId" to catalog, "args" to emptyMap<String, Any?>()))))
+        }
+        call("globalOnlyRpc", "unknown_catalog.json", "unknown_catalog")
+        call("globalOnlyRpc", "custom_functions_catalog_v1_0.json", "unknown_function")
+        assertFalse(called)
+        assertTrue(sink.envelopes[0].contains("UNKNOWN_CATALOG"))
+        assertTrue(sink.envelopes[1].contains("UNKNOWN_FUNCTION"))
+        assertEquals(0, adapter.rpcDispatcher.pendingCountFor())
+        assertNotNull(A2UICustomFunctionRegistry.lookup("globalOnlyRpc", "unknown_catalog.json"))
+        assertNull(A2UICustomFunctionRegistry.lookupExact("globalOnlyRpc", "unknown_catalog.json"))
+        A2UICustomFunctionRegistry.unregister("globalOnlyRpc")
+    }
+
+    @Test
+    fun strict_catalogGate_rejectsAgentOnlyAndInvalidArgumentsOnRenderer() {
+        val adapter = newAdapter(strict = true)
+        val sink = WireSink()
+        adapter.emitWireMessage = sink.emitLambda
+        var called = false
+        adapter.onIncomingAgentCall = { called = true }
+        fun call(name: String, args: Map<String, Any?>, id: String) {
+            adapter.convertMessage(mapOf("version" to "1.0", "callRendererFunction" to mapOf(
+                "functionCallId" to id, "callFunction" to mapOf("@call" to name,
+                    "catalogId" to "custom_functions_catalog_v1_0.json", "args" to args))))
+        }
+        call("fetchUser", mapOf("id" to 42), "wrong_direction")
+        call("getGreeting", mapOf("name" to 42), "wrong_type")
+        call("getGreeting", emptyMap(), "missing_argument")
+        call("getGreeting", mapOf("name" to "Ada", "extra" to true), "extra_argument")
+        assertFalse(called)
+        assertTrue(sink.envelopes.first().contains("FUNCTION_NOT_ALLOWED"))
+        assertTrue(sink.envelopes.drop(1).all { it.contains("INVALID_ARGS") })
+        assertTrue(sink.envelopes.all { !it.contains("surfaceId") })
+        assertEquals(0, adapter.rpcDispatcher.pendingCountFor())
+    }
+
+    @Test
+    fun strict_catalogGate_outboundRejectsInvalidArgumentsWithoutWireOrPendingLeak() {
+        val adapter = newAdapter(strict = true)
+        val sink = WireSink()
+        adapter.emitWireMessage = sink.emitLambda
+        var code: String? = null
+        adapter.invokeAgentFunction("s1", "fetchUser", mapOf("id" to "42"), null) { code = it.error?.code }
+        assertEquals(A2UIRpcError.Codes.INVALID_ARGS, code)
+        assertTrue(sink.envelopes.isEmpty())
+        assertEquals(0, adapter.rpcDispatcher.pendingCountFor())
+        adapter.invokeAgentFunction("other", "fetchUser", mapOf("id" to 42), null) { code = it.error?.code }
+        assertEquals(A2UIRpcError.Codes.INVALID_ARGS, code)
+        assertTrue(sink.envelopes.isEmpty())
+    }
+
+    @Test
+    fun strict_catalogGate_activationAndRendererOnlyCannotBeInvokedByAgent() {
+        val adapter = newAdapter(strict = true)
+        val sink = WireSink()
+        adapter.emitWireMessage = sink.emitLambda
+        var called = false
+        adapter.onIncomingAgentCall = { called = true }
+        A2UICustomFunctionRegistry.register("trustedRpc", """{"catalogId":"custom_functions_catalog_v1_0.json","returnType":"void","allowedCallers":"rendererOrAgent","requiresUserActivation":true}""")
+        A2UICustomFunctionRegistry.register("rendererOnlyRpc", """{"catalogId":"custom_functions_catalog_v1_0.json","returnType":"void","allowedCallers":"rendererOnly"}""")
+        for (name in listOf("trustedRpc", "rendererOnlyRpc")) {
+            adapter.convertMessage(mapOf("version" to "1.0", "callRendererFunction" to mapOf(
+                "functionCallId" to name, "callFunction" to mapOf("@call" to name,
+                    "catalogId" to "custom_functions_catalog_v1_0.json", "args" to emptyMap<String, Any?>()))))
+        }
+        assertFalse(called)
+        assertTrue(sink.envelopes[0].contains("USER_ACTIVATION_REQUIRED"))
+        assertTrue(sink.envelopes[1].contains("FUNCTION_NOT_ALLOWED"))
+        A2UICustomFunctionRegistry.unregister("trustedRpc", "custom_functions_catalog_v1_0.json")
+        A2UICustomFunctionRegistry.unregister("rendererOnlyRpc", "custom_functions_catalog_v1_0.json")
+    }
+
+    @Test
+    fun catalogMetadata_parseAndQualifiedSnapshotPreserveLegacyExecutionSpec() {
+        val spec = """{"name":"snapshotRpc","catalogId":"snapshot_catalog.json","returnType":"string","invokeMode":"async","allowedCallers":"rendererOrAgent","args":{"properties":{"name":{"type":"string"}},"required":["name"],"additionalProperties":false}}"""
+        assertTrue(A2UICustomFunctionRegistry.register("snapshot_catalog.json::snapshotRpc", spec))
+        val descriptor = assertNotNull(A2UICustomFunctionRegistry.lookupExact("snapshotRpc", "snapshot_catalog.json"))
+        assertEquals("snapshotRpc", descriptor.name)
+        assertEquals("string|sync", descriptor.toSpec())
+        assertNull(descriptor.validateArguments(mapOf("name" to "Ada")))
+        assertNotNull(descriptor.validateArguments(mapOf("name" to null)))
+        assertFalse(A2UICustomFunctionRegistry.register("snapshotRpc", """{"catalogId":"snapshot_catalog.json","returnType":"string","allowedCallers":"invalid"}"""))
+        A2UICustomFunctionRegistry.unregister("snapshotRpc", "snapshot_catalog.json")
     }
 
     // --- Outbound-only keys appearing on inbound path are ignored ---------

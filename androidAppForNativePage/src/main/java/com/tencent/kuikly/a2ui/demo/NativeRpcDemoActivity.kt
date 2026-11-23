@@ -56,7 +56,7 @@ import org.json.JSONObject
  *     `onComplete` lambda, closing the loop.
  *
  *  2. **Inbound**: tapping the mock-agent button synthesises a
- *     `callRendererFunction("openPage", {"path":"/profile"})` envelope and
+ *     `callRendererFunction("getGreeting", {"path":"Ada"})` envelope and
  *     feeds it into [A2UISurfaceView.writeStream]; the Kotlin core splits
  *     it off from the stream, routes it to the handler we installed via
  *     [A2UIBridgeManager.setRendererFunctionJsonHandler], and we respond
@@ -113,7 +113,7 @@ class NativeRpcDemoActivity : AppCompatActivity() {
 
         // 2) Boot the surface and install the inbound RPC handler. The
         //    JSON handler stays alive for the whole activity.
-        surfaceView.init()
+        surfaceView.init("{\"protocolVersion\":\"1.0\",\"strictV10\":true}")
         A2UIBridgeManager.setRendererFunctionJsonHandler(surfaceView.instanceId) { requestJson ->
             // Same thread note as above.
             mainHandler.post { onInboundRendererFunction(requestJson) }
@@ -147,23 +147,24 @@ class NativeRpcDemoActivity : AppCompatActivity() {
                 "callRendererFunction",
                 JSONObject().apply {
                     put("surfaceId", surfaceId)
-                    put("requestId", requestId)
-                    put("name", "openPage")
-                    put("args", JSONObject().apply { put("path", "/profile") })
-                    put("timeoutMs", 5000)
+                    put("functionCallId", requestId)
+                    put("callFunction", JSONObject().apply {
+                        put("@call", "getGreeting")
+                        put("catalogId", "custom_functions_catalog_v1_0.json")
+                        put("args", JSONObject().apply { put("name", "Ada") })
+                    })
                 }
             )
         }.toString()
-        setStatus("Mock agent -> callRendererFunction openPage")
+        setStatus("Mock agent -> callRendererFunction getGreeting")
         log("agent → $envelope")
         surfaceView.writeStream(envelope)
     }
 
     /**
      * Called by [A2UIBridgeManager] for every `callRendererFunction`
-     * arriving on this surface's instance. Payload shape mirrors the
-     * on-wire protocol (minus the `callRendererFunction` key, which the
-     * dispatcher has already peeled off).
+     * arriving on this surface's instance. Host callbacks retain the internal
+     * requestId/name/args representation; the stream uses official 1.0 fields.
      */
     private fun onInboundRendererFunction(requestJson: String) {
         log("← agent callRendererFunction: $requestJson")
@@ -179,15 +180,15 @@ class NativeRpcDemoActivity : AppCompatActivity() {
         val args = req.optJSONObject("args")
         val instanceId = surfaceView.instanceId
         when (name) {
-            "openPage" -> {
-                val path = args?.optString("path").orEmpty()
-                setStatus("Inbound openPage(path=\"$path\") → ok")
+            "getGreeting" -> {
+                val recipient = args?.optString("name").orEmpty()
+                setStatus("Inbound getGreeting(name=\"$recipient\") → ok")
                 log("→ host responding ok for requestId=$requestId")
                 A2UIBridgeManager.respondToAgentJson(
                     instanceId = instanceId,
                     surfaceId = reqSurfaceId,
                     requestId = requestId,
-                    resultJson = "{\"status\":\"ok\",\"pushed\":\"$path\"}",
+                    resultJson = JSONObject.quote("Hello, $recipient!"),
                 )
             }
             else -> {
@@ -281,17 +282,15 @@ class NativeRpcDemoActivity : AppCompatActivity() {
         }
         val call = env.optJSONObject("callAgentFunction") ?: return
         // Mock backend: pretend we processed fetchUser(id=42) and reply.
-        val reqSurfaceId = call.optString("surfaceId")
-        val requestId = call.optString("requestId")
+        val requestId = call.optString("functionCallId")
         val response = JSONObject().apply {
             put("version", "1.0")
             put(
                 "agentFunctionResponse",
                 JSONObject().apply {
-                    put("surfaceId", reqSurfaceId)
-                    put("requestId", requestId)
+                    put("functionCallId", requestId)
                     put(
-                        "result",
+                        "value",
                         JSONObject().apply {
                             put("id", 42)
                             put("name", "Alice")
@@ -355,7 +354,7 @@ class NativeRpcDemoActivity : AppCompatActivity() {
         }
         root.addView(surfaceView)
 
-        root.addView(buildButton("Mock agent → openPage(\"/profile\")", "#1A73E8") {
+        root.addView(buildButton("Mock agent → getGreeting(\"Ada\")", "#1A73E8") {
             simulateAgentCallRendererFunction()
         })
         root.addView(buildButton("Fetch user from agent (id=42)", "#34A853") {
@@ -450,24 +449,8 @@ class NativeRpcDemoActivity : AppCompatActivity() {
          * roundtrip, not the UI tree.
          */
         private const val INITIAL_CREATE_SURFACE_ENVELOPE: String =
-            "{" +
-                "\"version\":\"1.0\"," +
-                "\"createSurface\":{" +
-                    "\"surfaceId\":\"rpc-demo-native\"," +
-                    "\"components\":[" +
-                        "{" +
-                            "\"id\":\"root\",\"component\":\"Column\"," +
-                            "\"styles\":{\"padding\":8}," +
-                            "\"children\":[" +
-                                "{" +
-                                    "\"id\":\"hint\",\"component\":\"Text\"," +
-                                    "\"text\":\"Tap a button below to trigger an RPC.\"," +
-                                    "\"styles\":{\"fontSize\":13,\"color\":\"#334155\"}" +
-                                "}" +
-                            "]" +
-                        "}" +
-                    "]" +
-                "}" +
-            "}"
+            """{"version":"1.0","createSurface":{"surfaceId":"rpc-demo-native","catalogId":"custom_functions_catalog_v1_0.json"}}
+{"version":"1.0","updateComponents":{"surfaceId":"rpc-demo-native","components":[{"id":"root","component":"Column","children":["hint"]},{"id":"hint","component":"Text","text":"Tap a button below to trigger an RPC."}]}}
+"""
     }
 }
