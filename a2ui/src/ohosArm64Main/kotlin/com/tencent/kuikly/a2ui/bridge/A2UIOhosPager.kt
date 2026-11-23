@@ -99,12 +99,11 @@ open class A2UIOhosPager : Pager() {
         // After this, all events go to A2UIPager.onReceivePagerEvent()
         // Pass device screen size from this Pager's pageData (set by KRNativeRenderController.createPageParams)
         // so that A2UIPager can size full-screen overlays (Modal) correctly.
-        val configJson = if (pageData.deviceWidth > 0f || pageData.deviceHeight > 0f) {
-            "{\"deviceWidth\":${pageData.deviceWidth},\"deviceHeight\":${pageData.deviceHeight}}"
-        } else {
-            null
-        }
-        A2UIBridgeManager.callKotlinMethod(A2UIKotlinMethod.INIT, pagerId, configJson, null)
+        val incomingConfig = pageData.params.optString("a2uiConfig", "")
+        val config = if (incomingConfig.isNotEmpty()) JSONObject(incomingConfig) else JSONObject()
+        if (pageData.deviceWidth > 0f) config.put("deviceWidth", pageData.deviceWidth)
+        if (pageData.deviceHeight > 0f) config.put("deviceHeight", pageData.deviceHeight)
+        A2UIBridgeManager.callKotlinMethod(A2UIKotlinMethod.INIT, pagerId, config.toString(), null)
     }
 
     companion object {

@@ -15,7 +15,7 @@
 
 package com.tencent.kuikly.a2ui.golden
 
-/** 由 ka2ui golden 生成；只收 conformant 用例，共 260 条。 */
+/** 由 ka2ui golden 生成；只收 conformant 用例，共 266 条。 */
 internal data class A2UIGoldenCase(
     val id: String,
     val sourcePath: String,
@@ -1560,6 +1560,42 @@ internal object A2UIGoldenCorpus {
             sourcePath = """a2ui_theme_tests/08_agent_identity_edge/2_data_uri_icon.json""",
             protocolVersion = """v0.9""",
             stream = """[{"version":"v0.9","createSurface":{"surfaceId":"theme-agent-3","catalogId":"https://a2ui.org/specification/v0_9/catalogs/basic/catalog.json","theme":{"primaryColor":"#009688","iconUrl":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=","agentDisplayName":"Data URI Icon Agent"}}},{"version":"v0.9","updateComponents":{"surfaceId":"theme-agent-3","components":[{"id":"root","component":"Card","child":"col"},{"id":"col","component":"Column","children":["hint","avatar","name","btn"]},{"id":"hint","component":"Text","text":"theme.iconUrl 使用 data:image/png;base64,... 内联图片（1×1 蓝色像素）。Image 组件应能渲染，且不因非 http(s) URL 崩溃。","variant":"caption"},{"id":"avatar","component":"Image","url":{"path":"/mirror/iconUrl"},"variant":"avatar"},{"id":"name","component":"Text","text":{"path":"/mirror/agentDisplayName"}},{"id":"btn","component":"Button","child":"btn_lbl","variant":"primary","action":{"event":{"name":"themeTestClick"}}},{"id":"btn_lbl","component":"Text","text":"Primary Button（背景应为青 #009688）"}]}},{"version":"v0.9","updateDataModel":{"surfaceId":"theme-agent-3","value":{"mirror":{"iconUrl":"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=","agentDisplayName":"Data URI Icon Agent"}}}}]""",
+        ),
+        A2UIGoldenCase(
+            id = """v1_0.binding.03_child_list_template.1_column_template""",
+            sourcePath = """a2ui_databinding_tests/03_child_list_template/1_column_template.json""",
+            protocolVersion = """1.0""",
+            stream = """[{"version":"1.0","createSurface":{"surfaceId":"db-cl-1","catalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"}},{"version":"1.0","updateComponents":{"surfaceId":"db-cl-1","components":[{"id":"root","component":"Card","child":"col"},{"id":"col","component":"Column","children":["title","list"]},{"id":"title","component":"Text","text":"##### 今日 TODO"},{"id":"list","component":"Column","children":{"componentId":"todo_tpl","path":"/todos"}},{"id":"todo_tpl","component":"Text","text":{"@call":"formatString","args":{"value":"• ${'$'}{title}"}},"variant":"body"}]}},{"version":"1.0","updateDataModel":{"surfaceId":"db-cl-1","value":{"todos":[{"title":"阅读 A2UI 协议规范","done":true},{"title":"补齐数据绑定测试用例","done":false},{"title":"跑通 Android / iOS 双端","done":false}]}}}]""",
+        ),
+        A2UIGoldenCase(
+            id = """v1_0.component.list.1_list_direction_vertical""",
+            sourcePath = """a2ui_components/list/1_list_direction_vertical.json""",
+            protocolVersion = """1.0""",
+            stream = """[{"version":"1.0","createSurface":{"surfaceId":"test-list-vertical","catalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"}},{"version":"1.0","updateComponents":{"surfaceId":"test-list-vertical","components":[{"id":"root","component":"Card","child":"list"},{"id":"list","component":"List","children":["li1","li2","li3","li4","li5","li6"],"direction":"vertical"},{"id":"li1","component":"Text","text":"Vertical Item 1","variant":"body"},{"id":"li2","component":"Text","text":"Vertical Item 2","variant":"body"},{"id":"li3","component":"Text","text":"Vertical Item 3","variant":"body"},{"id":"li4","component":"Text","text":"Vertical Item 4","variant":"body"},{"id":"li5","component":"Text","text":"Vertical Item 5","variant":"body"},{"id":"li6","component":"Text","text":"Vertical Item 6","variant":"body"}]}}]""",
+        ),
+        A2UIGoldenCase(
+            id = """v1_0.component.text.4_text_body""",
+            sourcePath = """a2ui_components/text/4_text_body.json""",
+            protocolVersion = """1.0""",
+            stream = """[{"version":"1.0","createSurface":{"surfaceId":"test-text-body","catalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"}},{"version":"1.0","updateComponents":{"surfaceId":"test-text-body","components":[{"id":"root","component":"Card","child":"main_column"},{"id":"main_column","component":"Column","children":["t_body","t_default","t_long"]},{"id":"t_body","component":"Text","text":"This is body text with variant=\"body\" (16dp).","variant":"body"},{"id":"t_default","component":"Text","text":"This is text WITHOUT variant set (should default to body)."},{"id":"t_long","component":"Text","text":"Long body text to verify wrapping. The quick brown fox jumps over the lazy dog. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.","variant":"body"}]}}]""",
+        ),
+        A2UIGoldenCase(
+            id = """v1_0.component.text.6_text_path_binding""",
+            sourcePath = """a2ui_components/text/6_text_path_binding.json""",
+            protocolVersion = """1.0""",
+            stream = """[{"version":"1.0","createSurface":{"surfaceId":"test-text-path","catalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"}},{"version":"1.0","updateComponents":{"surfaceId":"test-text-path","components":[{"id":"root","component":"Card","child":"main_column"},{"id":"main_column","component":"Column","children":["title","subtitle"]},{"id":"title","component":"Text","text":{"@call":"formatString","args":{"value":"### ${'$'}{/title}"}}},{"id":"subtitle","component":"Text","text":{"@path":"/subtitle"},"variant":"caption"}]}},{"version":"1.0","updateDataModel":{"surfaceId":"test-text-path","value":{"title":"Bound Title from Data Model","subtitle":"This caption text is also bound via /subtitle"}}}]""",
+        ),
+        A2UIGoldenCase(
+            id = """v1_0.component.textfield.6_textfield_email_checks_vs_legacy_regexp""",
+            sourcePath = """a2ui_components/textfield/6_textfield_email_checks_vs_legacy_regexp.json""",
+            protocolVersion = """1.0""",
+            stream = """[{"version":"1.0","createSurface":{"surfaceId":"test-tf-regexp","catalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json","sendDataModel":true}},{"version":"1.0","updateComponents":{"surfaceId":"test-tf-regexp","components":[{"id":"root","component":"Card","child":"col"},{"id":"col","component":"Column","children":["tf_checks","tf"]},{"id":"tf_checks","component":"TextField","label":"Email (email via @checks)","value":{"@path":"/email"},"variant":"shortText","@checks":[{"condition":{"@call":"email","args":{"value":{"@path":"/email"}}},"message":"Please enter a valid email address"}]},{"id":"tf","component":"TextField","label":"Email (regex via @checks)","value":{"@path":"/emailRegexp"},"variant":"shortText","@checks":[{"condition":{"@call":"regex","args":{"value":{"@path":"/emailRegexp"},"pattern":"^[^@]+@[^@]+\\.[^@]+${'$'}"}},"message":"Please enter an address matching the original email pattern"}]}]}},{"version":"1.0","updateDataModel":{"surfaceId":"test-tf-regexp","value":{"email":"","emailRegexp":""}}}]""",
+        ),
+        A2UIGoldenCase(
+            id = """v1_0.examples.04_weather-current""",
+            sourcePath = """a2ui_examples/04_weather-current.json""",
+            protocolVersion = """1.0""",
+            stream = """[{"version":"1.0","createSurface":{"surfaceId":"gallery-weather-current","catalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json","sendDataModel":true}},{"version":"1.0","updateComponents":{"surfaceId":"gallery-weather-current","components":[{"id":"root","component":"Card","child":"main_column"},{"id":"main_column","component":"Column","children":["temp_row","location","description","forecast_row"],"align":"center"},{"id":"temp_row","component":"Row","children":["temp_high","temp_low"],"align":"start"},{"id":"temp_high","component":"Text","text":{"@call":"formatString","args":{"value":"# ${'$'}{/tempHigh}°"}}},{"id":"temp_low","component":"Text","text":{"@call":"formatString","args":{"value":"## ${'$'}{/tempLow}°"}}},{"id":"location","component":"Text","text":{"@call":"formatString","args":{"value":"### ${'$'}{/location}"}}},{"id":"description","component":"Text","text":{"@path":"/description"},"variant":"caption"},{"id":"forecast_row","component":"Row","children":{"path":"/forecast","componentId":"forecast_day_template"},"justify":"spaceAround"},{"id":"forecast_day_template","component":"Column","children":["day_name","day_icon","day_temp"],"align":"center"},{"id":"day_name","component":"Text","text":{"@call":"formatDate","args":{"value":{"@path":"date"},"format":"E"}},"variant":"caption"},{"id":"day_icon","component":"Text","text":{"@call":"formatString","args":{"value":"### ${'$'}{icon}"}}},{"id":"day_temp","component":"Text","text":{"@call":"formatString","args":{"value":"${'$'}{temp}°"}},"variant":"caption"}]}},{"version":"1.0","updateDataModel":{"surfaceId":"gallery-weather-current","value":{"tempHigh":72,"tempLow":58,"location":"Austin, TX","description":"Clear skies with light breeze","forecast":[{"date":"2025-12-16","icon":"☀️","temp":74},{"date":"2025-12-17","icon":"☀️","temp":76},{"date":"2025-12-18","icon":"⛅","temp":71},{"date":"2025-12-19","icon":"☀️","temp":73},{"date":"2025-12-20","icon":"☀️","temp":75}]}}}]""",
         ),
         A2UIGoldenCase(
             id = """v1_0.protocol.01_pr2_mixin_keys""",

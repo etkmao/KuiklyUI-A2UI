@@ -55,7 +55,7 @@ class A2UIV10SamplesActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "A2UIV10SamplesActivity"
-        private const val ASSETS_DIR = "a2ui_v10_tests"
+        private const val ASSETS_DIR = "v1_0/a2ui_v10_tests"
     }
 
     private val surfaceViews = mutableListOf<A2UISurfaceView>()
@@ -157,7 +157,11 @@ class A2UIV10SamplesActivity : AppCompatActivity() {
                 val jsonObj = JSONObject(jsonStr)
                 val name = jsonObj.optString("name", fileName)
                 val description = jsonObj.optString("description", "")
-                val messages = jsonObj.getJSONArray("messages").toString()
+                val envelopes = jsonObj.getJSONArray("messages")
+                A2UIDemoAssetVersion.validate((0 until envelopes.length()).map {
+                    envelopes.optJSONObject(it)?.optString("version")
+                }, ASSETS_DIR)
+                val messages = envelopes.toString()
 
                 // Card label
                 val label = TextView(this).apply {
@@ -200,7 +204,7 @@ class A2UIV10SamplesActivity : AppCompatActivity() {
                 cardContainer.addView(surfaceView)
                 scrollContent.addView(cardContainer)
 
-                surfaceView.init("{\"debug\": true}")
+                surfaceView.init(A2UIDemoAssetVersion.config(ASSETS_DIR))
                 surfaceView.setListener(object : A2UISurfaceViewListener {
                     override fun onAction(surfaceId: String, tag: Int, action: String, params: String?) {
                         Log.d(TAG, "[Sample: $name] Action: surfaceId=$surfaceId, tag=$tag, action=$action, params=$params")

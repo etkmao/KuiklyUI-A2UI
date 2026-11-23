@@ -802,6 +802,7 @@ class A2UIEvent {
  */
 @Component
 export struct A2UISurfaceView {
+  @Prop configJson: string = '{}';
   /** Listener for surface events */
   listener?: A2UISurfaceViewListener;
   /** Callback when the surface view controller is ready */
@@ -843,7 +844,7 @@ export struct A2UISurfaceView {
       if (this.showKuikly && this.delegate) {
         Kuikly({
           pageName: 'a2ui',
-          pageData: {},
+          pageData: { a2uiConfig: this.configJson },
           nativeManager: a2uiNativeManager,
           delegate: this.delegate,
           onControllerReadyCallback: (renderController: KRNativeRenderController) => {

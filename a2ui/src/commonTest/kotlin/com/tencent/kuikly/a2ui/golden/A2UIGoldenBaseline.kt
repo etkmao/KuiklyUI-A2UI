@@ -16,7 +16,7 @@
 package com.tencent.kuikly.a2ui.golden
 
 /**
- * 由 ka2ui golden --accept 生成，共 260 条全字段快照。
+ * 由 ka2ui golden --accept 生成，共 266 条全字段快照。
  * 记录既有行为，不代表规范正确性；更新前必须核对行为差异。
  */
 internal object A2UIGoldenBaseline {
@@ -21776,6 +21776,547 @@ internal object A2UIGoldenBaseline {
     "text" = "Data URI Icon Agent"
 #state dataModel "{\"mirror\":{\"iconUrl\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=\",\"agentDisplayName\":\"Data URI Icon Agent\"}}"
 #state actions {"6": "{\"event\":{\"name\":\"themeTestClick\"}}"}
+""",
+        """v1_0.binding.03_child_list_template.1_column_template""" to """#0 createSurface surface="db-cl-1"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="db-cl-1" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="db-cl-1" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="db-cl-1" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "##### 今日 TODO"
+#4 createComponent surface="db-cl-1" tag=4 parent=2 index=1 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#5 updateData surface="db-cl-1"
+  data:
+    "todos" = [{"done": true, "title": "阅读 A2UI 协议规范"}, {"done": false, "title": "补齐数据绑定测试用例"}, {"done": false, "title": "跑通 Android / iOS 双端"}]
+#6 createComponent surface="db-cl-1" tag=6 parent=4 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "• 阅读 A2UI 协议规范"
+#7 createComponent surface="db-cl-1" tag=7 parent=4 index=1 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "• 补齐数据绑定测试用例"
+#8 createComponent surface="db-cl-1" tag=8 parent=4 index=2 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "• 跑通 Android / iOS 双端"
+#state dataModel "{\"todos\":[{\"title\":\"阅读 A2UI 协议规范\",\"done\":true},{\"title\":\"补齐数据绑定测试用例\",\"done\":false},{\"title\":\"跑通 Android / iOS 双端\",\"done\":false}]}"
+#state actions {}
+""",
+        """v1_0.component.list.1_list_direction_vertical""" to """#0 createSurface surface="test-list-vertical"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-list-vertical" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-list-vertical" tag=2 parent=1 index=0 view="KRScrollView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-list-vertical" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 1"
+#4 createComponent surface="test-list-vertical" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 2"
+#5 createComponent surface="test-list-vertical" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 3"
+#6 createComponent surface="test-list-vertical" tag=6 parent=2 index=3 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 4"
+#7 createComponent surface="test-list-vertical" tag=7 parent=2 index=4 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 5"
+#8 createComponent surface="test-list-vertical" tag=8 parent=2 index=5 view="KRRichTextView"
+  props:
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Vertical Item 6"
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.component.text.4_text_body""" to """#0 createSurface surface="test-text-body"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-text-body" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-text-body" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-text-body" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "This is body text with variant=\"body\" (16dp)."
+#4 createComponent surface="test-text-body" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "This is text WITHOUT variant set (should default to body)."
+#5 createComponent surface="test-text-body" tag=5 parent=2 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Long body text to verify wrapping. The quick brown fox jumps over the lazy dog. Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+#state dataModel "{}"
+#state actions {}
+""",
+        """v1_0.component.text.6_text_path_binding""" to """#0 createSurface surface="test-text-path"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-text-path" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-text-path" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-text-path" tag=3 parent=2 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "### "
+#4 createComponent surface="test-text-path" tag=4 parent=2 index=1 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = ""
+#5 updateData surface="test-text-path"
+  data:
+    "subtitle" = "This caption text is also bound via /subtitle"
+    "title" = "Bound Title from Data Model"
+#6 updateComponent surface="test-text-path" tag=3 view="KRRichTextView"
+  props:
+    "text" = "### Bound Title from Data Model"
+#7 updateComponent surface="test-text-path" tag=4 view="KRRichTextView"
+  props:
+    "text" = "This caption text is also bound via /subtitle"
+#state dataModel "{\"title\":\"Bound Title from Data Model\",\"subtitle\":\"This caption text is also bound via /subtitle\"}"
+#state actions {}
+""",
+        """v1_0.component.textfield.6_textfield_email_checks_vs_legacy_regexp""" to """#0 createSurface surface="test-tf-regexp"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="test-tf-regexp" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="test-tf-regexp" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "stretch"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="test-tf-regexp" tag=5 parent=2 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#4 createComponent surface="test-tf-regexp" tag=6 parent=5 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Email (email via @checks)"
+#5 createComponent surface="test-tf-regexp" tag=3 parent=5 index=1 view="KRTextFieldView"
+  props:
+    "__textFieldBindingPath" = "email"
+    "alignSelf" = "stretch"
+    "border" = "1 solid 4291611852"
+    "borderRadius" = "4"
+    "height" = 44
+    "padding" = 8
+    "text" = ""
+    "variant" = "shortText"
+#6 createComponent surface="test-tf-regexp" tag=7 parent=5 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#D32F2F"
+    "fontSize" = 12.0
+    "height" = 0.0
+    "marginLeft" = 4.0
+    "marginTop" = 4.0
+    "opacity" = 0.0
+    "text" = ""
+#7 createComponent surface="test-tf-regexp" tag=8 parent=2 index=1 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+    "margin" = 8
+#8 createComponent surface="test-tf-regexp" tag=9 parent=8 index=0 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#333333"
+    "fontSize" = 14.0
+    "fontWeight" = "bold"
+    "marginBottom" = 4.0
+    "text" = "Email (regex via @checks)"
+#9 createComponent surface="test-tf-regexp" tag=4 parent=8 index=1 view="KRTextFieldView"
+  props:
+    "__textFieldBindingPath" = "emailRegexp"
+    "alignSelf" = "stretch"
+    "border" = "1 solid 4292030255"
+    "borderRadius" = "4"
+    "height" = 44
+    "padding" = 8
+    "text" = ""
+    "variant" = "shortText"
+#10 createComponent surface="test-tf-regexp" tag=10 parent=8 index=2 view="KRRichTextView"
+  props:
+    "alignSelf" = "stretch"
+    "color" = "#D32F2F"
+    "fontSize" = 12.0
+    "marginLeft" = 4.0
+    "marginTop" = 4.0
+    "text" = "Please enter an address matching the original email pattern"
+#11 updateData surface="test-tf-regexp"
+  data:
+    "email" = ""
+    "emailRegexp" = ""
+#12 updateComponent surface="test-tf-regexp" tag=3 view="KRTextFieldView"
+  props:
+    "border" = "1 solid 4291611852"
+    "text" = ""
+#13 updateComponent surface="test-tf-regexp" tag=6 view="KRRichTextView"
+  props:
+    "text" = "Email (email via @checks)"
+#14 updateComponent surface="test-tf-regexp" tag=4 view="KRTextFieldView"
+  props:
+    "border" = "1 solid 4291611852"
+    "text" = ""
+#15 updateComponent surface="test-tf-regexp" tag=9 view="KRRichTextView"
+  props:
+    "text" = "Email (regex via @checks)"
+#16 updateComponent surface="test-tf-regexp" tag=7 view="KRRichTextView"
+  props:
+    "height" = 0.0
+    "opacity" = 0.0
+    "text" = ""
+#17 updateComponent surface="test-tf-regexp" tag=10 view="KRRichTextView"
+  props:
+    "height" = 0.0
+    "opacity" = 0.0
+    "text" = ""
+#state dataModel "{\"email\":\"\",\"emailRegexp\":\"\"}"
+#state actions {}
+""",
+        """v1_0.examples.04_weather-current""" to """#0 createSurface surface="gallery-weather-current"
+  config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+#1 createComponent surface="gallery-weather-current" tag=1 index=0 view="KRView"
+  props:
+    "alignSelf" = "stretch"
+    "backgroundColor" = "4294967295"
+    "border" = "1 solid 4292927712"
+    "borderRadius" = "12"
+    "boxShadow" = "0 1 2 436207616 0"
+    "flexDirection" = "column"
+    "margin" = 0
+    "padding" = 16
+    "wrapperBoxShadowView" = 1
+#2 createComponent surface="gallery-weather-current" tag=2 parent=1 index=0 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#3 createComponent surface="gallery-weather-current" tag=3 parent=2 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignItems" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+#4 createComponent surface="gallery-weather-current" tag=4 parent=3 index=0 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "# °"
+#5 createComponent surface="gallery-weather-current" tag=5 parent=3 index=1 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "## °"
+#6 createComponent surface="gallery-weather-current" tag=6 parent=2 index=1 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "### "
+#7 createComponent surface="gallery-weather-current" tag=7 parent=2 index=2 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = ""
+#8 createComponent surface="gallery-weather-current" tag=8 parent=2 index=3 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+    "justifyContent" = "space-around"
+#9 updateData surface="gallery-weather-current"
+  data:
+    "description" = "Clear skies with light breeze"
+    "forecast" = [{"date": "2025-12-16", "icon": "☀️", "temp": 74}, {"date": "2025-12-17", "icon": "☀️", "temp": 76}, {"date": "2025-12-18", "icon": "⛅", "temp": 71}, {"date": "2025-12-19", "icon": "☀️", "temp": 73}, {"date": "2025-12-20", "icon": "☀️", "temp": 75}]
+    "location" = "Austin, TX"
+    "tempHigh" = 72
+    "tempLow" = 58
+#10 createComponent surface="gallery-weather-current" tag=13 parent=8 index=0 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#11 createComponent surface="gallery-weather-current" tag=14 parent=13 index=0 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Tue"
+#12 createComponent surface="gallery-weather-current" tag=15 parent=13 index=1 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "### ☀️"
+#13 createComponent surface="gallery-weather-current" tag=16 parent=13 index=2 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "74°"
+#14 createComponent surface="gallery-weather-current" tag=17 parent=8 index=1 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#15 createComponent surface="gallery-weather-current" tag=18 parent=17 index=0 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Wed"
+#16 createComponent surface="gallery-weather-current" tag=19 parent=17 index=1 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "### ☀️"
+#17 createComponent surface="gallery-weather-current" tag=20 parent=17 index=2 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "76°"
+#18 createComponent surface="gallery-weather-current" tag=21 parent=8 index=2 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#19 createComponent surface="gallery-weather-current" tag=22 parent=21 index=0 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Thu"
+#20 createComponent surface="gallery-weather-current" tag=23 parent=21 index=1 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "### ⛅"
+#21 createComponent surface="gallery-weather-current" tag=24 parent=21 index=2 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "71°"
+#22 createComponent surface="gallery-weather-current" tag=25 parent=8 index=3 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#23 createComponent surface="gallery-weather-current" tag=26 parent=25 index=0 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Fri"
+#24 createComponent surface="gallery-weather-current" tag=27 parent=25 index=1 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "### ☀️"
+#25 createComponent surface="gallery-weather-current" tag=28 parent=25 index=2 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "73°"
+#26 createComponent surface="gallery-weather-current" tag=29 parent=8 index=4 view="KRView"
+  props:
+    "alignItems" = "center"
+    "alignSelf" = "stretch"
+    "flexDirection" = "column"
+#27 createComponent surface="gallery-weather-current" tag=30 parent=29 index=0 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "Sat"
+#28 createComponent surface="gallery-weather-current" tag=31 parent=29 index=1 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "### ☀️"
+#29 createComponent surface="gallery-weather-current" tag=32 parent=29 index=2 view="KRRichTextView"
+  props:
+    "__textAlignPostLayout" = "center"
+    "alignSelf" = "stretch"
+    "color" = "4284900966"
+    "fontSize" = 13.0
+    "margin" = 8
+    "text" = "75°"
+#30 updateComponent surface="gallery-weather-current" tag=4 view="KRRichTextView"
+  props:
+    "text" = "# 72°"
+#31 updateComponent surface="gallery-weather-current" tag=5 view="KRRichTextView"
+  props:
+    "text" = "## 58°"
+#32 updateComponent surface="gallery-weather-current" tag=6 view="KRRichTextView"
+  props:
+    "text" = "### Austin, TX"
+#33 updateComponent surface="gallery-weather-current" tag=7 view="KRRichTextView"
+  props:
+    "text" = "Clear skies with light breeze"
+#state dataModel "{\"tempHigh\":72,\"tempLow\":58,\"location\":\"Austin, TX\",\"description\":\"Clear skies with light breeze\",\"forecast\":[{\"date\":\"2025-12-16\",\"icon\":\"☀️\",\"temp\":74},{\"date\":\"2025-12-17\",\"icon\":\"☀️\",\"temp\":76},{\"date\":\"2025-12-18\",\"icon\":\"⛅\",\"temp\":71},{\"date\":\"2025-12-19\",\"icon\":\"☀️\",\"temp\":73},{\"date\":\"2025-12-20\",\"icon\":\"☀️\",\"temp\":75}]}"
+#state actions {}
 """,
         """v1_0.protocol.01_pr2_mixin_keys""" to """#0 createSurface surface="pr2-mixin-keys-surface"
   config: w=0.0 h=0.0 bg=null incremental=true catalogId="https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"

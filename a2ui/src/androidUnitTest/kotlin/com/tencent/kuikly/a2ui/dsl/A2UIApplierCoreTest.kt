@@ -129,7 +129,7 @@ class A2UIApplierCoreTest {
     @Test
     fun inlineCartAssetCreatesThreeRowsInRealScrollerContent() = withPager { pager, applier, _ ->
         val roots = listOf(File("androidAppForTest/src/main/assets"), File("../androidAppForTest/src/main/assets"))
-        val asset = roots.map { File(it, "a2ui_v10_tests/02_pr3_createsurface_inline_datamodel.json") }.first { it.isFile }
+        val asset = roots.map { File(it, "v1_0/a2ui_v10_tests/02_pr3_createsurface_inline_datamodel.json") }.first { it.isFile }
         val envelopes = JSONObject(asset.readText()).optJSONArray("messages")!!
         val parsed = mutableListOf<A2UIMessage>()
         val parser = A2UIStreamParser()
@@ -162,6 +162,58 @@ class A2UIApplierCoreTest {
         }
         assertEquals(listOf("Your cart", "1", "Espresso", "3.5", "2", "Croissant", "2.8", "3", "Tea latte", "4.2"),
             creates.mapNotNull { it.props?.get("text")?.toString() })
+    }
+
+    private fun withMigrationAsset(relative: String, check: (A2UIPager, List<A2UIMessage>) -> Unit) = withPager { pager, applier, _ ->
+        val roots = listOf(File("androidAppForTest/src/main/assets/v1_0"), File("../androidAppForTest/src/main/assets/v1_0"))
+        val asset = roots.map { File(it, relative) }.first { it.isFile }
+        val envelopes = JSONObject(asset.readText()).optJSONArray("messages")!!
+        val output = mutableListOf<A2UIMessage>()
+        val parser = A2UIStreamParser()
+        parser.protocolAdapter.strictV10 = true
+        parser.setListener(object : A2UIStreamParser.A2UIStreamListener {
+            override fun onMessageParsed(message: A2UIMessage) {
+                output.add(message)
+                when (message.type) {
+                    A2UIMessageType.CREATE_COMPONENT -> applier.createComponent(message.tag, message.viewName ?: "KRView", message.parentTag, message.index, message.props)
+                    A2UIMessageType.UPDATE_COMPONENT -> message.props?.let { applier.updateComponent(message.tag, message.viewName ?: "KRView", it) }
+                    A2UIMessageType.REMOVE_COMPONENT -> applier.removeComponent(message.tag, message.parentTag)
+                    A2UIMessageType.STREAM_END -> applier.performLayout()
+                    else -> Unit
+                }
+            }
+            override fun onError(error: A2UIParseError) { error(error.message) }
+            override fun onStreamEnd() = Unit
+        })
+        for (index in 0 until envelopes.length()) parser.feed(envelopes.optJSONObject(index)!!.toString())
+        parser.finish()
+        check(pager, output.filter { it.type == A2UIMessageType.CREATE_COMPONENT })
+    }
+
+    @Test
+    fun migratedListMountsSixChildrenInTheRealScrollContent() = withMigrationAsset("a2ui_components/list/1_list_direction_vertical.json") { pager, creates ->
+        val list = creates.single { it.viewName == "KRScrollView" }
+        val children = creates.filter { it.parentTag == list.tag }
+        val container = assertNotNull(pager.registry.getContainer(list.tag)).realContainerView()
+        assertEquals(6, children.size)
+        assertEquals(6, container.getSubviews().size)
+        children.forEach { assertTrue(container.getSubviews().contains(pager.registry.getView(it.tag))) }
+    }
+
+    @Test
+    fun migratedWeatherMountsAllFiveForecastRowsAndFifteenTexts() = withMigrationAsset("a2ui_examples/04_weather-current.json") { pager, creates ->
+        val forecast = creates.single { parent -> creates.count { it.parentTag == parent.tag && it.viewName == "KRView" } == 5 }
+        val days = creates.filter { it.parentTag == forecast.tag }
+        val parent = assertNotNull(pager.registry.getContainer(forecast.tag)).realContainerView()
+        assertEquals(5, parent.getSubviews().size)
+        days.forEach { day ->
+            val children = creates.filter { it.parentTag == day.tag }
+            val container = assertNotNull(pager.registry.getContainer(day.tag)).realContainerView()
+            assertTrue(parent.getSubviews().contains(pager.registry.getView(day.tag)))
+            assertEquals(3, children.size)
+            assertEquals(3, container.getSubviews().size)
+            children.forEach { assertTrue(container.getSubviews().contains(pager.registry.getView(it.tag))) }
+        }
     }
 
     @Test
