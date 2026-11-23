@@ -74,10 +74,51 @@ internal fun A2UIComponentProjection.expandChildListBindings(surfaceId: String):
         return expandChildListBindings(surfaceId, onlyParents = null)
     }
 
+internal fun A2UIComponentProjection.hasCompleteTemplate(templateId: String): Boolean {
+    val visiting = mutableSetOf<String>()
+    val complete = mutableSetOf<String>()
+    fun visit(id: String): Boolean {
+        if (id in complete) return true
+        if (!visiting.add(id)) return false
+        val definition = idToOriginalDef[id] ?: return false
+        if (definition["component"] !is String) return false
+        val children = getChildrenIds(definition).toMutableList()
+        getInlineChildListBinding(definition)?.second?.let(children::add)
+        if (!children.all(::visit)) return false
+        visiting.remove(id)
+        complete.add(id)
+        return true
+    }
+    return visit(templateId)
+}
+
+internal fun A2UIComponentProjection.reconcileChildLists(surfaceId: String, output: List<A2UIMessage>): List<A2UIMessage> {
+    val pendingTags = output.filter { it.type == A2UIMessageType.CREATE_COMPONENT }.mapTo(mutableSetOf()) { it.tag }
+    return expandChildListBindings(surfaceId, onlyParents = null, pendingParentTags = pendingTags)
+}
+
     /**
      * Whether [componentId] belongs to a Modal content subtree whose overlay is not
      * currently open. Such components have a protocol tag but no view yet.
      */
+internal fun A2UIComponentProjection.templateInputSnapshot(templateId: String): String {
+    val definitions = linkedMapOf<String, Map<String, Any?>>()
+    val rootPaths = linkedSetOf<String>()
+    fun visit(id: String) {
+        if (id in definitions) return
+        val definition = idToOriginalDef[id] ?: return
+        definitions[id] = definition
+        rootPaths.addAll(extractDataPaths(definition).filter { it.startsWith("/") })
+        getChildrenIds(definition).forEach(::visit)
+        getInlineChildListBinding(definition)?.let { (path, child) ->
+            if (path.startsWith("/")) rootPaths.add(path)
+            visit(child)
+        }
+    }
+    visit(templateId)
+    return A2UIJsonValue.buildJsonString(listOf(definitions, rootPaths.associateWith { model.read(it.removePrefix("/")) }))
+}
+
 internal fun A2UIComponentProjection.isInClosedModalContent(componentId: String): Boolean {
         if (componentId !in modalDeferredIds) return false
         val tag = idToTag[componentId] ?: return true
@@ -88,7 +129,11 @@ internal fun A2UIComponentProjection.isInClosedModalContent(componentId: String)
      * @param onlyParents when non-null, only bindings whose parent id is in this set are
      *   expanded (used by [openModal] to materialize lists inside the new overlay).
      */
-internal fun A2UIComponentProjection.expandChildListBindings(surfaceId: String, onlyParents: Set<String>?): List<A2UIMessage> {
+internal fun A2UIComponentProjection.expandChildListBindings(
+    surfaceId: String,
+    onlyParents: Set<String>?,
+    pendingParentTags: Set<Int> = emptySet(),
+): List<A2UIMessage> {
         val messages = mutableListOf<A2UIMessage>()
 
         for ((parentId, binding) in childListBindings) {
@@ -118,11 +163,17 @@ internal fun A2UIComponentProjection.expandChildListBindings(surfaceId: String, 
             if (parentTag == null) {
                 continue
             }
+            if (_protocolVersion == A2UIProtocolVersion.V1_0) {
+                if (!materialization.contains(parentTag) && parentTag !in pendingParentTags) continue
+                if (!hasCompleteTemplate(binding.templateId)) continue
+            }
             val templateDef = idToOriginalDef[binding.templateId]
             if (templateDef == null) {
                 continue
             }
             val templateComponentType = templateDef["component"] as? String ?: continue
+            val inputSnapshot = if (_protocolVersion == A2UIProtocolVersion.V1_0) templateInputSnapshot(binding.templateId) else null
+            val templateUnchanged = inputSnapshot == binding.templateInputSnapshot
 
             // ------------------------------------------------------------------
             // Diff-based update (see KDoc on `ChildListBinding.lastItemSnapshots`).
@@ -173,7 +224,11 @@ internal fun A2UIComponentProjection.expandChildListBindings(surfaceId: String, 
                 val oldItem = oldSnapshots[index]
                 val hadOld = oldInstancesByIndex.containsKey(index)
 
-                if (hadOld && oldItem == itemData) {
+                val oldRootTag = idToTag["${binding.templateId}__$index"]
+                val reusable = _protocolVersion != A2UIProtocolVersion.V1_0 ||
+                    (templateUnchanged && oldRootTag != null &&
+                        (materialization.contains(oldRootTag) || oldRootTag in pendingParentTags))
+                if (hadOld && oldItem == itemData && reusable) {
                     // Unchanged: preserve the entire subtree for this index.
                     val preservedIds = oldInstancesByIndex[index] ?: mutableListOf()
                     newInstancesByIndex[index] = preservedIds.toMutableList()
@@ -193,6 +248,10 @@ internal fun A2UIComponentProjection.expandChildListBindings(surfaceId: String, 
                         // children are torn down via removeInstanceTree so we
                         // don't double-REMOVE already-detached children.
                         if (oldInstanceId == "${binding.templateId}__$index") {
+                            if (_protocolVersion == A2UIProtocolVersion.V1_0 && !materialization.contains(oldInstanceTag)) {
+                                removeInstanceTree(oldInstanceId, surfaceId, parentTag, mutableListOf())
+                                break
+                            }
                             messages.add(
                                 A2UIMessage(
                                     type = A2UIMessageType.REMOVE_COMPONENT,
@@ -270,6 +329,7 @@ internal fun A2UIComponentProjection.expandChildListBindings(surfaceId: String, 
             binding.lastInstancesByIndex.putAll(newInstancesByIndex)
             binding.lastItemSnapshots.clear()
             binding.lastItemSnapshots.putAll(newSnapshots)
+            binding.templateInputSnapshot = inputSnapshot
         }
 
         return messages
@@ -304,8 +364,9 @@ internal fun A2UIComponentProjection.getInlineChildListBinding(compDef: Map<Stri
 internal fun A2UIComponentProjection.resolveScopePathValue(path: String, itemData: Map<String, Any?>): Any? {
         return if (path.startsWith("/")) {
             val key = path.removePrefix("/")
-            resolveNestedDataPath(key)
-                ?: if (itemData.isNotEmpty()) resolveRelativePath(key, itemData) else null
+            val absolute = resolveNestedDataPath(key)
+            if (_protocolVersion == A2UIProtocolVersion.V1_0 && strictV10) absolute
+            else absolute ?: if (itemData.isNotEmpty()) resolveRelativePath(key, itemData) else null
         } else {
             resolveRelativePath(path, itemData)
         }

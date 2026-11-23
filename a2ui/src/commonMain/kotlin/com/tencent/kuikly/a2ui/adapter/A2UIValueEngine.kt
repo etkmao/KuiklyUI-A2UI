@@ -55,6 +55,32 @@ internal class A2UIEvaluationWorker(
     private fun resolveNestedDataPath(key: String) = A2UIDataPath.resolveNestedDataPath(context.data, key)
     private fun getRootDataKey(key: String) = A2UIDataPath.getRootDataKey(key)
     private fun readMixinKey(map: Map<*, *>, key: String) = decoder.readMixinKey(map, key)
+    private val strictScope get() = _protocolVersion == A2UIProtocolVersion.V1_0 && decoder.strictV10
+
+    private fun resolveAbsoluteInScope(key: String, item: Map<String, Any?>): Any? {
+        val absolute = resolveNestedDataPath(key)
+        if (absolute != null || strictScope) return absolute ?: ""
+        return if (item.isNotEmpty()) resolveRelativePath(key, item) else ""
+    }
+
+    private fun evaluateIndex(call: Map<*, *>, item: Map<String, Any?>? = null): String {
+        val index = currentTemplateIndex ?: run {
+            reportDiagnostic("[A2UI] warn: v1.0 @index evaluated outside any ChildList scope; returning empty string.")
+            return ""
+        }
+        val rawOffset = (call["args"] as? Map<*, *>)?.get("offset") ?: return index.toString()
+        val resolved = if (item != null) resolveValueWithScope(rawOffset, item) else resolveDynamicArg(rawOffset)
+        val offset = when (resolved) {
+            is Number -> resolved.toDouble()
+            is String -> resolved.toDoubleOrNull()
+            else -> null
+        }
+        if (offset == null || !offset.isFinite()) {
+            reportDiagnostic("[A2UI] warn: v1.0 @index offset must resolve to a finite number; returning empty string.")
+            return ""
+        }
+        return doubleToPlainString(index.toDouble() + offset).removeSuffix(".0")
+    }
     internal fun resolveActionValue(obj: Any?): Any? {
         return when (obj) {
             is Map<*, *> -> {
@@ -244,23 +270,7 @@ internal class A2UIEvaluationWorker(
     internal fun evaluateFunctionCall(funcCall: Map<*, *>): String? {
         val call = readCallKey(funcCall) ?: return null
 
-        // v1.0 `@index` built-in. This non-scope entry point is reachable
-        // when a card uses `@index` outside any ChildList (which is a
-        // misuse — per v1.0 spec `@index` is only defined inside template
-        // iteration). We still handle it gracefully by reading
-        // [currentTemplateIndex], which is `null` here, and returning an
-        // empty string with a warning so the UI shows a benign placeholder
-        // instead of "@index" leaking through as a custom-function miss.
-        if (call == "@index") {
-            val idx = currentTemplateIndex
-            return idx?.toString() ?: run {
-                reportDiagnostic(
-                    "[A2UI] warn: v1.0 @index evaluated outside any " +
-                        "ChildList scope; returning empty string."
-                )
-                ""
-            }
-        }
+        if (call == "@index") return evaluateIndex(funcCall)
 
         @Suppress("UNCHECKED_CAST")
         val args = funcCall["args"] as? Map<String, Any?> ?: return null
@@ -664,18 +674,7 @@ internal class A2UIEvaluationWorker(
                 is A2UIValue.Literal -> value.value
                 is A2UIValue.PathBinding -> {
                     if (value.isAbsolute) {
-                        // Absolute path - resolve from root data model.
-                        // Fallback: some cards use "/xxx" inside a list-template to
-                        // reference the item's field (technically a spec violation
-                        // where "xxx" would be the correct relative form). If the
-                        // global lookup misses and we are inside a template scope,
-                        // fall back to relative resolution against itemData so the
-                        // card still renders. Per spec, unresolved paths render as
-                        // empty strings, so this fallback never breaks correct data.
-                        val absolute = resolveNestedDataPath(value.key)
-                        if (absolute != null) absolute
-                        else if (itemData.isNotEmpty()) resolveRelativePath(value.key, itemData)
-                        else ""
+                        resolveAbsoluteInScope(value.key, itemData)
                     } else {
                         // Relative path - resolve from current item data
                         resolveRelativePath(value.path, itemData)
@@ -687,8 +686,7 @@ internal class A2UIEvaluationWorker(
                     // as PathBinding, then translate the name through A2UIIconRegistry.
                     val inner = value.binding
                     val nameRaw: Any? = if (inner.isAbsolute) {
-                        resolveNestedDataPath(inner.key)
-                            ?: (if (itemData.isNotEmpty()) resolveRelativePath(inner.key, itemData) else null)
+                        resolveAbsoluteInScope(inner.key, itemData)
                     } else {
                         resolveRelativePath(inner.path, itemData)
                     }
@@ -706,13 +704,7 @@ internal class A2UIEvaluationWorker(
             val pathRef = readPathKey(value)
             if (pathRef != null) {
                 if (pathRef.startsWith("/")) {
-                    // Absolute path - resolve from root data model, with template
-                    // scope fallback (see A2UIValue.PathBinding branch above for
-                    // rationale).
-                    val key = pathRef.removePrefix("/")
-                    val absolute = resolveNestedDataPath(key)
-                    return absolute
-                        ?: if (itemData.isNotEmpty()) resolveRelativePath(key, itemData) else ""
+                    return resolveAbsoluteInScope(pathRef.removePrefix("/"), itemData)
                 } else {
                     // Relative path - resolve from current item data
                     return resolveRelativePath(pathRef, itemData)
@@ -757,23 +749,7 @@ internal class A2UIEvaluationWorker(
     internal fun evaluateFunctionCallWithScope(funcCall: Map<*, *>, itemData: Map<String, Any?>): String? {
         val call = readCallKey(funcCall) ?: return null
 
-        // v1.0 `@index` built-in: no args, returns the active ChildList
-        // iteration index (0-based) as a string. Must be recognised BEFORE
-        // the args null-check below because spec-compliant `@index`
-        // FunctionCalls omit the args field entirely. Under v0.9 the call
-        // name "@index" cannot be emitted (v0.9 would route through bare
-        // `call` where "@index" is just an unrecognised function name),
-        // so this short-circuit never fires on legacy streams.
-        if (call == "@index") {
-            val idx = currentTemplateIndex
-            return idx?.toString() ?: run {
-                reportDiagnostic(
-                    "[A2UI] warn: v1.0 @index evaluated outside any " +
-                        "ChildList scope; returning empty string."
-                )
-                ""
-            }
-        }
+        if (call == "@index") return evaluateIndex(funcCall, itemData)
 
         @Suppress("UNCHECKED_CAST")
         val args = funcCall["args"] as? Map<String, Any?> ?: return null

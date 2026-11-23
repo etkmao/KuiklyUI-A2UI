@@ -15,6 +15,12 @@
 
 package com.tencent.kuikly.a2ui.dsl
 
+import com.tencent.kuikly.a2ui.parser.A2UIParseError
+import com.tencent.kuikly.a2ui.parser.A2UIStreamParser
+import com.tencent.kuikly.a2ui.protocol.A2UIMessage
+import com.tencent.kuikly.a2ui.protocol.A2UIMessageType
+import com.tencent.kuikly.core.nvi.serialization.json.JSONObject
+import java.io.File
 import com.tencent.kuikly.core.base.CrossPlatFeature
 import com.tencent.kuikly.core.manager.BridgeManager
 import com.tencent.kuikly.core.manager.KotlinMethod
@@ -118,6 +124,44 @@ class A2UIApplierCoreTest {
         assertEquals("2026-11-23T00:00:00Z", date.getISOString())
         assertEquals("date", applier.getDateTimeBindingPath(2))
         assertTrue(date.getSubviews().isNotEmpty())
+    }
+
+    @Test
+    fun inlineCartAssetCreatesThreeRowsInRealScrollerContent() = withPager { pager, applier, _ ->
+        val roots = listOf(File("androidAppForTest/src/main/assets"), File("../androidAppForTest/src/main/assets"))
+        val asset = roots.map { File(it, "a2ui_v10_tests/02_pr3_createsurface_inline_datamodel.json") }.first { it.isFile }
+        val envelopes = JSONObject(asset.readText()).optJSONArray("messages")!!
+        val parsed = mutableListOf<A2UIMessage>()
+        val parser = A2UIStreamParser()
+        parser.protocolAdapter.strictV10 = true
+        parser.setListener(object : A2UIStreamParser.A2UIStreamListener {
+            override fun onMessageParsed(message: A2UIMessage) {
+                parsed.add(message)
+                when (message.type) {
+                    A2UIMessageType.CREATE_COMPONENT -> applier.createComponent(message.tag, message.viewName ?: "KRView", message.parentTag, message.index, message.props)
+                    A2UIMessageType.UPDATE_COMPONENT -> message.props?.let { applier.updateComponent(message.tag, message.viewName ?: "KRView", it) }
+                    A2UIMessageType.REMOVE_COMPONENT -> applier.removeComponent(message.tag, message.parentTag)
+                    A2UIMessageType.STREAM_END -> applier.performLayout()
+                    else -> Unit
+                }
+            }
+            override fun onError(error: A2UIParseError) { error(error.message) }
+            override fun onStreamEnd() = Unit
+        })
+        for (index in 0 until envelopes.length()) parser.feed(envelopes.optJSONObject(index)!!.toString())
+        parser.finish()
+        val creates = parsed.filter { it.type == A2UIMessageType.CREATE_COMPONENT }
+        val list = creates.single { it.viewName == "KRScrollView" }
+        val rows = creates.filter { it.parentTag == list.tag }
+        val container = assertNotNull(pager.registry.getContainer(list.tag)).realContainerView()
+        assertEquals(3, rows.size)
+        assertEquals(3, container.getSubviews().size)
+        rows.forEach { row ->
+            assertTrue(container.getSubviews().contains(pager.registry.getView(row.tag)))
+            assertEquals(3, assertNotNull(pager.registry.getContainer(row.tag)).getSubviews().size)
+        }
+        assertEquals(listOf("Your cart", "1", "Espresso", "3.5", "2", "Croissant", "2.8", "3", "Tea latte", "4.2"),
+            creates.mapNotNull { it.props?.get("text")?.toString() })
     }
 
     @Test

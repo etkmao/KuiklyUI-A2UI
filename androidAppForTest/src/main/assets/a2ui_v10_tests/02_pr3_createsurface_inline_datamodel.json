@@ -1,6 +1,6 @@
 {
   "name": "PR-3 createSurface Inlined dataModel",
-  "description": "A2UI v1.0 showcases the createSurface.dataModel inline shortcut (replacing the v0.9 'sendDataModel: true' + separate updateDataModel pattern) and the surface-level catalogId (a plain string identifier, not a downloadable URL). @index demonstrates the list-indexing dynamic string.",
+  "description": "A2UI v1.0 initializes the data model through createSurface.dataModel before updateComponents arrives. The List template binds existing cart items using relative item paths and @index with offset 1. catalogId identifies the Basic catalog; sendDataModel independently controls model metadata sent to the agent.",
   "messages": [
     {
       "version": "1.0",
@@ -38,7 +38,7 @@
             "component": "Column",
             "children": [
               "title",
-              "items-list"
+              "items_list"
             ]
           },
           {
@@ -50,36 +50,44 @@
             }
           },
           {
-            "id": "items-list",
+            "id": "items_list",
             "component": "List",
-            "children": {"componentId":"item-row","path":"/cart/items"}
-          },
-          {
-            "id": "item-row",
-            "component": "Row",
-            "children": [
-              "item-index",
-              "item-name",
-              "item-price"
-            ]
-          },
-          {
-            "id": "item-index",
-            "component": "Text",
-            "text": {"@call":"@index","args":{"offset":1}}
-          },
-          {
-            "id": "item-name",
-            "component": "Text",
-            "text": {
-              "@path": "/name"
+            "children": {
+              "componentId": "item_row",
+              "path": "/cart/items"
             }
           },
           {
-            "id": "item-price",
+            "id": "item_row",
+            "component": "Row",
+            "children": [
+              "item_index",
+              "item_name",
+              "item_price"
+            ]
+          },
+          {
+            "id": "item_index",
             "component": "Text",
             "text": {
-              "@path": "/price"
+              "@call": "@index",
+              "args": {
+                "offset": 1
+              }
+            }
+          },
+          {
+            "id": "item_name",
+            "component": "Text",
+            "text": {
+              "@path": "name"
+            }
+          },
+          {
+            "id": "item_price",
+            "component": "Text",
+            "text": {
+              "@path": "price"
             }
           }
         ]

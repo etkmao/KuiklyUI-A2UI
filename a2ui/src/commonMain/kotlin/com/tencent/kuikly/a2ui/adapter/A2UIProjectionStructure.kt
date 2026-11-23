@@ -137,7 +137,12 @@ internal fun A2UIComponentProjection.handleUpdateComponents(data: Map<String, An
                     val dataPath = children["path"] as? String
                     val templateId = children["componentId"] as? String
                     if (dataPath != null && templateId != null) {
-                        childListBindings[id] = ChildListBinding(dataPath, templateId)
+                        val previous = childListBindings[id]
+                        if (_protocolVersion != A2UIProtocolVersion.V1_0 || previous == null ||
+                            previous.dataPath != dataPath || previous.templateId != templateId
+                        ) {
+                            childListBindings[id] = ChildListBinding(dataPath, templateId)
+                        }
                         // Register dependency so we get notified when this data changes
                         val dataKey = dataPath.removePrefix("/")
                         reactive.registerPath("__childlist__$id", dataKey)
@@ -230,7 +235,13 @@ internal fun A2UIComponentProjection.handleUpdateComponents(data: Map<String, An
             }
             // The content subtree is created lazily when the modal opens, so exclude it
             // (and its descendants) from the initial component creation.
-            collectTemplateTree(modalDef.contentId, idToComp, childToParent, modalDeferredIds)
+            if (_protocolVersion == A2UIProtocolVersion.V1_0) {
+                val deferred = mutableSetOf<String>()
+                collectTemplateTree(modalDef.contentId, idToOriginalDef, childToParent, deferred)
+                modalDeferredIds.addAll(deferred)
+            } else {
+                collectTemplateTree(modalDef.contentId, idToComp, childToParent, modalDeferredIds)
+            }
         }
         model.replaceBatchParents(childToParent)
 
@@ -287,8 +298,9 @@ internal fun A2UIComponentProjection.handleUpdateComponents(data: Map<String, An
         // Generate messages in topological order
         // First, collect template component IDs and their descendants (they should NOT be created as regular components)
         val templateIds = mutableSetOf<String>()
+        val templateDefinitions = if (_protocolVersion == A2UIProtocolVersion.V1_0) idToOriginalDef else idToComp
         for ((_, binding) in childListBindings) {
-            collectTemplateTree(binding.templateId, idToComp, childToParent, templateIds)
+            collectTemplateTree(binding.templateId, templateDefinitions, childToParent, templateIds)
         }
 
         // ---- PR-8: validate `allowedParents` / `allowedChildren` -------
@@ -1025,5 +1037,8 @@ internal fun A2UIComponentProjection.handleUpdateComponents(data: Map<String, An
             }
         }
 
+        if (_protocolVersion == A2UIProtocolVersion.V1_0) {
+            messages.addAll(reconcileChildLists(surfaceId, messages))
+        }
         return messages
     }

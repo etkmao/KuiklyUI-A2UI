@@ -109,10 +109,15 @@ class A2UIV10SamplesParseTest {
             listOf(
                 """{"version":"1.0","createSurface":{"surfaceId":"pr3-s",""" +
                     """"catalogId":"https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",""" +
-                    """"dataModel":{"cart":{"title":"t","items":[{"name":"A","price":1}]}}}}""",
+                    """"dataModel":{"cart":{"title":"Your cart","items":[{"name":"Espresso","price":3.5},{"name":"Croissant","price":2.8},{"name":"Tea latte","price":4.2}]}}}}""",
                 """{"version":"1.0","updateComponents":{"surfaceId":"pr3-s","components":[""" +
-                    """{"id":"root","component":"Column","children":["t"]},""" +
-                    """{"id":"t","component":"Text","text":{"@path":"/cart/title"}}""" +
+                    """{"id":"root","component":"Column","children":["title","items_list"]},""" +
+                    """{"id":"title","component":"Text","text":{"@path":"/cart/title"}},""" +
+                    """{"id":"items_list","component":"List","children":{"componentId":"item_row","path":"/cart/items"}},""" +
+                    """{"id":"item_row","component":"Row","children":["item_index","item_name","item_price"]},""" +
+                    """{"id":"item_index","component":"Text","text":{"@call":"@index","args":{"offset":1}}},""" +
+                    """{"id":"item_name","component":"Text","text":{"@path":"name"}},""" +
+                    """{"id":"item_price","component":"Text","text":{"@path":"price"}}""" +
                     """]}}""",
             )
         )

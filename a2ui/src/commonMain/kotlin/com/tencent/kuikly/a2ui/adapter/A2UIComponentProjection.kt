@@ -586,28 +586,6 @@ internal class A2UIComponentProjection(
             )
         )
 
-        // ---- Inline components -------------------------------------
-        // Per v1.0 spec, `createSurface.components` is identical in shape
-        // to `updateComponents.components`, so we delegate to the shared
-        // handler. The handler already reads `surfaceId` from
-        // [currentSurfaceId] when absent, so we don't need to copy it.
-        val inlineComponents = data["components"]
-        if (inlineComponents is List<*>) {
-            val wrapped = mapOf<String, Any?>(
-                "surfaceId" to surfaceId,
-                "components" to inlineComponents
-            )
-            messages.addAll(handleUpdateComponents(wrapped))
-        }
-
-        // ---- Inline dataModel --------------------------------------
-        // Per A2UI v1.0 spec (§createSurface), the field is `dataModel`.
-        // No alias is read — the schema property set is exact and this
-        // renderer has no shipped payloads to stay compatible with.
-        //
-        // Treated as a single root-level `updateDataModel` with
-        // `path = "/"`. The `@@xxx` key-unescape is applied by
-        // handleUpdateDataModel itself.
         val inlineDataModel = data["dataModel"]
         if (inlineDataModel != null) {
             val wrapped = mapOf<String, Any?>(
@@ -618,9 +596,18 @@ internal class A2UIComponentProjection(
             messages.addAll(handleUpdateDataModel(wrapped))
         }
 
+        val inlineComponents = data["components"]
+        if (inlineComponents is List<*>) {
+            val wrapped = mapOf<String, Any?>(
+                "surfaceId" to surfaceId,
+                "components" to inlineComponents
+            )
+            messages.addAll(handleUpdateComponents(wrapped))
+        }
+
         return messages
     }
-    internal fun handleUpdateDataModel(data: Map<String, Any?>): List<A2UIMessage> {
+    internal fun handleUpdateDataModel(data: Map<String, Any?>, pendingOutput: List<A2UIMessage> = emptyList()): List<A2UIMessage> {
         val surfaceId = data["surfaceId"] as? String ?: currentSurfaceId
         // NOTE(v1.0): `updateDataModel` envelope keeps bare `path` / `value` /
         //   `surfaceId` field names in v1.0 — the `@`-prefix rename only
@@ -726,7 +713,11 @@ internal class A2UIComponentProjection(
         }
 
         // Expand ChildList template bindings that depend on changed data
-        messages.addAll(expandChildListBindings(surfaceId))
+        if (_protocolVersion == A2UIProtocolVersion.V1_0) {
+            messages.addAll(reconcileChildLists(surfaceId, pendingOutput))
+        } else {
+            messages.addAll(expandChildListBindings(surfaceId))
+        }
 
         // Re-evaluate bindings that depend on changed keys
         val changedKeys = valueAsMap?.keys ?: setOf(path?.removePrefix("/") ?: "")

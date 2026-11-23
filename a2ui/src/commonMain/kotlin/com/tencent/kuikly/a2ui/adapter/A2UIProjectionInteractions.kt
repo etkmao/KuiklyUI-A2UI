@@ -607,7 +607,7 @@ internal fun A2UIComponentProjection.renderModalOpen(modalId: String): List<A2UI
         //    closed. Expand them now and record the instances so closeModal() removes them.
         val contentTags = createdTags.mapTo(mutableSetOf()) { it.first }
         val contentIds = idToTag.filterValues { it in contentTags }.keys
-        for (message in expandChildListBindings(surfaceId, onlyParents = contentIds)) {
+        for (message in expandChildListBindings(surfaceId, onlyParents = contentIds, pendingParentTags = contentTags)) {
             if (message.type == A2UIMessageType.CREATE_COMPONENT) {
                 createdTags.add(message.tag to message.parentTag)
             }

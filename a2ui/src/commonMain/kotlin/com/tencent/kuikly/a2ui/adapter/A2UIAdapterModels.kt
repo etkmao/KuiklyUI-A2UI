@@ -42,7 +42,9 @@ data class ChildListBinding(
      * structural equality.
      */
     val lastItemSnapshots: MutableMap<Int, Any?> = mutableMapOf()
-)
+) {
+    internal var templateInputSnapshot: String? = null
+}
 
 /**
  * Represents a single tab definition within a Tabs component.

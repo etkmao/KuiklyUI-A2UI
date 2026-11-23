@@ -21837,6 +21837,96 @@ internal object A2UIGoldenBaseline {
   props:
     "alignSelf" = "stretch"
     "flexDirection" = "column"
+#5 createComponent surface="pr3-inline-datamodel-surface" tag=8 parent=3 index=0 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+#6 createComponent surface="pr3-inline-datamodel-surface" tag=9 parent=8 index=0 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "1"
+#7 createComponent surface="pr3-inline-datamodel-surface" tag=10 parent=8 index=1 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Espresso"
+#8 createComponent surface="pr3-inline-datamodel-surface" tag=11 parent=8 index=2 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = 3.5
+#9 createComponent surface="pr3-inline-datamodel-surface" tag=12 parent=3 index=1 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+#10 createComponent surface="pr3-inline-datamodel-surface" tag=13 parent=12 index=0 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "2"
+#11 createComponent surface="pr3-inline-datamodel-surface" tag=14 parent=12 index=1 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Croissant"
+#12 createComponent surface="pr3-inline-datamodel-surface" tag=15 parent=12 index=2 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = 2.8
+#13 createComponent surface="pr3-inline-datamodel-surface" tag=16 parent=3 index=2 view="KRView"
+  props:
+    "alignContent" = "flex-start"
+    "alignSelf" = "stretch"
+    "flexDirection" = "row"
+    "flexWrap" = "wrap"
+#14 createComponent surface="pr3-inline-datamodel-surface" tag=17 parent=16 index=0 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "3"
+#15 createComponent surface="pr3-inline-datamodel-surface" tag=18 parent=16 index=1 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = "Tea latte"
+#16 createComponent surface="pr3-inline-datamodel-surface" tag=19 parent=16 index=2 view="KRRichTextView"
+  props:
+    "__textInRowPostLayout" = "true"
+    "alignSelf" = "stretch"
+    "color" = "4279900698"
+    "fontSize" = 16.0
+    "margin" = 8
+    "text" = 4.2
 #state dataModel "{\"cart\":{\"title\":\"Your cart\",\"items\":[{\"name\":\"Espresso\",\"price\":3.5},{\"name\":\"Croissant\",\"price\":2.8},{\"name\":\"Tea latte\",\"price\":4.2}]}}"
 #state actions {}
 """,

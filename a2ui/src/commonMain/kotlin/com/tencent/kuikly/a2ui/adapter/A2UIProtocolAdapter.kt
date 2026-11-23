@@ -73,7 +73,7 @@ class A2UIProtocolAdapter {
             when (command.kind) {
                 A2UICommandKind.CREATE -> command.payload?.let { messages.addAll(projection.handleCreateSurface(it)) }
                 A2UICommandKind.COMPONENTS -> command.payload?.let { messages.addAll(projection.handleUpdateComponents(it)) }
-                A2UICommandKind.DATA -> command.payload?.let { messages.addAll(projection.handleUpdateDataModel(it)) }
+                A2UICommandKind.DATA -> command.payload?.let { messages.addAll(projection.handleUpdateDataModel(it, messages)) }
                 A2UICommandKind.CALL_RENDERER -> rpcAdapter.handleCallRendererFunction(command.payload)
                 A2UICommandKind.RENDERER_RESPONSE -> rpcAdapter.handleRendererFunctionResponse(command.payload)
                 A2UICommandKind.CALL_AGENT -> rpcAdapter.handleCallAgentFunctionIncoming(command.payload)
