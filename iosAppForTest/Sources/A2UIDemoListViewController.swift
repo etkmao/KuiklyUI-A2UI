@@ -25,6 +25,8 @@ class A2UIDemoListViewController: A2UIDemoBaseListViewController {
 
     override var listTitle: String { "A2UI Test" }
     override var headerSubtitle: String { "A2UI 协议 / 主题 / 数据绑定 / 函数 / 官方示例 全量 sandbox" }
+    override var listRowHeight: CGFloat { 72 }
+    override var cellDescriptionLines: Int { 1 }
 
     override var sections: [A2UIDemoSection] {
         [

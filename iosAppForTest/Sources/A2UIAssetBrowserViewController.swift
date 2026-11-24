@@ -16,6 +16,8 @@ final class A2UIAssetBrowserViewController: A2UIDemoBaseListViewController {
 
     override var listTitle: String { directory.hasPrefix("v0_9") ? "0.9 兼容回归" : "1.0 回归样本" }
     override var headerSubtitle: String { directory }
+    override var listRowHeight: CGFloat { 72 }
+    override var cellDescriptionLines: Int { 1 }
 
     override var sections: [A2UIDemoSection] {
         guard let resourcePath = Bundle.main.resourcePath else { return [] }
