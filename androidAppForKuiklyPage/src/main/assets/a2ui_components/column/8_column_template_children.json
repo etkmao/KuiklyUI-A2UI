@@ -32,7 +32,7 @@
             "id": "li",
             "component": "Text",
             "text": {
-              "@path": "/text"
+              "@path": "text"
             },
             "variant": "body"
           }

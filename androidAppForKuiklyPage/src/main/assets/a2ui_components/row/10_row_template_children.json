@@ -33,7 +33,7 @@
             "id": "tag",
             "component": "Text",
             "text": {
-              "@path": "/label"
+              "@path": "label"
             },
             "variant": "caption"
           }

@@ -42,7 +42,7 @@
             "id": "avatar",
             "component": "Image",
             "url": {
-              "@path": "/avatar"
+              "@path": "avatar"
             },
             "variant": "avatar"
           },
@@ -60,7 +60,7 @@
             "text": {
               "@call": "formatString",
               "args": {
-                "value": "##### ${/name}"
+                "value": "##### ${name}"
               }
             }
           },
@@ -68,7 +68,7 @@
             "id": "sub",
             "component": "Text",
             "text": {
-              "@path": "/role"
+              "@path": "role"
             },
             "variant": "caption"
           }
