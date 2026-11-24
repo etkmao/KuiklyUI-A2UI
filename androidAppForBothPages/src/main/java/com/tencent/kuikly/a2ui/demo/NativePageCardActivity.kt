@@ -101,7 +101,7 @@ class NativePageCardActivity : AppCompatActivity() {
                   {
                     "id": "title",
                     "component": "Text",
-                    "text": "### 深圳 · 今日天气",
+                    "text": "深圳 · 今日天气",
                     "styles": {
                       "color": "#FFFFFF",
                       "fontSize": 15,
@@ -153,7 +153,7 @@ class NativePageCardActivity : AppCompatActivity() {
                   {
                     "id": "temp",
                     "component": "Text",
-                    "text": "# 27°",
+                    "text": "27°",
                     "styles": {
                       "color": "#FFFFFF",
                       "fontSize": 84,
