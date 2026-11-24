@@ -19,6 +19,37 @@ import {
   A2UISurfaceViewController
 } from '@kuikly-a2ui-open/render';
 
+interface GreetingArgs {
+  name: string;
+}
+
+interface RendererFunctionCall {
+  surfaceId: string;
+  functionCallId: string;
+  callFunction: Record<string, Object>;
+}
+
+interface RendererFunctionEnvelope {
+  version: string;
+  callRendererFunction: RendererFunctionCall;
+}
+
+interface MockUser {
+  id: number;
+  name: string;
+  role: string;
+}
+
+interface AgentFunctionResponse {
+  functionCallId: string;
+  value: MockUser;
+}
+
+interface AgentFunctionResponseEnvelope {
+  version: string;
+  agentFunctionResponse: AgentFunctionResponse;
+}
+
 /**
  * A2UI v1.0 **RPC round-trip demo**, Native-page edition (OHOS).
  *
@@ -198,16 +229,17 @@ struct A2UIRpcDemoPage {
     }
     this.mockRequestCounter += 1;
     const requestId = `req-${this.mockRequestCounter}`;
-    const envelope: Record<string, Object> = {
+    const args: GreetingArgs = { name: 'Ada' };
+    const callFunction: Record<string, Object> = {};
+    callFunction['@call'] = 'getGreeting';
+    callFunction['catalogId'] = 'custom_functions_catalog_v1_0.json';
+    callFunction['args'] = args;
+    const envelope: RendererFunctionEnvelope = {
       version: '1.0',
       callRendererFunction: {
         surfaceId: this.surfaceId,
         functionCallId: requestId,
-        callFunction: {
-          '@call': 'getGreeting',
-          catalogId: 'custom_functions_catalog_v1_0.json',
-          args: { name: 'Ada' }
-        }
+        callFunction: callFunction
       }
     };
     const json = JSON.stringify(envelope);
@@ -292,7 +324,7 @@ struct A2UIRpcDemoPage {
     }
     // Mock backend: pretend we processed fetchUser(id=42) and reply.
     const requestId = (call.functionCallId as string) ?? '';
-    const response: Record<string, Object> = {
+    const response: AgentFunctionResponseEnvelope = {
       version: '1.0',
       agentFunctionResponse: {
         functionCallId: requestId,

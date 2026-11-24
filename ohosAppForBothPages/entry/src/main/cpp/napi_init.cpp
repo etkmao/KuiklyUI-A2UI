@@ -452,7 +452,7 @@ static napi_value A2UIInvokeAgentFunction(napi_env env, napi_callback_info info)
         argsJson,
         (long)timeoutD,
         (void*)holder,
-        &RpcCompletionTrampoline);
+        reinterpret_cast<void*>(&RpcCompletionTrampoline));
 
     if (reqId) {
         napi_create_string_utf8(env, reqId, NAPI_AUTO_LENGTH, &retVal);

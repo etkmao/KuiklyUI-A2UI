@@ -319,7 +319,7 @@ static napi_value A2UIInvokeAgentFunction(napi_env env, napi_callback_info info)
         argsJson,
         (long)timeoutD,
         (void*)holder,
-        &RpcCompletionTrampoline);
+        reinterpret_cast<void*>(&RpcCompletionTrampoline));
 
     if (reqId) {
         napi_create_string_utf8(env, reqId, NAPI_AUTO_LENGTH, &retVal);
@@ -499,7 +499,7 @@ static napi_value A2UISetRendererFunctionHandler(napi_env env, napi_callback_inf
     // map in sync first means A2UIRemoveRendererFunctionHandler sees a
     // consistent world even under heavy concurrency).
     libshared_symbols()->kotlin.root.a2uiSetRendererFunctionHandler(
-        instanceId, (void*)holder, &RpcInboundTrampoline);
+        instanceId, (void*)holder, reinterpret_cast<void*>(&RpcInboundTrampoline));
 
     free(instanceId);
     return nullptr;

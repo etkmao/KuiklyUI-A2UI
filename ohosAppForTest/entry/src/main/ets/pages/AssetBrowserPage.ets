@@ -65,9 +65,15 @@ struct AssetBrowserPage {
               Text('暂无样本')
             }
           }
-        }.width('100%').alignItems(HorizontalAlign.Start)
-      }.layoutWeight(1)
+        }
+        .width('100%')
+        .justifyContent(FlexAlign.Start)
+        .alignItems(HorizontalAlign.Start)
+      }
+      .layoutWeight(1)
+      .align(Alignment.Top)
     }
+    .justifyContent(FlexAlign.Start)
     .padding({ left: 16, right: 16, bottom: 16 })
     .width('100%')
     .height('100%')
