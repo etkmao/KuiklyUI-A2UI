@@ -103,14 +103,14 @@ struct Index {
         Column() {
           this.SectionHeader('按协议版本运行')
           this.DemoEntry(new DemoEntryParams(
-            'A2UI 0.9 兼容回归',
+            'A2UI 0.9',
             '原样归档的组件、绑定、函数、主题和官方示例，包含预期非法样本',
             '0.9',
             '#607D8B',
             () => { router.pushUrl({ url: 'pages/AssetBrowserPage', params: { directory: 'v0_9' } }); }
           ))
           this.DemoEntry(new DemoEntryParams(
-            'A2UI 1.0 回归样本',
+            'A2UI 1.0',
             '独立的 1.0 严格模式样本目录，不混入旧版语料',
             '1.0',
             '#F39C12',

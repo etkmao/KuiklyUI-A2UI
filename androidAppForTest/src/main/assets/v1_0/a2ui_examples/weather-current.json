@@ -23,21 +23,13 @@
           {
             "id": "main_column",
             "component": "Column",
-            "children": [
-              "temp_row",
-              "location",
-              "description",
-              "forecast_row"
-            ],
+            "children": ["temp_row", "location", "description", "forecast_row"],
             "align": "center"
           },
           {
             "id": "temp_row",
             "component": "Row",
-            "children": [
-              "temp_high",
-              "temp_low"
-            ],
+            "children": ["temp_high", "temp_low"],
             "align": "start"
           },
           {
@@ -46,7 +38,7 @@
             "text": {
               "@call": "formatString",
               "args": {
-                "value": "# ${/tempHigh}°"
+                "value": "# ${/tempHigh}\u00b0"
               }
             }
           },
@@ -56,7 +48,7 @@
             "text": {
               "@call": "formatString",
               "args": {
-                "value": "## ${/tempLow}°"
+                "value": "## ${/tempLow}\u00b0"
               }
             }
           },
@@ -90,11 +82,7 @@
           {
             "id": "forecast_day_template",
             "component": "Column",
-            "children": [
-              "day_name",
-              "day_icon",
-              "day_temp"
-            ],
+            "children": ["day_name", "day_icon", "day_temp"],
             "align": "center"
           },
           {
@@ -115,10 +103,7 @@
             "id": "day_icon",
             "component": "Text",
             "text": {
-              "@call": "formatString",
-              "args": {
-                "value": "### ${icon}"
-              }
+              "@path": "icon"
             }
           },
           {
@@ -127,7 +112,7 @@
             "text": {
               "@call": "formatString",
               "args": {
-                "value": "${temp}°"
+                "value": "${temp}\u00b0"
               }
             },
             "variant": "caption"
@@ -147,27 +132,27 @@
           "forecast": [
             {
               "date": "2025-12-16",
-              "icon": "☀️",
+              "icon": "\u2600\ufe0f",
               "temp": 74
             },
             {
               "date": "2025-12-17",
-              "icon": "☀️",
+              "icon": "\u2600\ufe0f",
               "temp": 76
             },
             {
               "date": "2025-12-18",
-              "icon": "⛅",
+              "icon": "\u26c5",
               "temp": 71
             },
             {
               "date": "2025-12-19",
-              "icon": "☀️",
+              "icon": "\u2600\ufe0f",
               "temp": 73
             },
             {
               "date": "2025-12-20",
-              "icon": "☀️",
+              "icon": "\u2600\ufe0f",
               "temp": 75
             }
           ]

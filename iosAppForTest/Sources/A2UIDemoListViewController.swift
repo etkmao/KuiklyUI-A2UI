@@ -30,14 +30,14 @@ class A2UIDemoListViewController: A2UIDemoBaseListViewController {
         [
             A2UIDemoSection(title: "按协议版本运行", entries: [
                 A2UIDemoEntry(
-                    title: "A2UI 0.9 兼容回归",
+                    title: "A2UI 0.9",
                     description: "原样归档的组件、绑定、函数、主题和官方示例，包含预期非法样本",
                     icon: "0.9",
                     color: .systemGray,
                     build: { A2UIAssetBrowserViewController(directory: "v0_9") }
                 ),
                 A2UIDemoEntry(
-                    title: "A2UI 1.0 回归样本",
+                    title: "A2UI 1.0",
                     description: "独立的 1.0 严格模式样本目录，不混入旧版语料",
                     icon: "1.0",
                     color: .systemOrange,

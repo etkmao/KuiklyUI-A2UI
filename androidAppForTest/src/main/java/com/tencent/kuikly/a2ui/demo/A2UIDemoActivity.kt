@@ -94,7 +94,7 @@ class A2UIDemoActivity : AppCompatActivity() {
 
         contentLayout.addView(createSectionHeader("按协议版本运行"))
         contentLayout.addView(createDemoEntry(
-            title = "A2UI 0.9 兼容回归",
+            title = "A2UI 0.9",
             description = "原样归档的组件、绑定、函数、主题和官方示例；包含兼容与预期非法样本，不作为 1.0 正式展示",
             iconText = "0.9",
             color = "#607D8B"
@@ -105,7 +105,7 @@ class A2UIDemoActivity : AppCompatActivity() {
         })
 
         contentLayout.addView(createDemoEntry(
-            title = "A2UI 1.0 迁移试点",
+            title = "A2UI 1.0",
             description = "正文、动态 Markdown 标题、TextField checks、List、ChildList 和天气卡；按目录查看全部新版语料",
             iconText = "1.0",
             color = "#0984E3"
