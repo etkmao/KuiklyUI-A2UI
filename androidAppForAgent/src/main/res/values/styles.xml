@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.AgentChat.Base" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">#138A55</item>
+        <item name="colorPrimaryDark">#FFFFFF</item>
+        <item name="colorAccent">#138A55</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">#FFFFFF</item>
+        <item name="android:navigationBarColor">#233029</item>
+        <item name="android:windowBackground">#F5F6F7</item>
+        <item name="android:windowActionModeOverlay">true</item>
+    </style>
+    <style name="Theme.AgentChat" parent="Theme.AgentChat.Base" />
+</resources>

@@ -11,3 +11,8 @@ sdk.dir=/Users/YOUR_USER/Library/Android/sdk
 # is used. Absolute paths recommended for per-machine overrides.
 # ─────────────────────────────────────────────────────────────────────────
 # kuikly.projectDir=/absolute/path/to/KuiklyUI
+
+# androidAppForAgent debug connection defaults. Keep real values local.
+# Credentials must be entered at runtime, never in these properties.
+# agent.baseUrl=https://YOUR_AGENT_HOST
+# agent.routes={"sessions":"/YOUR_SESSION_PATH","runs":"/YOUR_RUN_PATH/{sessionId}","events":"/YOUR_EVENT_PATH/{sessionId}","snapshot":"/YOUR_SNAPSHOT_PATH/{sessionId}","card":"/YOUR_CARD_PATH/{sessionId}/{cardId}","messages":"/YOUR_MESSAGE_PATH/{sessionId}","cancel":"/YOUR_CANCEL_PATH/{runId}"}

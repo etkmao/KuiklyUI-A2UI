@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">AIChat</string>
+    <string name="disconnected">未连接</string>
+    <string name="new_session">新会话</string>
+    <string name="settings">设置</string>
+    <string name="load_history">加载更早消息</string>
+    <string name="empty_title">开始一段轻松的对话</string>
+    <string name="empty_description">发送消息，回答将以 A2UI 卡片呈现</string>
+    <string name="offline_preview">离线卡片预览</string>
+    <string name="latest_messages">查看最新消息</string>
+    <string name="cancel">取消</string>
+    <string name="input_hint">发送消息…</string>
+    <string name="send">发送</string>
+    <string name="edit_card_version">修改所选卡片 · v%1$d</string>
+</resources>

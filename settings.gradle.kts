@@ -147,6 +147,9 @@ project(":androidAppForKuiklyPage").projectDir = file("androidAppForKuiklyPage")
 include(":androidAppForNativePage")
 project(":androidAppForNativePage").projectDir = file("androidAppForNativePage")
 
+include(":androidAppForAgent")
+project(":androidAppForAgent").projectDir = file("androidAppForAgent")
+
 include(":androidAppForBothPages")
 project(":androidAppForBothPages").projectDir = file("androidAppForBothPages")
 
