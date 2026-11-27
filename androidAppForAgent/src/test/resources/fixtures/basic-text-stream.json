@@ -1,0 +1,25 @@
+{
+  "messages": [
+    {
+      "version": "1.0",
+      "createSurface": {
+        "surfaceId": "00000000-0000-4000-8000-000000000001",
+        "catalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
+        "sendDataModel": true,
+        "metadata": { "extensions": { "fixture": "lifecycle" } },
+        "components": [
+          { "id": "root", "component": "Column", "children": ["title", "body"] },
+          { "id": "title", "component": "Text", "text": { "@path": "/heading" }, "variant": "body" },
+          { "id": "body", "component": "Text", "text": "准备更新", "variant": "caption" }
+        ],
+        "dataModel": { "heading": "完整 A2UI 1.0", "obsolete": true, "user": { "name": "初始名称" } }
+      }
+    },
+    { "version": "1.0", "updateDataModel": { "surfaceId": "00000000-0000-4000-8000-000000000001", "path": "/user/name", "value": "更新名称" } },
+    { "version": "1.0", "updateDataModel": { "surfaceId": "00000000-0000-4000-8000-000000000001", "path": "/user/a~1b~0c", "value": "转义键" } },
+    { "version": "1.0", "updateComponents": { "surfaceId": "00000000-0000-4000-8000-000000000001", "components": [{ "id": "body", "component": "Text", "text": "生命周期更新已应用" }] } },
+    { "version": "1.0", "updateDataModel": { "surfaceId": "00000000-0000-4000-8000-000000000001", "path": "/obsolete", "value": null } },
+    { "version": "1.0", "createSurface": { "surfaceId": "00000000-0000-4000-8000-000000000002", "catalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json", "components": [{ "id": "root", "component": "Text", "text": "临时 Surface" }], "dataModel": {} } },
+    { "version": "1.0", "deleteSurface": { "surfaceId": "00000000-0000-4000-8000-000000000002" } }
+  ]
+}

@@ -90,7 +90,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     mutableState.update { it.copy(connected = false, connectionLabel = if (retries == 0) "连接中…" else "正在重新连接…") }
                     if (sessionId.isEmpty()) {
                         val result = transport.createSession()
-                        require(result.getJSONObject("capabilities").getString("protocolVersion") == "1.0")
+                        require(result.getJSONObject("capabilities").getString("protocolVersion") == "1.0" && result.getJSONObject("capabilities").getString("id") == "basic-v1")
                         sessionId = result.getString("sessionId")
                         preferences.edit().putString("session", sessionId).apply()
                         needsSnapshot = true
@@ -119,7 +119,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                 catch (e: Exception) {
                     mutableState.update { it.copy(connected = false, connectionLabel = "连接已断开") }
                     val code = (e as? AgentFailure)?.code
-                    if (e is SyncRequired || code == "EVENT_CURSOR_EXPIRED" || code == "INVALID_CURSOR") {
+                    if (store.hasPendingCommit || e is SyncRequired || code == "EVENT_CURSOR_EXPIRED" || code == "INVALID_CURSOR") {
                         needsSnapshot = true
                     } else if (e is AgentFailure && !e.retryable) {
                         mutableState.update { it.copy(notice = failureText(e.code)) }

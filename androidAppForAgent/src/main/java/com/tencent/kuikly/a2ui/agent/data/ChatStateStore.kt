@@ -16,23 +16,39 @@ class ChatStateStore {
     private val cardMap = linkedMapOf<String, CardDocument>()
     private val recentCards = mutableListOf<String>()
     private val completedRuns = mutableSetOf<String>()
+    private data class PendingCommit(val cardId: String, val runId: String, val messageId: String,
+        val surfaceId: String, val base: Int, val revision: Int, val count: Int,
+        val replaced: Boolean, val messages: List<JSONObject>)
+    private var pendingCommit: PendingCommit? = null
+    val hasPendingCommit: Boolean get() = pendingCommit != null
 
     val messages: List<ChatMessage> get() = messageMap.values.sortedBy { it.ordinal }
     val cards: Map<String, CardDocument> get() = cardMap.toMap()
 
     fun snapshot(json: JSONObject) {
-        sessionId = json.getString("sessionId")
-        cursor = json.getLong("lastEventId")
-        activeRunId = json.nullableString("activeRunId")
+        val nextSession = json.getString("sessionId")
+        val nextCursor = json.getLong("lastEventId")
+        val nextRun = json.nullableString("activeRunId")
+        val capability = json.getJSONObject("capabilities")
+        if (capability.getString("id") != UiStateDocument.PROFILE_ID || capability.getString("protocolVersion") != "1.0") throw SyncRequired()
+        val messageJson = json.getJSONArray("messages").objects()
+        val cardJson = json.getJSONArray("cards").objects()
+        if (messageJson.any { it.getString("sessionId") != nextSession } || cardJson.any { it.getString("sessionId") != nextSession }) throw SyncRequired()
+        val allMessages = messageJson.map(ChatMessage::parse).sortedBy { it.ordinal }
+        val allCards = cardJson.map(CardDocument::parse)
+        val recent = json.getJSONArray("recentCardIds")
+        val nextRecent = (0 until recent.length()).map { recent.getString(it) }
+        sessionId = nextSession
+        cursor = nextCursor
+        activeRunId = nextRun
+        pendingCommit = null
         messageMap.clear()
-        val allMessages = json.getJSONArray("messages").objects().map(ChatMessage::parse).sortedBy { it.ordinal }
         allMessages.takeLast(30).forEach { messageMap[it.id] = it }
         canLoadHistory = allMessages.size > 30
         cardMap.clear()
-        json.getJSONArray("cards").objects().map(CardDocument::parse).forEach { cardMap[it.id] = it }
+        allCards.forEach { cardMap[it.id] = it }
         recentCards.clear()
-        val recent = json.getJSONArray("recentCardIds")
-        (0 until recent.length()).forEach { recentCards.add(recent.getString(it)) }
+        recentCards.addAll(nextRecent)
         completedRuns.clear()
         allMessages.filter { it.role == "assistant" && it.status != "running" }.forEach { completedRuns.add(it.runId) }
     }
@@ -49,6 +65,7 @@ class ChatStateStore {
         if (id != cursor + 1) throw SyncRequired()
         val runId = event.getString("runId")
         val payload = event.getJSONObject("payload")
+        if (pendingCommit != null && event.getString("type") != "a2ui.message") throw SyncRequired()
         when (event.getString("type")) {
             "message.created", "message.updated" -> {
                 val message = ChatMessage.parse(payload)
@@ -77,34 +94,37 @@ class ChatStateStore {
     }
 
     private fun applyEnvelope(event: JSONObject, envelope: JSONObject) {
-        if (envelope.optString("version") != "1.0") throw SyncRequired()
+        val type = UiStateDocument.validateMessage(envelope)
         val id = event.getString("cardId")
-        val old = cardMap[id]
+        val old = cardMap[id] ?: throw SyncRequired()
         val base = event.getInt("baseCardRevision")
         val revision = event.getInt("cardRevision")
-        if ((old?.revision ?: 0) != base || revision != base + 1) throw SyncRequired()
+        if (old.revision != base || revision != base + 1) throw SyncRequired()
         val surfaceId = event.getString("surfaceId")
-        val replay = when {
-            envelope.has("createSurface") -> {
-                if (envelope.getJSONObject("createSurface").getString("surfaceId") != surfaceId) throw SyncRequired()
-                listOf(envelope.toString())
-            }
-            envelope.has("updateComponents") -> {
-                if (old == null || old.surfaceId != surfaceId || old.replay.isEmpty()) throw SyncRequired()
-                val update = envelope.getJSONObject("updateComponents")
-                if (update.getString("surfaceId") != surfaceId) throw SyncRequired()
-                val canonical = JSONObject(old.replay.first())
-                val surface = canonical.getJSONObject("createSurface")
-                val components = linkedMapOf<String, JSONObject>()
-                surface.getJSONArray("components").objects().forEach { components[it.getString("id")] = it }
-                update.getJSONArray("components").objects().forEach { components[it.getString("id")] = it }
-                surface.put("components", JSONArray(components.values.toList()))
-                listOf(canonical.toString())
-            }
-            else -> throw SyncRequired()
+        val messageIndex = event.getInt("messageIndex")
+        val messageCount = event.getInt("messageCount")
+        if (messageCount !in 1..UiStateDocument.MAX_MESSAGES || messageIndex !in 0 until messageCount) throw SyncRequired()
+        var batch = pendingCommit
+        if (batch == null) {
+            if (messageIndex != 0) throw SyncRequired()
+            val replaced = event.getString("type") == "card.replaced"
+            if (replaced && (base == 0 || surfaceId == old.surfaceId || type != "deleteSurface" || envelope.getJSONObject(type).getString("surfaceId") != old.surfaceId || messageCount < 2)) throw SyncRequired()
+            if (!replaced && surfaceId != old.surfaceId) throw SyncRequired()
+            if (base == 0 && (type != "createSurface" || envelope.getJSONObject(type).getString("surfaceId") != surfaceId)) throw SyncRequired()
+            batch = PendingCommit(id, event.getString("runId"), event.getString("messageId"), surfaceId, base, revision, messageCount, replaced, emptyList())
         }
+        if (batch.cardId != id || batch.runId != event.getString("runId") || batch.messageId != event.getString("messageId") || batch.surfaceId != surfaceId || batch.base != base || batch.revision != revision || batch.count != messageCount || batch.messages.size != messageIndex) throw SyncRequired()
+        val completed = batch.copy(messages = batch.messages + JSONObject(envelope.toString()))
+        if (completed.messages.size < completed.count) {
+            pendingCommit = completed
+            return
+        }
+        val document = UiStateDocument.apply(UiStateDocument.restore(old.replay), completed.messages)
+        if (completed.replaced && (document.getJSONObject("surfaces").length() != 1 || !document.getJSONObject("surfaces").has(surfaceId))) throw SyncRequired()
+        val replay = UiStateDocument.replay(document)
         cardMap[id] = CardDocument(id, surfaceId, revision, "ready", true, replay,
-            if (envelope.has("updateComponents")) envelope.toString() else null)
+            if (completed.replaced || base == 0) emptyList() else completed.messages.map { it.toString() })
+        pendingCommit = null
         if (base == 0) {
             recentCards.remove(id)
             recentCards.add(0, id)

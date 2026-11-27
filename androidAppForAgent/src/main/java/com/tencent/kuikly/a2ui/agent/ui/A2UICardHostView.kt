@@ -46,8 +46,8 @@ class A2UICardHostView(context: Context) : FrameLayout(context) {
         val identity = card.surfaceId to card.revision
         if (renderedIdentity == identity && surface != null) return
         val previous = renderedIdentity
-        if (surface != null && previous?.first == card.surfaceId && previous.second + 1 == card.revision && card.incrementalEnvelope != null) {
-            surface?.writeStream(card.incrementalEnvelope)
+        if (surface != null && previous?.first == card.surfaceId && previous.second + 1 == card.revision && card.incrementalEnvelopes.isNotEmpty()) {
+            card.incrementalEnvelopes.forEach { surface?.writeStream(it) }
             renderedIdentity = identity
             return
         }
@@ -57,6 +57,7 @@ class A2UICardHostView(context: Context) : FrameLayout(context) {
                 text = when (card.status) {
                     "failed" -> "卡片生成失败"
                     "cancelled" -> "已停止生成"
+                    "ready" -> "Surface 已删除；已提交状态可恢复"
                     else -> "正在生成卡片…"
                 }
                 setTextColor(muted)

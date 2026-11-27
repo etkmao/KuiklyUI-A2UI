@@ -32,7 +32,7 @@ class AgentApiClientTest {
         val request = server.takeRequest(3, TimeUnit.SECONDS)!!
         val client = JSONObject(request.body.readUtf8()).getJSONObject("client")
         assertEquals("android", client.getString("platform"))
-        assertEquals("basic-text-v1", client.getString("profileId"))
+        assertEquals("basic-v1", client.getString("profileId"))
         assertEquals("test-only", request.getHeader("X-Demo-Header"))
     }
     @Test fun submissionRetriesReuseSameIdempotencyKey() = runBlocking {

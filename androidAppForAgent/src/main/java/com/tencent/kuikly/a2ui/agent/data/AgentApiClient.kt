@@ -32,7 +32,7 @@ class AgentApiClient(val connection: AgentConnection) {
 
     suspend fun createSession(): JSONObject = request("sessions", body = JSONObject().put("client", JSONObject()
         .put("platform", "android").put("sdkVersion", "agent-demo-1.0")
-        .put("profileId", "basic-text-v1").put("a2uiRendererCapabilities", JSONObject()
+        .put("profileId", UiStateDocument.PROFILE_ID).put("a2uiRendererCapabilities", JSONObject()
             .put("1.0", JSONObject().put("supportedCatalogIds", org.json.JSONArray()
                 .put("https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"))))))
 
@@ -89,6 +89,7 @@ class AgentApiClient(val connection: AgentConnection) {
             override fun onOpen(eventSource: EventSource, response: Response) { onOpen() }
             override fun onEvent(eventSource: EventSource, id: String?, type: String?, data: String) {
                 try {
+                    if (data.toByteArray(Charsets.UTF_8).size > UiStateDocument.MAX_MESSAGE_BYTES + 8192) throw SyncRequired()
                     val event = JSONObject(data)
                     if (id != event.getLong("eventId").toString() || type != event.getString("type")) {
                         throw SyncRequired()

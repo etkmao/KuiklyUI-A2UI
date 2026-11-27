@@ -1,0 +1,10 @@
+{
+  "messages": [{
+    "version": "1.0",
+    "createSurface": {
+      "surfaceId": "00000000-0000-4000-8000-000000000001",
+      "catalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
+      "components": [{ "id": "root", "component": "Text", "text": "KA2UI Server 已就绪", "variant": "body" }]
+    }
+  }]
+}

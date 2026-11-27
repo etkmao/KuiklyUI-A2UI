@@ -25,14 +25,18 @@ data class ChatMessage(
 data class CardDocument(
     val id: String, val surfaceId: String, val revision: Int,
     val status: String, val editable: Boolean, val replay: List<String>,
-    val incrementalEnvelope: String? = null
+    val incrementalEnvelopes: List<String> = emptyList()
 ) {
     companion object {
-        fun parse(json: JSONObject): CardDocument = CardDocument(
-            json.getString("cardId"), json.getString("surfaceId"), json.getInt("revision"),
-            json.getString("status"), json.getBoolean("editable"),
-            json.getJSONArray("replayMessages").objects().map { it.toString() }
-        )
+        fun parse(json: JSONObject): CardDocument {
+            val replay = json.getJSONArray("replayMessages").objects().map { it.toString() }
+            val status = json.getString("status")
+            val revision = json.getInt("revision")
+            if ((status == "ready") != (revision > 0) || (status != "ready" && replay.isNotEmpty())) throw SyncRequired()
+            UiStateDocument.restore(replay)
+            return CardDocument(json.getString("cardId"), json.getString("surfaceId"), revision,
+                status, json.getBoolean("editable"), replay)
+        }
     }
 }
 

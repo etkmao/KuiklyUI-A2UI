@@ -9,20 +9,36 @@ import org.junit.Test
 class ChatStateStoreTest {
     private lateinit var store: ChatStateStore
     private fun snapshot() = JSONObject().put("sessionId", "session").put("lastEventId", 0)
+        .put("capabilities", JSONObject().put("id", "basic-v1").put("protocolVersion", "1.0"))
         .put("activeRunId", JSONObject.NULL).put("messages", JSONArray()).put("cards", JSONArray()).put("recentCardIds", JSONArray())
-    private fun envelope(surfaceId: String = "surface", text: String = "hello") = JSONObject()
-        .put("version", "1.0").put("createSurface", JSONObject().put("surfaceId", surfaceId)
-            .put("catalogId", "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json")
-            .put("components", JSONArray().put(JSONObject().put("id", "root").put("component", "Text").put("text", text).put("variant", "body"))))
+    private fun fixture(name: String): List<JSONObject> = javaClass.getResourceAsStream("/fixtures/$name.json")
+        ?.bufferedReader()?.use { JSONObject(it.readText()).getJSONArray("messages").objects() } ?: error("Missing harness fixture: $name")
+    private fun envelope(surfaceId: String = "surface", text: String = "hello") = fixture("basic-text").first().apply {
+        getJSONObject("createSurface").put("surfaceId", surfaceId).getJSONArray("components").getJSONObject(0).put("text", text)
+    }
     private fun event(id: Int, type: String, payload: JSONObject = JSONObject(), base: Int = 0, revision: Int = 0, surface: String = "surface") = JSONObject()
         .put("sessionId", "session").put("eventId", id).put("type", type).put("runId", "run")
-        .put("cardId", "card").put("surfaceId", surface).put("baseCardRevision", base).put("cardRevision", revision).put("payload", payload)
+        .put("cardId", "card").put("surfaceId", surface).put("baseCardRevision", base).put("cardRevision", revision).put("payload", payload).put("messageId", "message").put("messageIndex", 0).put("messageCount", 1)
     private fun message(id: String = "message", ordinal: Int = 1, status: String = "completed") = JSONObject()
-        .put("messageId", id).put("ordinal", ordinal).put("role", "assistant").put("status", status).put("runId", "run")
+        .put("messageId", id).put("sessionId", "session").put("ordinal", ordinal).put("role", "assistant").put("status", status).put("runId", "run")
         .put("parts", JSONArray().put(JSONObject().put("type", "text").put("text", "response"))).put("createdAt", "2026-01-01T00:00:00.000Z")
     private fun createCard() { store.consume(event(1, "a2ui.message", envelope(), revision = 1)) }
+    private fun deletion(surface: String) = fixture("basic-text-stream").last().apply { getJSONObject("deleteSurface").put("surfaceId", surface) }
+    private fun populateCards(count: Int) {
+        (1..count).forEach { i ->
+            val cardId = "card-$i"
+            val placeholder = message("message-$i", i, "running").put("parts", JSONArray().put(JSONObject().put("type", "card").put("cardId", cardId)))
+            store.consume(event(i * 2 - 1, "message.created", placeholder).put("cardId", cardId))
+            store.consume(event(i * 2, "a2ui.message", envelope(), revision = 1).put("cardId", cardId))
+        }
+    }
 
-    @Before fun setUp() { store = ChatStateStore(); store.snapshot(snapshot()) }
+    @Before fun setUp() {
+        store = ChatStateStore()
+        val pending = JSONObject().put("cardId", "card").put("sessionId", "session").put("surfaceId", "surface")
+            .put("revision", 0).put("status", "pending").put("editable", false).put("replayMessages", JSONArray())
+        store.snapshot(snapshot().put("cards", JSONArray().put(pending)))
+    }
 
     @Test fun duplicateEventIsIgnored() {
         assertTrue(store.consume(event(1, "run.started")))
@@ -51,9 +67,16 @@ class ChatStateStoreTest {
     }
     @Test fun replaceChangesSurfaceAndClearsOldReplay() {
         createCard()
-        store.consume(event(2, "card.replaced", envelope("new-surface", "replacement"), 1, 2, "new-surface"))
-        assertEquals("new-surface", store.cards.getValue("card").surfaceId)
-        assertEquals(1, store.cards.getValue("card").replay.size)
+        val before = store.cards.getValue("card")
+        store.consume(event(2, "card.replaced", deletion("surface"), 1, 2, "new-surface").put("messageCount", 2))
+        assertEquals(before, store.cards.getValue("card"))
+        assertTrue(store.hasPendingCommit)
+        store.consume(event(3, "a2ui.message", envelope("new-surface", "replacement"), 1, 2, "new-surface").put("messageIndex", 1).put("messageCount", 2))
+        val card = store.cards.getValue("card")
+        assertEquals("new-surface", card.surfaceId)
+        assertEquals(2, card.revision)
+        assertEquals(1, card.replay.size)
+        assertFalse(UiStateDocument.restore(card.replay).getJSONObject("surfaces").has("surface"))
     }
     @Test(expected = SyncRequired::class) fun wrongRevisionRequiresSnapshot() {
         createCard(); store.consume(event(2, "a2ui.message", envelope(), 0, 2))
@@ -87,14 +110,17 @@ class ChatStateStoreTest {
         assertEquals(100L, store.cursor)
     }
     @Test fun onlyTenRecentCardsAreEditable() {
-        (1..11).forEach { i -> store.consume(event(i, "a2ui.message", envelope(), revision = 1).put("cardId", "card-$i")) }
+        populateCards(11)
         assertFalse(store.cards.getValue("card-1").editable)
         assertTrue(store.cards.getValue("card-11").editable)
     }
     @Test fun updatingOldCardDoesNotChangeCreationRecency() {
-        (1..10).forEach { i -> store.consume(event(i, "a2ui.message", envelope(), revision = 1).put("cardId", "card-$i")) }
-        store.consume(event(11, "card.replaced", envelope("replacement"), 1, 2, "replacement").put("cardId", "card-1"))
-        store.consume(event(12, "a2ui.message", envelope(), revision = 1).put("cardId", "card-11"))
+        populateCards(10)
+        store.consume(event(21, "card.replaced", deletion("surface"), 1, 2, "replacement").put("cardId", "card-1").put("messageCount", 2))
+        store.consume(event(22, "a2ui.message", envelope("replacement"), 1, 2, "replacement").put("cardId", "card-1").put("messageIndex", 1).put("messageCount", 2))
+        val placeholder = message("new-message", 11, "running").put("parts", JSONArray().put(JSONObject().put("type", "card").put("cardId", "card-11")))
+        store.consume(event(23, "message.created", placeholder).put("cardId", "card-11"))
+        store.consume(event(24, "a2ui.message", envelope(), revision = 1).put("cardId", "card-11"))
         assertFalse(store.cards.getValue("card-1").editable)
         assertTrue(store.cards.getValue("card-2").editable)
     }
@@ -104,5 +130,64 @@ class ChatStateStoreTest {
         store.consume(event(3, "run.cancelled"))
         assertNull(store.activeRunId)
         assertEquals("ready", store.cards.getValue("card").status)
+    }
+    @Test fun lifecycleBatchIsAtomicAndRestorable() {
+        val messages = fixture("basic-text-stream")
+        val pending = JSONObject().put("cardId", "card").put("sessionId", "session")
+            .put("surfaceId", messages.first().getJSONObject("createSurface").getString("surfaceId"))
+            .put("revision", 0).put("status", "pending").put("editable", false).put("replayMessages", JSONArray())
+        store.snapshot(snapshot().put("cards", JSONArray().put(pending)))
+        messages.forEachIndexed { index, payload ->
+            store.consume(event(index + 1, "a2ui.message", payload, revision = 1)
+                .put("surfaceId", messages.first().getJSONObject("createSurface").getString("surfaceId"))
+                .put("messageIndex", index).put("messageCount", messages.size))
+            if (index < messages.lastIndex) assertEquals(0, store.cards.getValue("card").revision)
+        }
+        val card = store.cards.getValue("card")
+        assertEquals(1, card.revision)
+        assertFalse(store.hasPendingCommit)
+        val document = UiStateDocument.restore(card.replay)
+        assertEquals(1, document.getJSONObject("surfaces").length())
+        val surface = document.getJSONObject("surfaces").getJSONObject(card.surfaceId)
+        assertEquals(3, surface.getJSONObject("components").length())
+        assertFalse(surface.getJSONObject("dataModel").has("obsolete"))
+    }
+    @Test fun interruptedBatchDoesNotExposePartialStateAndSnapshotClearsIt() {
+        createCard()
+        val update = fixture("basic-text-stream")[1].apply { getJSONObject("updateDataModel").put("surfaceId", "surface") }
+        store.consume(event(2, "a2ui.message", update, 1, 2).put("messageCount", 2))
+        assertTrue(store.hasPendingCommit)
+        assertEquals(1, store.cards.getValue("card").revision)
+        val card = store.cards.getValue("card")
+        val serialized = JSONObject().put("cardId", card.id).put("sessionId", "session").put("surfaceId", card.surfaceId)
+            .put("revision", card.revision).put("status", card.status).put("editable", card.editable).put("replayMessages", JSONArray(card.replay.map(::JSONObject)))
+        store.snapshot(snapshot().put("cards", JSONArray().put(serialized)).put("lastEventId", 2))
+        assertFalse(store.hasPendingCommit)
+        assertEquals(card.replay, store.cards.getValue("card").replay)
+    }
+    @Test fun canonicalRecoveryHasLargerBudgetThanWire() {
+        val large = envelope(text = "x".repeat(UiStateDocument.MAX_MESSAGE_BYTES))
+        assertTrue(runCatching { UiStateDocument.apply(UiStateDocument.empty(), listOf(large)) }.isFailure)
+        assertEquals(1, UiStateDocument.restore(listOf(large.toString())).getJSONObject("surfaces").length())
+    }
+    @Test fun arrayUpdatesPadNullAndBoundWritesWithoutCreatingDeletedPaths() {
+        val create = envelope().apply { getJSONObject("createSurface").put("dataModel", JSONObject().put("items", JSONArray())) }
+        val initial = UiStateDocument.apply(UiStateDocument.empty(), listOf(create))
+        fun update(path: String, value: Any) = fixture("basic-text-stream")[1].apply {
+            getJSONObject("updateDataModel").put("surfaceId", "surface").put("path", path).put("value", value)
+        }
+        val filled = UiStateDocument.apply(initial, listOf(update("/items/2/name", "filled")))
+        val items = filled.getJSONObject("surfaces").getJSONObject("surface").getJSONObject("dataModel").getJSONArray("items")
+        assertEquals(3, items.length())
+        assertTrue(items.isNull(0))
+        assertTrue(items.isNull(1))
+        assertEquals("filled", items.getJSONObject(2).getString("name"))
+        val deleted = UiStateDocument.apply(filled, listOf(update("/items/1", JSONObject.NULL), update("/missing/4/name", JSONObject.NULL)))
+        assertFalse(deleted.getJSONObject("surfaces").getJSONObject("surface").getJSONObject("dataModel").has("missing"))
+        assertEquals(2, deleted.getJSONObject("surfaces").getJSONObject("surface").getJSONObject("dataModel").getJSONArray("items").length())
+        val bounded = UiStateDocument.apply(initial, listOf(update("/items/10000", "last")))
+        assertEquals(10001, bounded.getJSONObject("surfaces").getJSONObject("surface").getJSONObject("dataModel").getJSONArray("items").length())
+        assertTrue(runCatching { UiStateDocument.apply(initial, listOf(update("/items/10001", "invalid"))) }.isFailure)
+        assertTrue(runCatching { UiStateDocument.apply(initial, listOf(update("/items/01", "invalid"))) }.isFailure)
     }
 }
