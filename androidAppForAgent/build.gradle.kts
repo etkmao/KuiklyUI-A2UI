@@ -43,6 +43,7 @@ dependencies {
     implementation(A2uiDep.a2ui(project))
     implementation(A2uiDep.a2uiRenderAndroid(project))
     implementation(KuiklyDep.coreRenderAndroid(project))
+    implementation("com.google.android.exoplayer:exoplayer:2.16.1")
     implementation("androidx.appcompat:appcompat:1.4.2")
     implementation("androidx.core:core-ktx:1.7.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
