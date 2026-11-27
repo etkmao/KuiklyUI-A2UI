@@ -38,6 +38,16 @@ import com.tencent.kuikly.a2ui.parser.SimpleJsonParser
  */
 internal object A2UIRpcJson {
 
+    fun requestPayload(request: A2UIRpcRequest): Map<String, Any?> = linkedMapOf<String, Any?>(
+        "surfaceId" to request.surfaceId,
+        "requestId" to request.requestId,
+        "name" to request.name,
+        "args" to request.args,
+    ).apply {
+        request.timeoutMs?.let { this["timeoutMs"] = it }
+        request.catalogId?.let { this["catalogId"] = it }
+    }
+
     /**
      * Encode a Kotlin value graph (typically `Map<String, Any?>`) as
      * a JSON string. Returns `null` only when [value] is `null` to

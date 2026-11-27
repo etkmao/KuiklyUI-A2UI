@@ -514,6 +514,19 @@ class A2UIDSLBridge(
                 // Nothing to do here for DSL path
             }
 
+            A2UIMessageType.DESTROY_SURFACE -> {
+                val activeHost = host ?: return
+                fun removeChildren(container: com.tencent.kuikly.core.base.ViewContainer<*, *>, parentTag: Int) {
+                    for (child in container.getSubviews().toList()) {
+                        val tag = activeHost.registry.getTag(child) ?: continue
+                        if (child is com.tencent.kuikly.core.base.ViewContainer<*, *>) removeChildren(child, tag)
+                        applier.removeComponent(tag, parentTag)
+                    }
+                }
+                removeChildren(activeHost.rootContainer, 0)
+                applier.performLayout()
+            }
+
             A2UIMessageType.CREATE_COMPONENT -> {
                 val tag = message.tag
                 val viewName = message.viewName ?: "KRView"

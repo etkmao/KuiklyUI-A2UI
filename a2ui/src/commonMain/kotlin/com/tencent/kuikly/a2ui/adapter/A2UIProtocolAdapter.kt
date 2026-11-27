@@ -73,7 +73,23 @@ class A2UIProtocolAdapter {
         val messages = mutableListOf<A2UIMessage>()
         for (command in envelope.commands) {
             when (command.kind) {
-                A2UICommandKind.CREATE -> command.payload?.let { messages.addAll(projection.handleCreateSurface(it)) }
+                A2UICommandKind.CREATE -> command.payload?.let {
+                    messages.addAll(projection.handleCreateSurface(it))
+                    if (model.surfaceId.isNotEmpty()) rpcAdapter.markSurfaceOpen(model.surfaceId)
+                }
+                A2UICommandKind.DELETE -> command.payload?.let { payload ->
+                    val deletedId = payload["surfaceId"] as? String
+                    if (!deletedId.isNullOrEmpty() && deletedId == model.surfaceId &&
+                        (!strictV10 || payload.keys.all { it == "surfaceId" })) {
+                        rpcAdapter.markSurfaceClosed(deletedId)
+                        rpcDispatcher.cancelAll(deletedId)
+                        projection.reset()
+                        interactions.reset()
+                        model.reset()
+                        reactive.reset()
+                        messages += A2UIMessage(type = A2UIMessageType.DESTROY_SURFACE, surfaceId = deletedId)
+                    }
+                }
                 A2UICommandKind.COMPONENTS -> command.payload?.let { messages.addAll(projection.handleUpdateComponents(it)) }
                 A2UICommandKind.DATA -> command.payload?.let { messages.addAll(projection.handleUpdateDataModel(it, messages)) }
                 A2UICommandKind.CALL_RENDERER -> rpcAdapter.handleCallRendererFunction(command.payload)
@@ -96,12 +112,13 @@ class A2UIProtocolAdapter {
     }
 
     fun reset() {
+        if (model.surfaceId.isNotEmpty()) rpcAdapter.markSurfaceClosed(model.surfaceId)
+        rpcDispatcher.cancelAll(surfaceId = null)
         projection.reset()
         interactions.reset()
         model.reset()
         reactive.reset()
         decoder.reset()
-        rpcDispatcher.cancelAll(surfaceId = null)
     }
 
     fun getActionForTag(tag: Int): String? = interactions.getActionForTag(tag)
@@ -141,5 +158,14 @@ class A2UIProtocolAdapter {
         args: Map<String, Any?>,
         timeoutMs: Long?,
         onComplete: (A2UIRpcResponse) -> Unit,
-    ): String = rpcAdapter.invokeAgentFunction(surfaceId, name, args, timeoutMs, onComplete)
+    ): String = invokeAgentFunction(surfaceId, name, args, timeoutMs, onComplete, null)
+
+    internal fun invokeAgentFunction(
+        surfaceId: String,
+        name: String,
+        args: Map<String, Any?>,
+        timeoutMs: Long?,
+        onComplete: (A2UIRpcResponse) -> Unit,
+        catalogId: String? = null,
+    ): String = rpcAdapter.invokeAgentFunction(surfaceId, name, args, timeoutMs, onComplete, catalogId)
 }

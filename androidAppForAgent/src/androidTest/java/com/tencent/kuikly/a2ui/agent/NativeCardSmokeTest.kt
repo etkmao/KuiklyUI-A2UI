@@ -570,3 +570,193 @@ class NativeCardSmokeTest {
         if (view is ViewGroup) for (i in 0 until view.childCount) yieldAll(descendants(view.getChildAt(i)))
     }
 }
+
+@RunWith(AndroidJUnit4::class)
+class RpcSmokeTest {
+    @Before fun clearRpcSession() {
+        InstrumentationRegistry.getInstrumentation().targetContext.getSharedPreferences("agent_connection", 0).edit().clear().commit()
+    }
+
+    private fun connection(): AgentConnection {
+        val args = InstrumentationRegistry.getArguments()
+        val base = args.getString("rpcServiceBaseUrl") ?: args.getString("actionServiceBaseUrl") ?: "http://127.0.0.1:3102"
+        val routes = JSONObject(AgentConnection.emptyRoutes()).apply {
+            put("sessions", "/v1/sessions"); put("runs", "/v1/sessions/{sessionId}/runs")
+            put("events", "/v1/sessions/{sessionId}/events"); put("snapshot", "/v1/sessions/{sessionId}/snapshot")
+            put("card", "/v1/sessions/{sessionId}/cards/{cardId}"); put("messages", "/v1/sessions/{sessionId}/messages")
+            put("cancel", "/v1/runs/{runId}/cancel")
+        }
+        return AgentConnection(base, routes.toString())
+    }
+
+    private fun awaitState(scenario: ActivityScenario<AIChatActivity>, predicate: (ChatUiState) -> Boolean): ChatUiState {
+        val deadline = SystemClock.elapsedRealtime() + 25000
+        var state = ChatUiState()
+        while (SystemClock.elapsedRealtime() < deadline) {
+            scenario.onActivity { state = ViewModelProvider(it)[ChatViewModel::class.java].state.value }
+            if (predicate(state)) return state
+            Thread.sleep(100)
+        }
+        fail("RPC smoke timed out: connected=${state.connected}, notice=${state.notice}, rpc=${state.rpcNotice}, calls=${state.rpcCalls}")
+        return state
+    }
+
+    private fun awaitHost(scenario: ActivityScenario<AIChatActivity>, host: A2UICardHostView) {
+        val deadline = SystemClock.elapsedRealtime() + 15000
+        while (SystemClock.elapsedRealtime() < deadline) {
+            var ready = false
+            scenario.onActivity { ready = host.rpcReady && host.isAttachedToWindow && host.width > 0 &&
+                descendants(host).any { view -> view is KRRichTextView } }
+            if (ready) {
+                scenario.onActivity { Log.i("A2UIRpcDeviceTest", JSONObject().put("stage", "host.ready")
+                    .put("host", host.rpcDiagnostics()).toString()) }
+                return
+            }
+            Thread.sleep(100)
+        }
+        var diagnostics = JSONObject()
+        scenario.onActivity { diagnostics = host.rpcDiagnostics() }
+        fail("Real A2UISurfaceView RPC host not registered/rendered: $diagnostics")
+    }
+
+    private fun awaitSdkCompletion(scenario: ActivityScenario<AIChatActivity>, host: A2UICardHostView,
+        completion: AtomicReference<String?>, outbound: AtomicReference<String?>): JSONObject {
+        val deadline = SystemClock.elapsedRealtime() + 12000
+        while (completion.get() == null && SystemClock.elapsedRealtime() < deadline) Thread.sleep(50)
+        var diagnostics = JSONObject()
+        scenario.onActivity { diagnostics = host.rpcDiagnostics() }
+        val response = completion.get()
+        Log.i("A2UIRpcDeviceTest", JSONObject().put("stage", "sdk.completion.observed").put("host", diagnostics)
+            .put("completion", response?.let(::JSONObject)).put("outbound", outbound.get()?.let(::JSONObject)).toString())
+        assertNotNull("SDK completion absent; host=$diagnostics outbound=${outbound.get()}", response)
+        val parsed = JSONObject(response!!)
+        assertFalse("SDK failed locally: response=$parsed host=$diagnostics outbound=${outbound.get()}", parsed.has("error"))
+        return parsed
+    }
+
+    private fun logRpcCall(call: com.tencent.kuikly.a2ui.agent.data.RpcCall) {
+        Log.i("A2UIRpcDeviceTest", JSONObject().put("stage", "rpc.call.record")
+            .put("functionCallId", call.functionCallId).put("rendererId", call.rendererId).put("sessionId", call.sessionId)
+            .put("cardId", call.cardId).put("surfaceId", call.surfaceId).put("baseCardRevision", call.baseCardRevision)
+            .put("direction", call.direction).put("status", call.status).put("request", JSONObject(call.request))
+            .put("response", call.response?.let(::JSONObject)).toString())
+    }
+
+    private fun descendants(view: View): Sequence<View> = sequence {
+        yield(view)
+        if (view is ViewGroup) for (i in 0 until view.childCount) yieldAll(descendants(view.getChildAt(i)))
+    }
+
+    @Test fun realHostBidirectionalRpcLeavesTwoCardsUnchangedAndSupportsRecoveryCancelTimeout(): Unit = runBlocking {
+        val config = connection()
+        val api = AgentApiClient(config)
+        try {
+            ActivityScenario.launch(AIChatActivity::class.java).use { scenario ->
+                scenario.onActivity { ViewModelProvider(it)[ChatViewModel::class.java].connect(config, true) }
+                awaitState(scenario) { it.connected && it.sessionId.isNotEmpty() }
+                scenario.onActivity { assertTrue(ViewModelProvider(it)[ChatViewModel::class.java].send("Create a simple greeting card")) }
+                awaitState(scenario) { it.cards.values.count { card -> card.status == "ready" } == 1 && it.activeRunId == null && !it.posting }
+                scenario.onActivity { assertTrue(ViewModelProvider(it)[ChatViewModel::class.java].send("Create a second simple greeting card")) }
+                val initial = awaitState(scenario) { it.cards.values.count { card -> card.status == "ready" } == 2 && it.activeRunId == null && !it.posting }
+                val before = api.snapshot(initial.sessionId)
+                val firstCard = initial.cards.values.first(); val secondCard = initial.cards.values.last()
+                lateinit var first: A2UICardHostView
+                lateinit var second: A2UICardHostView
+                fun mountHosts() {
+                    scenario.onActivity { activity ->
+                        val model = ViewModelProvider(activity)[ChatViewModel::class.java]
+                        val root = android.widget.LinearLayout(activity).apply { orientation = android.widget.LinearLayout.VERTICAL }
+                        first = A2UICardHostView(activity).apply { connectRpc(model, initial.sessionId); bind(firstCard) }
+                        second = A2UICardHostView(activity).apply { connectRpc(model, initial.sessionId); bind(secondCard) }
+                        root.addView(first); root.addView(second)
+                        activity.setContentView(root)
+                    }
+                    awaitHost(scenario, first); awaitHost(scenario, second)
+                }
+                mountHosts()
+                val completion = AtomicReference<String?>()
+                val outbound = AtomicReference<String?>()
+                val handled = AtomicReference<String?>()
+                val otherHandled = AtomicReference<String?>()
+                scenario.onActivity {
+                    first.onRpcCompletion = { response ->
+                        completion.set(response)
+                        Log.i("A2UIRpcDeviceTest", JSONObject().put("stage", "sdk.completion").put("host", first.rpcDiagnostics())
+                            .put("message", JSONObject(response)).toString())
+                    }
+                    first.onRpcEnvelopeOutbound = { envelope ->
+                        outbound.set(envelope)
+                        Log.i("A2UIRpcDeviceTest", JSONObject().put("stage", "sdk.envelope.outbound").put("host", first.rpcDiagnostics())
+                            .put("message", JSONObject(envelope)).toString())
+                    }
+                    first.onRpcInvocationStarted = { requestId -> Log.i("A2UIRpcDeviceTest", JSONObject().put("stage", "sdk.invoke.return")
+                        .put("functionCallId", requestId).put("host", first.rpcDiagnostics()).toString()) }
+                    first.onRendererRpcHandled = { request ->
+                        handled.set(request)
+                        Log.i("A2UIRpcDeviceTest", JSONObject().put("stage", "sdk.renderer.handler").put("host", first.rpcDiagnostics())
+                            .put("message", JSONObject(request)).toString())
+                    }
+                    second.onRendererRpcHandled = otherHandled::set
+                    descendants(first).filterIsInstance<EditText>().first { input -> input.contentDescription == "RPC name" }.setText("Alice")
+                    descendants(first).first { view -> view.contentDescription == "RPC Renderer to Agent" }.performClick()
+                }
+                assertEquals("Hello, Alice!", awaitSdkCompletion(scenario, first, completion, outbound).getString("result"))
+                val outgoing = awaitState(scenario) { state -> state.rpcCalls.values.any { call -> call.cardId == firstCard.id && call.direction == "renderer_to_agent" && call.status == "completed" } }
+                outgoing.rpcCalls.values.forEach(::logRpcCall)
+                val outboundCall = outgoing.rpcCalls.values.last { it.cardId == firstCard.id && it.direction == "renderer_to_agent" }
+                val wireRequest = JSONObject(outboundCall.request).getJSONObject("callAgentFunction")
+                assertEquals("getGreeting", wireRequest.getJSONObject("callFunction").getString("@call"))
+                assertEquals(com.tencent.kuikly.a2ui.agent.data.RpcCall.CATALOG_ID, wireRequest.getJSONObject("callFunction").getString("catalogId"))
+                scenario.onActivity { descendants(first).first { view -> view.contentDescription == "RPC Agent to Renderer" }.performClick() }
+                val incoming = awaitState(scenario) { state -> state.rpcCalls.values.any { call -> call.cardId == firstCard.id && call.direction == "agent_to_renderer" && call.status == "completed" } }
+                val incomingCall = incoming.rpcCalls.values.last { it.cardId == firstCard.id && it.direction == "agent_to_renderer" }
+                logRpcCall(incomingCall)
+                assertEquals("Hello, Alice!", JSONObject(incomingCall.response!!).getJSONObject("rendererFunctionResponse").getString("value"))
+                assertEquals(incomingCall.functionCallId, JSONObject(handled.get()!!).getString("requestId"))
+                assertEquals(com.tencent.kuikly.a2ui.agent.data.RpcCall.CATALOG_ID, JSONObject(handled.get()!!).getString("catalogId"))
+                assertNull("RPC must not reach another bound card", otherHandled.get())
+                scenario.onActivity { assertTrue(second.requestRendererGreeting("Bob")) }
+                val both = awaitState(scenario) { state -> state.rpcCalls.values.any { call -> call.cardId == secondCard.id && call.status == "completed" } }
+                assertEquals("Hello, Bob!", JSONObject(both.rpcCalls.values.last { it.cardId == secondCard.id }.response!!)
+                    .getJSONObject("rendererFunctionResponse").getString("value"))
+                val originalBinding = first.rpcBinding!!
+                scenario.onActivity {
+                    val parent = first.parent as ViewGroup; val params = first.layoutParams; val index = parent.indexOfChild(first)
+                    parent.removeView(first); parent.addView(first, index, params)
+                }
+                awaitHost(scenario, first)
+                assertNotEquals(originalBinding.rendererId, first.rpcBinding!!.rendererId)
+                handled.set(null)
+                scenario.onActivity { first.onRendererRpcHandled = handled::set; first.deferRendererRpcResponses = true; assertTrue(first.requestRendererGreeting("Cancel")) }
+                val pending = awaitState(scenario) { state -> state.rpcCalls.values.any { call -> call.rendererId == first.rpcBinding!!.rendererId && !call.terminal } }
+                val cancelId = pending.rpcCalls.values.last { !it.terminal }.functionCallId
+                scenario.onActivity { ViewModelProvider(it)[ChatViewModel::class.java].cancelRpc(first.rpcBinding!!) }
+                awaitState(scenario) { it.rpcCalls[cancelId]?.status == "cancelled" }
+                scenario.onActivity { first.flushDeferredRpcResponses() }
+                assertEquals("cancelled", api.rpcCall(initial.sessionId, cancelId, first.rpcBinding!!.rendererId).status)
+                scenario.onActivity { assertTrue(first.requestRendererGreeting("Timeout", 300)) }
+                val timed = awaitState(scenario) { state -> state.rpcCalls.values.any { call -> call.rendererId == first.rpcBinding!!.rendererId && call.status == "timed_out" } }
+                assertTrue(timed.rpcCalls.values.any { it.status == "timed_out" })
+                scenario.onActivity { first.flushDeferredRpcResponses(); assertTrue(first.requestRendererGreeting("DeadInstance")) }
+                val deadBinding = first.rpcBinding!!
+                val deadPending = awaitState(scenario) { state -> state.rpcCalls.values.any { call -> call.rendererId == deadBinding.rendererId && !call.terminal } }
+                val deadId = deadPending.rpcCalls.values.last { it.rendererId == deadBinding.rendererId && !it.terminal }.functionCallId
+                scenario.onActivity { first.releaseSurface(); first.flushDeferredRpcResponses() }
+                awaitState(scenario) { it.rpcCalls[deadId]?.status == "cancelled" }
+                assertEquals("cancelled", api.rpcCall(initial.sessionId, deadId, deadBinding.rendererId).status)
+                scenario.recreate()
+                awaitState(scenario) { it.connected }
+                mountHosts()
+                completion.set(null)
+                scenario.onActivity { first.onRpcCompletion = completion::set; assertTrue(first.invokeAgentGreeting("Recovered")) }
+                awaitState(scenario) { state -> state.rpcCalls.values.any { call -> call.rendererId == first.rpcBinding!!.rendererId && call.status == "completed" } }
+                val after = api.snapshot(initial.sessionId)
+                assertEquals(before.getJSONArray("cards").toString(), after.getJSONArray("cards").toString())
+                assertEquals(before.getJSONArray("messages").toString(), after.getJSONArray("messages").toString())
+                assertEquals(initial.cards.mapValues { it.value.revision }, timed.cards.mapValues { it.value.revision })
+                assertEquals(initial.cards.mapValues { it.value.replay }, timed.cards.mapValues { it.value.replay })
+                Log.i("A2UIRpcDeviceTest", "realSdkRpcSmoke session=${initial.sessionId} twoCards=${initial.cards.keys} directions=both cancel=cancelled timeout=timed_out cardsAndMessagesUnchanged=true")
+            }
+        } finally { api.close() }
+    }
+}

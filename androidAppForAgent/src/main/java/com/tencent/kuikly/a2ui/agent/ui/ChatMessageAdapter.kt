@@ -19,9 +19,11 @@ class ChatMessageAdapter(
     private val onEdit: (String) -> Unit,
     private val onResize: () -> Unit,
     private val onAction: (RendererCardAction) -> Unit,
-    private val onLink: (String) -> Unit
+    private val onLink: (String) -> Unit,
+    private val rpcModel: com.tencent.kuikly.a2ui.agent.ChatViewModel? = null
 ) : RecyclerView.Adapter<ChatMessageAdapter.Holder>() {
-    data class Row(val key: String, val user: Boolean, val text: String?, val card: CardDocument?, val status: String, val time: String)
+    data class Row(val key: String, val user: Boolean, val text: String?, val card: CardDocument?, val status: String, val time: String,
+        val sessionId: String = "")
     private var rows = emptyList<Row>()
 
     fun submit(state: ChatUiState) {
@@ -29,7 +31,7 @@ class ChatMessageAdapter(
             state.messages.forEach { message ->
                 message.parts.forEachIndexed { index, part ->
                     add(Row("${message.id}:$index", message.role == "user", part.text,
-                        part.cardId?.let { state.cards[it] }, message.status, message.createdAt))
+                        part.cardId?.let { state.cards[it] }, message.status, message.createdAt, state.sessionId))
                 }
             }
             if (!state.uncertainRequest) state.pendingText?.let { add(Row("pending", true, it, null, "sending", "")) }
@@ -70,6 +72,7 @@ class ChatMessageAdapter(
             val available = root.resources.displayMetrics.widthPixels - root.context.dp(32)
             val width = (available * if (row.card != null) .88f else .76f).toInt()
             if (row.card != null && bound?.card?.id == row.card.id && cardHost != null) {
+                cardHost?.connectRpc(rpcModel, row.sessionId)
                 cardHost?.bind(row.card)
                 cardHost?.layoutParams?.width = width
             } else {
@@ -80,6 +83,7 @@ class ChatMessageAdapter(
                         onContentResize = onResize
                         this.onAction = this@ChatMessageAdapter.onAction
                         onOpenLink = onLink
+                        connectRpc(rpcModel, row.sessionId)
                         bind(row.card)
                     }
                     cardHost = host

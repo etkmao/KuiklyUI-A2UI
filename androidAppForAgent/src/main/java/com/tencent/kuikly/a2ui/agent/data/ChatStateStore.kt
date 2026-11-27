@@ -24,6 +24,51 @@ class ChatStateStore {
 
     val messages: List<ChatMessage> get() = messageMap.values.sortedBy { it.ordinal }
     val cards: Map<String, CardDocument> get() = cardMap.toMap()
+    private val rpcMap = linkedMapOf<String, RpcCall>()
+    private val rpcDeliveries = mutableListOf<RpcDelivery>()
+    val rpcCalls: Map<String, RpcCall> get() = rpcMap.toMap()
+
+    fun confirmRpc(call: RpcCall) {
+        if (call.sessionId != sessionId) throw SyncRequired()
+        val old = rpcMap[call.functionCallId]
+        if (old != null && (old.rendererId != call.rendererId || old.cardId != call.cardId ||
+                old.surfaceId != call.surfaceId || old.baseCardRevision != call.baseCardRevision ||
+                old.direction != call.direction || old.request != call.request)) throw SyncRequired()
+        if (old?.terminal == true) return
+        rpcMap[call.functionCallId] = call
+        while (rpcMap.size > 128) {
+            val expired = rpcMap.entries.firstOrNull { it.value.terminal } ?: break
+            rpcMap.remove(expired.key)
+        }
+    }
+
+    fun drainRpcDeliveries(): List<RpcDelivery> = rpcDeliveries.toList().also { rpcDeliveries.clear() }
+
+    private fun consumeRpc(event: JSONObject, id: Long, payload: JSONObject) {
+        val binding = RendererBinding(event.getString("rendererId"), sessionId, event.getString("cardId"),
+            event.getString("surfaceId"), event.getInt("baseCardRevision"))
+        val callId = event.getString("functionCallId")
+        if (event.getString("type") == "rpc.updated") {
+            val call = RpcCall.parse(payload)
+            if (call.functionCallId != callId || !call.matches(binding)) throw SyncRequired()
+            confirmRpc(call)
+        } else {
+            val type = when {
+                payload.has("callRendererFunction") -> "callRendererFunction"
+                payload.has("agentFunctionResponse") -> "agentFunctionResponse"
+                else -> throw SyncRequired()
+            }
+            if (payload.opt("version") != "1.0" || payload.getJSONObject(type).getString("functionCallId") != callId) throw SyncRequired()
+            if (type == "callRendererFunction") {
+                val request = payload.getJSONObject(type)
+                val call = request.getJSONObject("callFunction")
+                if (request.opt("surfaceId") != binding.surfaceId || call.opt("catalogId") != RpcCall.CATALOG_ID ||
+                    call.opt("@call") != "getGreeting") throw SyncRequired()
+            }
+            rpcDeliveries.add(RpcDelivery(id, binding, callId, payload.toString()))
+        }
+        cursor = id
+    }
 
     fun snapshot(json: JSONObject) {
         val nextSession = json.getString("sessionId")
@@ -38,6 +83,8 @@ class ChatStateStore {
         val allCards = cardJson.map(CardDocument::parse)
         val recent = json.getJSONArray("recentCardIds")
         val nextRecent = (0 until recent.length()).map { recent.getString(it) }
+        if (sessionId != nextSession) rpcMap.clear()
+        rpcDeliveries.clear()
         sessionId = nextSession
         cursor = nextCursor
         activeRunId = nextRun
@@ -63,8 +110,12 @@ class ChatStateStore {
         val id = event.getLong("eventId")
         if (id <= cursor) return false
         if (id != cursor + 1) throw SyncRequired()
-        val runId = event.getString("runId")
         val payload = event.getJSONObject("payload")
+        if (event.getString("type") in setOf("rpc.message", "rpc.updated")) {
+            consumeRpc(event, id, payload)
+            return true
+        }
+        val runId = event.getString("runId")
         if (pendingCommit != null && event.getString("type") != "a2ui.message") throw SyncRequired()
         when (event.getString("type")) {
             "message.created", "message.updated" -> {

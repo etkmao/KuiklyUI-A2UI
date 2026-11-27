@@ -12,6 +12,11 @@ import com.tencent.kuikly.a2ui.agent.data.ChatStateStore
 import com.tencent.kuikly.a2ui.agent.data.ChatUiState
 import com.tencent.kuikly.a2ui.agent.data.MessagePart
 import com.tencent.kuikly.a2ui.agent.data.SyncRequired
+import com.tencent.kuikly.a2ui.agent.data.RendererBinding
+import com.tencent.kuikly.a2ui.agent.data.RpcCall
+import com.tencent.kuikly.a2ui.agent.data.RpcDelivery
+import com.tencent.kuikly.a2ui.agent.ui.A2UICardHostView
+import java.lang.ref.WeakReference
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -43,6 +48,199 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private var sessionId = preferences.getString("session", "").orEmpty()
     private data class Submission(val key: String, val body: JSONObject, val text: String?, val action: Boolean = false)
     private var pending: Submission? = null
+    private data class BoundRenderer(val binding: RendererBinding, val host: WeakReference<A2UICardHostView>,
+        val registration: Job)
+    private data class RpcSubmission(val binding: RendererBinding, val body: String, val key: String,
+        val toRenderer: Boolean, val response: Boolean = false)
+    private val renderers = linkedMapOf<String, BoundRenderer>()
+    private val rpcPending = linkedMapOf<String, RpcSubmission>()
+    private val rpcJobs = linkedMapOf<String, Job>()
+    private val deliveredRpc = linkedSetOf<Pair<String, String>>()
+    private val rpcIncoming = linkedMapOf<Pair<String, String>, RpcDelivery>()
+    private val rpcDeliveryJobs = linkedMapOf<Pair<String, String>, Job>()
+
+    fun attachRpcHost(host: A2UICardHostView, binding: RendererBinding) {
+        val transport = api ?: return
+        if (binding.sessionId != sessionId || !binding.matches(store.cards[binding.cardId]) || state.value.offline) return
+        val old = renderers.remove(binding.rendererId)
+        old?.registration?.cancel()
+        val registration = viewModelScope.launch {
+            try {
+                transport.registerRenderer(binding.sessionId, binding)
+                if (api === transport && host.rpcBinding == binding) host.rpcRegistered(binding)
+            } catch (e: CancellationException) { throw e }
+            catch (_: Exception) {
+                if (host.rpcBinding == binding) host.rpcUnavailable("RPC 实例注册未确认，点击恢复连接")
+            }
+        }
+        renderers[binding.rendererId] = BoundRenderer(binding, WeakReference(host), registration)
+    }
+
+    fun releaseRpcHost(binding: RendererBinding) {
+        val bound = renderers[binding.rendererId] ?: return
+        if (bound.binding != binding) return
+        renderers.remove(binding.rendererId)
+        rpcPending.values.filter { it.binding == binding }.map { it.key }.forEach { key ->
+            rpcPending.remove(key); rpcJobs.remove(key)?.cancel()
+        }
+        rpcIncoming.keys.filter { it.first == binding.rendererId }.toList().forEach { key ->
+            rpcIncoming.remove(key); rpcDeliveryJobs.remove(key)?.cancel()
+        }
+        mutableState.update { it.copy(uncertainRpc = rpcPending.isNotEmpty() || rpcIncoming.isNotEmpty()) }
+        val transport = api ?: return
+        viewModelScope.launch {
+            bound.registration.join()
+            runCatching { transport.releaseRenderer(binding.sessionId, binding.rendererId) }
+        }
+    }
+
+    fun forwardRpc(binding: RendererBinding, envelope: String) {
+        if (!validRpcBinding(binding)) return
+        val message = runCatching { JSONObject(envelope) }.getOrNull() ?: return
+        if (message.opt("version") != "1.0") return
+        val response = message.has("rendererFunctionResponse")
+        val payload = message.optJSONObject(if (response) "rendererFunctionResponse" else "callAgentFunction") ?: return
+        val callId = payload.optString("functionCallId")
+        if (callId.isBlank()) return
+        if (!response) {
+            val function = payload.optJSONObject("callFunction") ?: return
+            if (payload.opt("surfaceId") != binding.surfaceId || function.opt("catalogId") != RpcCall.CATALOG_ID ||
+                function.opt("@call") != "getGreeting") return
+        }
+        val body = if (response) JSONObject().put("rendererId", binding.rendererId).put("message", message)
+            else binding.requestBody().put("message", message)
+        val key = "${binding.rendererId}:$callId:${if (response) "response" else "invoke"}"
+        if (rpcPending.containsKey(key) || store.rpcCalls[callId]?.terminal == true) return
+        rpcPending[key] = RpcSubmission(binding, body.toString(), key, false, response)
+        postRpc(key)
+    }
+
+    fun requestRendererGreeting(binding: RendererBinding, name: String, timeoutMs: Int = 10000): Boolean {
+        if (!validRpcBinding(binding) || !state.value.connected || name.isBlank() || name.trim().length > 200 || timeoutMs !in 1..30000) return false
+        val key = UUID.randomUUID().toString()
+        val call = JSONObject().put("catalogId", RpcCall.CATALOG_ID)
+            .put("@call", "getGreeting").put("args", JSONObject().put("name", name.trim()))
+        val body = binding.requestBody().put("callFunction", call).put("timeoutMs", timeoutMs)
+        rpcPending[key] = RpcSubmission(binding, body.toString(), key, true)
+        postRpc(key)
+        return true
+    }
+
+    private fun validRpcBinding(binding: RendererBinding): Boolean = binding.sessionId == sessionId &&
+        binding.matches(store.cards[binding.cardId]) && renderers[binding.rendererId]?.binding == binding &&
+        renderers[binding.rendererId]?.host?.get()?.rpcBinding == binding
+
+    private fun postRpc(key: String) {
+        val submission = rpcPending[key] ?: return
+        val transport = api ?: return
+        if (rpcJobs[key]?.isActive == true || !validRpcBinding(submission.binding)) return
+        rpcJobs[key] = viewModelScope.launch {
+            try {
+                renderers[submission.binding.rendererId]?.registration?.join()
+                if (!validRpcBinding(submission.binding)) return@launch
+                val body = JSONObject(submission.body)
+                val call = if (submission.response) transport.respondRpc(submission.binding.sessionId, body)
+                    else transport.submitRpc(submission.binding.sessionId, body, submission.key, submission.toRenderer)
+                if (api !== transport || sessionId != call.sessionId) return@launch
+                store.confirmRpc(call)
+                rpcPending.remove(key)
+                mutableState.update { it.copy(rpcNotice = "RPC ${call.status}", uncertainRpc = rpcPending.isNotEmpty()) }
+                notifyRpc(call)
+                publishRpc()
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) {
+                val uncertain = (e as? AgentFailure)?.submissionUncertain != false
+                if (!uncertain) rpcPending.remove(key)
+                mutableState.update { it.copy(rpcNotice = if (uncertain) "RPC 待确认；使用原请求安全重试"
+                    else "RPC 未完成：${(e as? AgentFailure)?.code ?: "INVALID_RESPONSE"}", uncertainRpc = rpcPending.isNotEmpty()) }
+                renderers[submission.binding.rendererId]?.host?.get()?.rpcUnavailable(state.value.rpcNotice.orEmpty())
+            } finally { rpcJobs.remove(key) }
+        }
+    }
+
+    fun retryRpc(binding: RendererBinding? = null) {
+        rpcPending.values.filter { binding == null || it.binding == binding }.map { it.key }.forEach(::postRpc)
+        rpcIncoming.values.filter { binding == null || it.binding == binding }.toList().forEach(::deliverRpc)
+    }
+
+    fun cancelRpc(binding: RendererBinding) {
+        val call = store.rpcCalls.values.lastOrNull { it.matches(binding) && !it.terminal } ?: return
+        val transport = api ?: return
+        viewModelScope.launch {
+            try { val result = transport.cancelRpc(binding.sessionId, call.functionCallId, binding.rendererId)
+                store.confirmRpc(result); notifyRpc(result); publishRpc() }
+            catch (e: CancellationException) { throw e }
+            catch (_: Exception) { mutableState.update { it.copy(rpcNotice = "RPC 取消未确认，可再次取消或查询") } }
+        }
+    }
+
+    fun queryRpc(binding: RendererBinding) {
+        val transport = api ?: return
+        rpcIncoming.values.filter { it.binding == binding }.toList().forEach(::deliverRpc)
+        viewModelScope.launch {
+            store.rpcCalls.values.filter { it.matches(binding) }.forEach { call ->
+                try {
+                    val result = transport.rpcCall(binding.sessionId, call.functionCallId, binding.rendererId)
+                    store.confirmRpc(result); notifyRpc(result)
+                    if (result.direction == "renderer_to_agent" && result.response != null) deliverRpc(
+                        RpcDelivery(0, binding, result.functionCallId, result.response))
+                } catch (e: CancellationException) { throw e }
+                catch (_: Exception) { mutableState.update { it.copy(rpcNotice = "RPC 查询未确认") } }
+            }
+            publishRpc()
+        }
+    }
+
+    private fun deliverRpc(delivery: RpcDelivery) {
+        val bound = renderers[delivery.binding.rendererId] ?: return
+        if (bound.binding != delivery.binding || !validRpcBinding(delivery.binding)) return
+        val key = delivery.binding.rendererId to delivery.functionCallId
+        if (key in deliveredRpc || rpcDeliveryJobs[key]?.isActive == true) return
+        if (!JSONObject(delivery.envelope).has("callRendererFunction")) {
+            writeRpcDelivery(delivery)
+            return
+        }
+        val known = store.rpcCalls[delivery.functionCallId]
+        if (known?.terminal == true) { notifyRpc(known); return }
+        val transport = api ?: return
+        rpcIncoming[key] = delivery
+        rpcDeliveryJobs[key] = viewModelScope.launch {
+            try {
+                bound.registration.join()
+                val call = transport.rpcCall(delivery.binding.sessionId, delivery.functionCallId, delivery.binding.rendererId)
+                if (api !== transport || !validRpcBinding(delivery.binding) || !call.matches(delivery.binding) ||
+                    call.direction != "agent_to_renderer" || call.request != delivery.envelope) return@launch
+                store.confirmRpc(call)
+                val confirmed = store.rpcCalls[call.functionCallId] ?: return@launch
+                notifyRpc(confirmed); publishRpc()
+                rpcIncoming.remove(key)
+                if (confirmed.canExecute(delivery)) writeRpcDelivery(delivery)
+            } catch (e: CancellationException) { throw e }
+            catch (_: Exception) {
+                mutableState.update { it.copy(rpcNotice = "下行 RPC 状态待确认；未执行，可查询或安全重试", uncertainRpc = true) }
+            } finally { rpcDeliveryJobs.remove(key) }
+        }
+    }
+
+    private fun writeRpcDelivery(delivery: RpcDelivery) {
+        val bound = renderers[delivery.binding.rendererId] ?: return
+        if (bound.binding != delivery.binding || !validRpcBinding(delivery.binding)) return
+        val key = delivery.binding.rendererId to delivery.functionCallId
+        if (key in deliveredRpc) return
+        if (bound.host.get()?.deliverRpc(delivery) == true) {
+            deliveredRpc.add(key)
+            while (deliveredRpc.size > 256) deliveredRpc.remove(deliveredRpc.first())
+        }
+    }
+
+    private fun notifyRpc(call: RpcCall) {
+        val bound = renderers[call.rendererId] ?: return
+        if (call.matches(bound.binding)) bound.host.get()?.rpcUpdated(call)
+    }
+
+    private fun publishRpc() {
+        mutableState.update { it.copy(rpcCalls = store.rpcCalls, sessionId = store.sessionId) }
+    }
 
     fun foreground(active: Boolean) {
         foreground = active
@@ -63,6 +261,12 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         config.validate(BuildConfig.DEBUG)
         val changed = config.baseUrl != connection.baseUrl || config.routesJson != connection.routesJson
         streamJob?.cancel(); submitJob?.cancel(); historyJob?.cancel(); cancelJob?.cancel()
+        rpcJobs.values.toList().forEach { it.cancel() }; rpcJobs.clear()
+        rpcDeliveryJobs.values.toList().forEach { it.cancel() }; rpcDeliveryJobs.clear()
+        if (changed || newSession || state.value.offline) {
+            renderers.values.mapNotNull { it.host.get() }.forEach { it.releaseSurface() }
+            renderers.clear(); deliveredRpc.clear(); rpcPending.clear(); rpcIncoming.clear()
+        }
         api?.close()
         connection = config
         api = AgentApiClient(config)
@@ -102,14 +306,21 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     transport.events(sessionId, store.cursor) {
                         viewModelScope.launch {
-                            if (api === transport && foreground) mutableState.update {
-                                it.copy(connected = true, connectionLabel = "已连接 · A2UI 1.0", notice = if (pending != null) it.notice else null)
+                            if (api === transport && foreground) {
+                                mutableState.update { it.copy(connected = true, connectionLabel = "已连接 · A2UI 1.0", notice = if (pending != null) it.notice else null) }
+                                renderers.values.toList().forEach { queryRpc(it.binding) }
                             }
                         }
                     }.collect { event ->
                         if (store.consume(event)) {
                             retries = 0
-                            if (!state.value.posting) publish()
+                            store.drainRpcDeliveries().forEach(::deliverRpc)
+                            if (event.getString("type") == "rpc.updated") {
+                                val call = store.rpcCalls[event.getString("functionCallId")]
+                                if (call != null) notifyRpc(call)
+                                publishRpc()
+                            } else if (event.getString("type") == "rpc.message") publishRpc()
+                            else if (!state.value.posting) publish()
                             if (event.getString("type") == "run.failed") {
                                 mutableState.update { it.copy(notice = failureText(event.getJSONObject("payload").optString("code"))) }
                             }
@@ -238,6 +449,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun publish() {
         mutableState.update { it.copy(messages = store.messages, cards = store.cards,
+            sessionId = store.sessionId, rpcCalls = store.rpcCalls,
             activeRunId = store.activeRunId, canLoadHistory = store.canLoadHistory,
             selectedCardId = it.selectedCardId?.takeIf { id -> store.cards[id]?.editable == true }) }
     }
@@ -273,6 +485,11 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
 
     override fun onCleared() {
         streamJob?.cancel(); submitJob?.cancel(); historyJob?.cancel(); cancelJob?.cancel()
+        rpcJobs.values.toList().forEach { it.cancel() }
+        rpcDeliveryJobs.values.toList().forEach { it.cancel() }
+        renderers.values.mapNotNull { it.host.get() }.forEach { it.releaseSurface() }
+        rpcPending.clear(); rpcJobs.clear(); renderers.clear(); deliveredRpc.clear()
+        rpcIncoming.clear(); rpcDeliveryJobs.clear()
         api?.close()
         super.onCleared()
     }

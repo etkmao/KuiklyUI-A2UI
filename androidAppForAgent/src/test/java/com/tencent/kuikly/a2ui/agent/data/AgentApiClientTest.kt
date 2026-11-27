@@ -228,4 +228,75 @@ class AgentApiClientTest {
     @Test fun validationRejectsHeaderInjection() {
         assertTrue(runCatching { AgentConnection("https://example.com", routes(), "X-Test", "value\r\nOther: x").validate(false) }.isFailure)
     }
+
+    private fun syntheticRpc(direction: String = "renderer_to_agent", status: String = "pending"): JSONObject {
+        val requestKey = if (direction == "renderer_to_agent") "callAgentFunction" else "callRendererFunction"
+        val responseKey = if (direction == "renderer_to_agent") "agentFunctionResponse" else "rendererFunctionResponse"
+        return JSONObject().put("sessionId", "session").put("rendererId", "renderer").put("cardId", "card")
+            .put("surfaceId", "surface").put("baseCardRevision", 1).put("functionCallId", "rpc-id")
+            .put("direction", direction).put("status", status).put("createdAt", "2026-11-27T01:00:00.000Z")
+            .put("deadline", "2026-11-27T01:00:10.000Z").put("request", JSONObject().put("version", "1.0")
+                .put(requestKey, JSONObject().put("surfaceId", "surface").put("functionCallId", "rpc-id")
+                    .put("callFunction", JSONObject().put("@call", "getGreeting").put("catalogId", RpcCall.CATALOG_ID)
+                        .put("args", JSONObject().put("name", "World")))))
+            .apply { if (status != "pending") put("response", JSONObject().put("version", "1.0").put(responseKey,
+                JSONObject().put("functionCallId", "rpc-id").put("value", "Hello, World!"))) }
+    }
+
+    @Test fun rpcPostsCompleteEnvelopeAnd408RetryPreservesExactOriginalBodyAndKey() = runBlocking {
+        val call = syntheticRpc()
+        val body = RendererBinding("renderer", "session", "card", "surface", 1).requestBody()
+            .put("message", call.getJSONObject("request"))
+        server.enqueue(MockResponse().setResponseCode(408).setBody("{\"error\":{\"code\":\"TIMEOUT\",\"retryable\":false}}"))
+        server.enqueue(MockResponse().setResponseCode(202).setBody(call.toString()))
+        val failure = runCatching { api.submitRpc("session", body, "original-rpc-key") }.exceptionOrNull() as AgentFailure
+        assertTrue(failure.submissionUncertain); assertTrue(failure.retryable)
+        assertEquals("rpc-id", api.submitRpc("session", body, "original-rpc-key").functionCallId)
+        val first = server.takeRequest(3, TimeUnit.SECONDS)!!; val retry = server.takeRequest(3, TimeUnit.SECONDS)!!
+        assertEquals("/test/rpc/session", first.path); assertEquals("POST", first.method)
+        assertEquals(first.body.readUtf8(), retry.body.readUtf8())
+        assertEquals("original-rpc-key", retry.getHeader("Idempotency-Key"))
+        assertEquals("test-only", retry.getHeader("X-Demo-Header"))
+    }
+
+    @Test fun rpcRendererResponseQueryCancelAndRegistrationUseIndependentRoutes() = runBlocking {
+        val binding = RendererBinding("renderer", "session", "card", "surface", 1)
+        server.enqueue(MockResponse().setResponseCode(201).setBody(binding.requestBody().put("surfaceId", "surface").put("active", true).toString()))
+        api.registerRenderer("session", binding)
+        assertEquals("/test/renderers/session", server.takeRequest(3, TimeUnit.SECONDS)!!.path)
+        val call = syntheticRpc("agent_to_renderer")
+        server.enqueue(MockResponse().setResponseCode(202).setBody(call.toString()))
+        api.submitRpc("session", binding.requestBody().put("callFunction", call.getJSONObject("request")
+            .getJSONObject("callRendererFunction").getJSONObject("callFunction")), "renderer-key", true)
+        assertEquals("/test/rpcRenderer/session", server.takeRequest(3, TimeUnit.SECONDS)!!.path)
+        val done = syntheticRpc("agent_to_renderer", "completed")
+        server.enqueue(MockResponse().setResponseCode(200).setBody(done.toString()))
+        assertEquals("completed", api.respondRpc("session", JSONObject().put("rendererId", "renderer")
+            .put("message", done.getJSONObject("response"))).status)
+        assertEquals("/test/rpcResponses/session", server.takeRequest(3, TimeUnit.SECONDS)!!.path)
+        server.enqueue(MockResponse().setResponseCode(200).setBody(done.toString()))
+        api.rpcCall("session", "rpc-id", "renderer")
+        assertEquals("/test/rpcCall/session?rendererId=renderer", server.takeRequest(3, TimeUnit.SECONDS)!!.path)
+        server.enqueue(MockResponse().setResponseCode(200).setBody(syntheticRpc("agent_to_renderer", "cancelled").toString()))
+        assertEquals("cancelled", api.cancelRpc("session", "rpc-id", "renderer").status)
+        val cancel = server.takeRequest(3, TimeUnit.SECONDS)!!
+        assertEquals("/test/rpcCancel/session", cancel.path)
+        assertEquals("renderer", JSONObject(cancel.body.readUtf8()).getString("rendererId"))
+        server.enqueue(MockResponse().setResponseCode(200).setBody("{\"rendererId\":\"renderer\",\"active\":false}"))
+        api.releaseRenderer("session", "renderer")
+        assertEquals("DELETE", server.takeRequest(3, TimeUnit.SECONDS)!!.method)
+    }
+
+    @Test fun legacyConnectionGetsPublicRpcDefaultsAndSessionAdvertisesBothCatalogs() = runBlocking {
+        val legacy = JSONObject(routes()).apply { AgentConnection.DEFAULT_ROUTES.keys.filter { it != "actions" }.forEach { remove(it) } }
+        val connection = AgentConnection(server.url("/").toString(), legacy.toString())
+        connection.validate(true)
+        assertEquals(server.url("/v1/sessions/session/rpc/rpc-id").toString(), connection.url("rpcCall",
+            "sessionId" to "session", "functionCallId" to "rpc-id"))
+        server.enqueue(MockResponse().setResponseCode(201).setBody("{\"sessionId\":\"session\"}"))
+        api.createSession()
+        val supported = JSONObject(server.takeRequest(3, TimeUnit.SECONDS)!!.body.readUtf8()).getJSONObject("client")
+            .getJSONObject("a2uiRendererCapabilities").getJSONObject("1.0").getJSONArray("supportedCatalogIds")
+        assertEquals(2, supported.length()); assertEquals(RpcCall.CATALOG_ID, supported.getString(1))
+    }
 }

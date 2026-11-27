@@ -220,4 +220,92 @@ class ChatStateStoreTest {
         assertTrue(runCatching { UiStateDocument.apply(initial, listOf(update("/items/10001", "invalid"))) }.isFailure)
         assertTrue(runCatching { UiStateDocument.apply(initial, listOf(update("/items/01", "invalid"))) }.isFailure)
     }
+
+    private fun syntheticRpcCall(status: String = "pending", direction: String = "agent_to_renderer"): JSONObject {
+        val requestKey = if (direction == "agent_to_renderer") "callRendererFunction" else "callAgentFunction"
+        val responseKey = if (direction == "agent_to_renderer") "rendererFunctionResponse" else "agentFunctionResponse"
+        return JSONObject().put("sessionId", "session").put("rendererId", "renderer").put("cardId", "card")
+            .put("surfaceId", "surface").put("baseCardRevision", 1).put("functionCallId", "rpc-call")
+            .put("direction", direction).put("status", status).put("createdAt", "2026-11-27T01:00:00.000Z")
+            .put("deadline", "2026-11-27T01:00:10.000Z").put("request", JSONObject().put("version", "1.0")
+                .put(requestKey, JSONObject().put("surfaceId", "surface").put("functionCallId", "rpc-call")
+                    .put("callFunction", JSONObject().put("@call", "getGreeting").put("catalogId", RpcCall.CATALOG_ID)
+                        .put("args", JSONObject().put("name", "World")))))
+            .apply { if (status != "pending") put("response", JSONObject().put("version", "1.0").put(responseKey,
+                JSONObject().put("functionCallId", "rpc-call").put("value", "Hello, World!"))) }
+    }
+    private fun rpcEvent(id: Int, type: String, payload: JSONObject): JSONObject = JSONObject()
+        .put("eventId", id).put("sessionId", "session").put("rendererId", "renderer").put("cardId", "card")
+        .put("surfaceId", "surface").put("baseCardRevision", 1).put("functionCallId", "rpc-call")
+        .put("createdAt", "2026-11-27T01:00:00.000Z").put("type", type).put("payload", payload)
+
+    @Test fun rpcEventsWithoutRunFieldsAdvanceCursorAndNeverMutateUiDocuments() {
+        createCard()
+        val cards = store.cards; val messages = store.messages
+        val request = syntheticRpcCall().getJSONObject("request")
+        assertTrue(store.consume(rpcEvent(2, "rpc.message", request)))
+        val delivery = store.drainRpcDeliveries().single()
+        assertEquals("renderer", delivery.binding.rendererId)
+        assertEquals("rpc-call", delivery.functionCallId)
+        assertEquals(request.toString(), delivery.envelope)
+        assertTrue(store.consume(rpcEvent(3, "rpc.updated", syntheticRpcCall("completed"))))
+        assertEquals("completed", store.rpcCalls.getValue("rpc-call").status)
+        assertEquals(cards, store.cards); assertEquals(messages, store.messages)
+        assertEquals(3L, store.cursor)
+        assertFalse(store.consume(rpcEvent(2, "rpc.message", request)))
+        assertTrue(store.drainRpcDeliveries().isEmpty())
+    }
+
+    @Test fun rpcMayInterleaveAtomicCardCommitWithoutExposingPartialUi() {
+        createCard()
+        val before = store.cards
+        fun update(value: String) = JSONObject().put("version", "1.0").put("updateDataModel",
+            JSONObject().put("surfaceId", "surface").put("path", "/value").put("value", value))
+        store.consume(event(2, "a2ui.message", update("one"), 1, 2).put("messageCount", 2))
+        store.consume(rpcEvent(3, "rpc.message", syntheticRpcCall().getJSONObject("request")))
+        assertTrue(store.hasPendingCommit); assertEquals(before, store.cards)
+        store.consume(event(4, "a2ui.message", update("two"), 1, 2).put("messageCount", 2).put("messageIndex", 1))
+        assertFalse(store.hasPendingCommit); assertEquals(2, store.cards.getValue("card").revision)
+    }
+
+    @Test fun terminalRpcIsNotResurrectedByLate202AndSnapshotKeepsSeparateRpcState() {
+        createCard()
+        store.consume(rpcEvent(2, "rpc.updated", syntheticRpcCall("cancelled")))
+        store.confirmRpc(RpcCall.parse(syntheticRpcCall()))
+        assertEquals("cancelled", store.rpcCalls.getValue("rpc-call").status)
+        val card = store.cards.getValue("card")
+        val serialized = JSONObject().put("cardId", card.id).put("sessionId", "session").put("surfaceId", card.surfaceId)
+            .put("revision", card.revision).put("status", card.status).put("editable", card.editable)
+            .put("replayMessages", JSONArray(card.replay.map(::JSONObject)))
+        store.snapshot(snapshot().put("cards", JSONArray().put(serialized)).put("lastEventId", 2))
+        assertEquals("cancelled", store.rpcCalls.getValue("rpc-call").status)
+        assertEquals(card.replay, store.cards.getValue("card").replay)
+        assertTrue(runCatching { store.consume(rpcEvent(4, "rpc.message", syntheticRpcCall().getJSONObject("request"))) }.isFailure)
+        assertTrue(runCatching { store.confirmRpc(RpcCall.parse(syntheticRpcCall().put("rendererId", "other"))) }.isFailure)
+    }
+
+    @Test fun rpcResponseIsIndependentAndCannotEnterStateReplay() {
+        createCard()
+        val call = syntheticRpcCall("completed", "renderer_to_agent")
+        store.consume(rpcEvent(2, "rpc.message", call.getJSONObject("response")))
+        store.consume(rpcEvent(3, "rpc.updated", call))
+        assertEquals("renderer_to_agent", store.rpcCalls.getValue("rpc-call").direction)
+        assertTrue(runCatching { UiStateDocument.validateMessage(call.getJSONObject("response")) }.isFailure)
+        assertTrue(store.cards.getValue("card").replay.none { it.contains("FunctionResponse") })
+    }
+
+    @Test fun rendererCallExecutionRequiresServerPendingAndExactTargetAndOriginalRequest() {
+        val call = RpcCall.parse(syntheticRpcCall())
+        val binding = RendererBinding("renderer", "session", "card", "surface", 1)
+        val delivery = RpcDelivery(10, binding, call.functionCallId, call.request)
+        assertTrue(call.canExecute(delivery))
+        RpcCall.STATUSES.filter { it != "pending" }.forEach { status -> assertFalse(call.copy(status = status).canExecute(delivery)) }
+        assertFalse(call.canExecute(delivery.copy(functionCallId = "other")))
+        assertFalse(call.canExecute(delivery.copy(binding = binding.copy(rendererId = "other"))))
+        assertFalse(call.canExecute(delivery.copy(binding = binding.copy(cardId = "other"))))
+        assertFalse(call.canExecute(delivery.copy(binding = binding.copy(surfaceId = "other"))))
+        assertFalse(call.canExecute(delivery.copy(binding = binding.copy(baseCardRevision = 2))))
+        assertFalse(call.canExecute(delivery.copy(envelope = call.request.replace("World", "Changed"))))
+        assertFalse(call.copy(direction = "renderer_to_agent").canExecute(delivery))
+    }
 }

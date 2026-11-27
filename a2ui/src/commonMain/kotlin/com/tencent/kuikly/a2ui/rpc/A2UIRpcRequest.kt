@@ -68,6 +68,8 @@ data class A2UIRpcRequest(
      * `onComplete` callback.
      */
     val timeoutMs: Long?,
+    /** Explicit function catalog; independent of the surface component catalog. */
+    val catalogId: String? = null,
 ) {
     /**
      * Which side initiated the RPC. Encoded onto the wire by the choice

@@ -34,7 +34,7 @@ class AgentApiClient(val connection: AgentConnection) {
         .put("platform", "android").put("sdkVersion", "agent-demo-1.0")
         .put("profileId", UiStateDocument.PROFILE_ID).put("a2uiRendererCapabilities", JSONObject()
             .put("1.0", JSONObject().put("supportedCatalogIds", org.json.JSONArray()
-                .put("https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"))))))
+                .put("https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json").put(RpcCall.CATALOG_ID))))))
 
     suspend fun snapshot(sessionId: String): JSONObject = request("snapshot", parameters = arrayOf("sessionId" to sessionId))
     suspend fun submit(sessionId: String, body: JSONObject, key: String): JSONObject = request(
@@ -51,6 +51,30 @@ class AgentApiClient(val connection: AgentConnection) {
         "messages", parameters = arrayOf("sessionId" to sessionId), query = "?limit=30&beforeOrdinal=$before"
     )
 
+    suspend fun registerRenderer(sessionId: String, binding: RendererBinding): JSONObject = request(
+        "renderers", binding.requestBody(), parameters = arrayOf("sessionId" to sessionId)
+    )
+    suspend fun releaseRenderer(sessionId: String, rendererId: String): JSONObject = request(
+        "renderer", parameters = arrayOf("sessionId" to sessionId, "rendererId" to rendererId), method = "DELETE"
+    )
+    suspend fun submitRpc(sessionId: String, body: JSONObject, key: String, toRenderer: Boolean = false): RpcCall {
+        require(key.isNotBlank())
+        return RpcCall.parse(request(if (toRenderer) "rpcRenderer" else "rpc", body, key,
+            arrayOf("sessionId" to sessionId), expectedStatus = 202))
+    }
+    suspend fun respondRpc(sessionId: String, body: JSONObject): RpcCall = RpcCall.parse(request(
+        "rpcResponses", body, parameters = arrayOf("sessionId" to sessionId), expectedStatus = 200
+    ))
+    suspend fun rpcCall(sessionId: String, functionCallId: String, rendererId: String): RpcCall {
+        require(rendererId.matches(Regex("[A-Za-z0-9._:-]+")))
+        return RpcCall.parse(request("rpcCall", parameters = arrayOf("sessionId" to sessionId,
+            "functionCallId" to functionCallId), query = "?rendererId=$rendererId"))
+    }
+    suspend fun cancelRpc(sessionId: String, functionCallId: String, rendererId: String): RpcCall = RpcCall.parse(request(
+        "rpcCancel", JSONObject().put("rendererId", rendererId), parameters = arrayOf(
+            "sessionId" to sessionId, "functionCallId" to functionCallId)
+    ))
+
     private fun builder(key: String, parameters: Array<out Pair<String, String>>, query: String = ""): Request.Builder =
         Request.Builder().url(connection.url(key, *parameters) + query).apply {
             if (connection.headerName.isNotEmpty() && connection.headerValue.isNotEmpty()) {
@@ -60,10 +84,11 @@ class AgentApiClient(val connection: AgentConnection) {
 
     private suspend fun request(
         route: String, body: JSONObject? = null, idempotencyKey: String? = null,
-        parameters: Array<out Pair<String, String>> = emptyArray(), query: String = "", expectedStatus: Int? = null
+        parameters: Array<out Pair<String, String>> = emptyArray(), query: String = "", expectedStatus: Int? = null,
+        method: String = if (body == null) "GET" else "POST"
     ): JSONObject = suspendCancellableCoroutine { continuation ->
         val request = builder(route, parameters, query).header("Accept", "application/json").apply {
-            body?.let { post(it.toString().toRequestBody("application/json; charset=utf-8".toMediaType())) }
+            method(method, body?.toString()?.toRequestBody("application/json; charset=utf-8".toMediaType()))
             idempotencyKey?.let { header("Idempotency-Key", it) }
         }.build()
         val call = client.newCall(request)
@@ -124,6 +149,7 @@ class AgentApiClient(val connection: AgentConnection) {
 
     private fun parseFailure(status: Int, json: JSONObject): AgentFailure {
         val error = json.optJSONObject("error")
-        return AgentFailure(error?.optString("code") ?: "HTTP_ERROR", error?.optBoolean("retryable") ?: (status >= 500), status)
+        return AgentFailure(error?.optString("code") ?: "HTTP_ERROR", status == 408 || status >= 500 ||
+            error?.optBoolean("retryable") == true, status)
     }
 }

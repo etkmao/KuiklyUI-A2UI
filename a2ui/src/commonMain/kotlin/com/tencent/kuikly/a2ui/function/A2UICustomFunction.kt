@@ -158,11 +158,19 @@ data class A2UICustomFunctionDescriptor(
                     val mode = if (rt == A2UIFunctionReturnType.VOID) {
                         A2UIFunctionInvokeMode.fromWire(json.optString("invokeMode"))
                     } else A2UIFunctionInvokeMode.SYNC
-                    val schema = json.optJSONObject("args")
+                    val functionProperties = json.optJSONObject("properties")
+                    val schema = json.optJSONObject("args") ?: functionProperties?.optJSONObject("args")
                     val properties = schema?.optJSONObject("properties")
                     val types = mutableMapOf<String, String>()
                     properties?.keys()?.forEach { key ->
-                        val type = properties.optJSONObject(key)?.optString("type") ?: return null
+                        val argument = properties.optJSONObject(key) ?: return null
+                        val reference = argument.optString("\$ref")
+                        val type = if (reference.isNotEmpty()) {
+                            when (reference) {
+                                "common_types.json#/\$defs/DynamicString" -> "string"
+                                else -> return null
+                            }
+                        } else argument.optString("type")
                         if (type !in setOf("string", "number", "integer", "boolean", "object", "array", "null")) return null
                         types[key] = type
                     }
@@ -177,9 +185,12 @@ data class A2UICustomFunctionDescriptor(
                     }
                     val functionName = json.optString("name", name)
                     if (name != functionName && name != "$catalog::$functionName") return null
+                    val declaredCall = functionProperties?.optJSONObject("@call")?.optString("const")
+                    if (!declaredCall.isNullOrEmpty() && declaredCall != functionName) return null
                     A2UICustomFunctionDescriptor(functionName, rt, mode, catalog, callers,
                         json.optBoolean("requiresUserActivation", false), types, required,
-                        schema?.optBoolean("additionalProperties", true) ?: true)
+                        (schema?.optBoolean("additionalProperties", true) ?: true) &&
+                            (schema?.optBoolean("unevaluatedProperties", true) ?: true))
                 } catch (_: Throwable) {
                     null
                 }

@@ -69,6 +69,22 @@ class A2UIRpcJsonTest {
     }
 
     @Test
+    fun rendererCallbackRequestPreservesCatalogAndNullArguments() {
+        val request = A2UIRpcRequest(A2UIRpcRequest.Direction.AGENT_TO_RENDERER,
+            "s1", "request", "getGreeting", mapOf("name" to null), null,
+            "https://ka2ui.dev/catalogs/rpc-v1.json")
+        val json = A2UIRpcJson.stringify(A2UIRpcJson.requestPayload(request))
+        val payload = A2UIRpcJson.parseObject(json)!!
+        assertEquals(request.catalogId, payload["catalogId"])
+        assertEquals(request.requestId, payload["requestId"])
+        assertEquals(setOf("surfaceId", "requestId", "name", "args", "catalogId"), payload.keys)
+        assertTrue((payload["args"] as Map<*, *>).containsKey("name"))
+        assertNull((payload["args"] as Map<*, *>)["name"])
+        val legacy = A2UIRpcJson.requestPayload(request.copy(catalogId = null))
+        assertEquals(setOf("surfaceId", "requestId", "name", "args"), legacy.keys)
+    }
+
+    @Test
     fun parseObject_emptyInput_returnsNull() {
         assertNull(A2UIRpcJson.parseObject(null))
         assertNull(A2UIRpcJson.parseObject(""))

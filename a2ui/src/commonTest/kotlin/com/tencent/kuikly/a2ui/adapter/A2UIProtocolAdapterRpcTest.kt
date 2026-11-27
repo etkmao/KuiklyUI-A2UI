@@ -453,4 +453,174 @@ class A2UIProtocolAdapterRpcTest {
 
         assertTrue(sink.envelopes.isEmpty())
     }
+
+    private val rpcCatalog = "https://ka2ui.dev/catalogs/rpc-v1.json"
+    private val basicCatalog = "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json"
+
+    private fun withRpcCatalog(test: (A2UIProtocolAdapter, MutableList<Map<String, Any?>>) -> Unit) {
+        val previous = A2UICustomFunctionRegistry.lookupExact("getGreeting", rpcCatalog)
+        try {
+            assertTrue(A2UICustomFunctionRegistry.register("getGreeting", """{"catalogId":"$rpcCatalog","type":"object","description":"Returns a greeting string for the supplied name without side effects.","returnType":"string","allowedCallers":"rendererOrAgent","properties":{"@call":{"const":"getGreeting"},"args":{"type":"object","properties":{"name":{"${'$'}ref":"common_types.json#/${'$'}defs/DynamicString"}},"required":["name"],"unevaluatedProperties":false}},"required":["@call","args"]}"""))
+            val adapter = A2UIProtocolAdapter()
+            adapter.strictV10 = true
+            adapter.setExpectedProtocolVersion(A2UIProtocolVersion.V1_0)
+            adapter.convertMessage(mapOf("version" to "1.0", "createSurface" to mapOf(
+                "surfaceId" to "s1", "catalogId" to basicCatalog,
+            )))
+            val emitted = mutableListOf<Map<String, Any?>>()
+            adapter.emitWireMessage = { emitted += com.tencent.kuikly.a2ui.parser.SimpleJsonParser.parse(it)!! }
+            test(adapter, emitted)
+        } finally {
+            A2UICustomFunctionRegistry.unregister("getGreeting", rpcCatalog)
+            previous?.let(A2UICustomFunctionRegistry::register)
+        }
+    }
+
+    private fun officialCall(id: String, catalog: String = rpcCatalog, name: String = "getGreeting") =
+        mapOf("version" to "1.0", "callRendererFunction" to mapOf(
+            "surfaceId" to "s1", "functionCallId" to id,
+            "callFunction" to mapOf("@call" to name, "catalogId" to catalog, "args" to mapOf("name" to "Ada")),
+        ))
+
+    private fun officialReply(id: String, value: Any?) = mapOf("version" to "1.0",
+        "agentFunctionResponse" to mapOf("functionCallId" to id, "value" to value))
+
+    @Test
+    fun officialManifestRegistrationEnforcesResolvedStringAndUniqueArgument() = withRpcCatalog { adapter, emitted ->
+        val descriptor = A2UICustomFunctionRegistry.lookupExact("getGreeting", rpcCatalog)!!
+        assertEquals(mapOf("name" to "string"), descriptor.argumentTypes)
+        assertEquals(setOf("name"), descriptor.requiredArguments)
+        assertFalse(descriptor.allowAdditionalArguments)
+        assertFalse(descriptor.requiresUserActivation)
+        assertNull(descriptor.validateArguments(mapOf("name" to "Ada")))
+        val invalid = listOf(emptyMap<String, Any?>(), mapOf("name" to 42),
+            mapOf("name" to mapOf("@path" to "/name")), mapOf("name" to "Ada", "extra" to true))
+        var executions = 0
+        adapter.onIncomingAgentCall = { executions++ }
+        invalid.forEachIndexed { index, args ->
+            assertNotNull(descriptor.validateArguments(args))
+            adapter.convertMessage(mapOf("version" to "1.0", "callRendererFunction" to mapOf(
+                "surfaceId" to "s1", "functionCallId" to "invalid-$index",
+                "callFunction" to mapOf("@call" to "getGreeting", "catalogId" to rpcCatalog, "args" to args),
+            )))
+        }
+        assertEquals(0, executions)
+        assertEquals(invalid.size, emitted.size)
+        emitted.forEach {
+            val payload = it["rendererFunctionResponse"] as Map<*, *>
+            assertEquals(A2UIRpcError.Codes.INVALID_ARGS, (payload["error"] as Map<*, *>)["code"])
+        }
+    }
+
+    @Test
+    fun strictRpcCatalogOverrideDoesNotChangeBasicSurfaceCatalog() = withRpcCatalog { adapter, emitted ->
+        val completions = mutableListOf<com.tencent.kuikly.a2ui.rpc.A2UIRpcResponse>()
+        val id = adapter.invokeAgentFunction("s1", "getGreeting", mapOf("name" to "Ada"), null,
+            onComplete = { completions += it }, catalogId = rpcCatalog)
+        val envelope = emitted.single()
+        assertEquals("1.0", envelope["version"])
+        val payload = envelope["callAgentFunction"] as Map<*, *>
+        assertEquals(setOf("surfaceId", "functionCallId", "callFunction"), payload.keys)
+        assertEquals(id, payload["functionCallId"])
+        assertEquals(rpcCatalog, (payload["callFunction"] as Map<*, *>)["catalogId"])
+        adapter.convertMessage(officialReply(id, "Hello, Ada!"))
+        adapter.convertMessage(officialReply(id, "duplicate"))
+        assertEquals("Hello, Ada!", completions.single().result)
+        var rejected: com.tencent.kuikly.a2ui.rpc.A2UIRpcResponse? = null
+        adapter.invokeAgentFunction("s1", "getGreeting", mapOf("name" to "Ada"), null) { rejected = it }
+        assertEquals("UNKNOWN_CATALOG", rejected?.error?.code)
+        assertEquals(1, emitted.size)
+    }
+
+    @Test
+    fun strictIncomingCallbackKeepsCatalogAndCompletesRealNullOnce() = withRpcCatalog { adapter, emitted ->
+        val received = mutableListOf<A2UIRpcRequest>()
+        adapter.onIncomingAgentCall = { received += it }
+        adapter.convertMessage(officialCall("real-null"))
+        adapter.convertMessage(officialCall("real-null"))
+        assertEquals(rpcCatalog, received.single().catalogId)
+        adapter.respondToAgent("s1", "real-null", null)
+        adapter.respondToAgent("s1", "real-null", "duplicate")
+        adapter.convertMessage(officialCall("real-null"))
+        assertEquals(1, received.size)
+        val payload = emitted.single()["rendererFunctionResponse"] as Map<*, *>
+        assertEquals(setOf("functionCallId", "value"), payload.keys)
+        assertEquals("real-null", payload["functionCallId"])
+        assertTrue(payload.containsKey("value"))
+        assertNull(payload["value"])
+    }
+
+    @Test
+    fun strictUnknownFunctionAndCatalogNeverRunHost() = withRpcCatalog { adapter, emitted ->
+        var executions = 0
+        adapter.onIncomingAgentCall = { executions++ }
+        adapter.convertMessage(officialCall("catalog", catalog = "https://unknown.invalid/catalog.json"))
+        adapter.convertMessage(officialCall("function", name = "unknown"))
+        assertEquals(0, executions)
+        val codes = emitted.map { ((it["rendererFunctionResponse"] as Map<*, *>)["error"] as Map<*, *>)["code"] }
+        assertEquals(listOf("UNKNOWN_CATALOG", A2UIRpcError.Codes.UNKNOWN_FUNCTION), codes)
+        assertEquals(0, adapter.rpcDispatcher.pendingCountFor())
+    }
+
+    @Test
+    fun deleteSurfaceCancelsBothDirectionsAndRejectsLateReplies() = withRpcCatalog { adapter, emitted ->
+        val completions = mutableListOf<com.tencent.kuikly.a2ui.rpc.A2UIRpcResponse>()
+        adapter.onIncomingAgentCall = {}
+        adapter.convertMessage(officialCall("agent-deleted"))
+        val id = adapter.invokeAgentFunction("s1", "getGreeting", mapOf("name" to "Ada"), null,
+            onComplete = { completions += it }, catalogId = rpcCatalog)
+        adapter.convertMessage(mapOf("version" to "1.0", "deleteSurface" to mapOf("surfaceId" to "other")))
+        assertEquals(2, adapter.rpcDispatcher.pendingCountFor())
+        val messages = adapter.convertMessage(mapOf("version" to "1.0", "deleteSurface" to mapOf("surfaceId" to "s1")))
+        assertTrue(messages.any { it.type == com.tencent.kuikly.a2ui.protocol.A2UIMessageType.DESTROY_SURFACE })
+        assertEquals("", adapter.surfaceId)
+        assertEquals(A2UIRpcError.Codes.SURFACE_CLOSED, completions.single().error?.code)
+        assertEquals(0, adapter.rpcDispatcher.pendingCountFor())
+        val count = emitted.size
+        adapter.convertMessage(officialReply(id, "late"))
+        adapter.respondToAgent("s1", "agent-deleted", "late")
+        assertEquals(count, emitted.size)
+        assertEquals(1, completions.size)
+        val response = emitted.last()["rendererFunctionResponse"] as Map<*, *>
+        assertEquals("agent-deleted", response["functionCallId"])
+        assertEquals(A2UIRpcError.Codes.SURFACE_CLOSED, (response["error"] as Map<*, *>)["code"])
+        adapter.onIncomingAgentCall = { error("deleted surface must not execute late requests") }
+        adapter.convertMessage(officialCall("new-late-id"))
+        assertEquals(0, adapter.rpcDispatcher.pendingCountFor())
+        val rejected = emitted.last()["rendererFunctionResponse"] as Map<*, *>
+        assertEquals(A2UIRpcError.Codes.SURFACE_CLOSED, (rejected["error"] as Map<*, *>)["code"])
+    }
+
+    @Test
+    fun resetCancelsPendingOnceWithOfficialWireResponse() = withRpcCatalog { adapter, emitted ->
+        adapter.onIncomingAgentCall = {}
+        adapter.convertMessage(officialCall("reset"))
+        val completions = mutableListOf<com.tencent.kuikly.a2ui.rpc.A2UIRpcResponse>()
+        val id = adapter.invokeAgentFunction("s1", "getGreeting", mapOf("name" to "Ada"), null,
+            onComplete = { completions += it }, catalogId = rpcCatalog)
+        adapter.reset()
+        adapter.reset()
+        adapter.convertMessage(officialReply(id, null))
+        adapter.respondToAgent("s1", "reset", null)
+        assertEquals(1, completions.size)
+        assertEquals(A2UIRpcError.Codes.SURFACE_CLOSED, completions.single().error?.code)
+        assertEquals(2, emitted.size)
+        assertEquals(setOf("functionCallId", "error"), (emitted.last()["rendererFunctionResponse"] as Map<*, *>).keys)
+    }
+
+    @Test
+    fun strictTimeoutEmitsOfficialFailureAndDropsLateResponse() = withRpcCatalog { adapter, emitted ->
+        adapter.onIncomingAgentCall = {}
+        adapter.convertMessage(officialCall("timeout"))
+        val completions = mutableListOf<com.tencent.kuikly.a2ui.rpc.A2UIRpcResponse>()
+        val id = adapter.invokeAgentFunction("s1", "getGreeting", mapOf("name" to "Ada"), 1L,
+            onComplete = { completions += it }, catalogId = rpcCatalog)
+        adapter.rpcDispatcher.tick(com.tencent.kuikly.core.datetime.DateTime.currentTimestamp() + 30_000L)
+        adapter.convertMessage(officialReply(id, "late"))
+        adapter.respondToAgent("s1", "timeout", "late")
+        assertEquals(A2UIRpcError.Codes.TIMEOUT, completions.single().error?.code)
+        val response = emitted.last()["rendererFunctionResponse"] as Map<*, *>
+        assertEquals("timeout", response["functionCallId"])
+        assertEquals(A2UIRpcError.Codes.TIMEOUT, (response["error"] as Map<*, *>)["code"])
+    }
 }

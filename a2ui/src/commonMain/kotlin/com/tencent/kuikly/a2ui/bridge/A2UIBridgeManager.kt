@@ -286,9 +286,14 @@ object A2UIBridgeManager {
      * NOTE: This does NOT destroy the bridge; that is the caller's responsibility.
      */
     fun unregisterDslBridge(instanceId: String) {
+        dslBridgeMap[instanceId]?.protocolAdapter?.rpcDispatcher?.cancelAll(null)
         dslBridgeMap.remove(instanceId)
         rendererFunctionHandlers.remove(instanceId)
     }
+
+    /** Drive RPC expiry on the Kuikly Context Thread, including idle streams. */
+    fun expireRpcRequests(instanceId: String): List<String> =
+        dslBridgeMap[instanceId]?.protocolAdapter?.rpcDispatcher?.tick() ?: emptyList()
 
     /**
      * Attempt to intercept an A2UI `action.functionCall` and execute it via the
@@ -979,6 +984,17 @@ object A2UIBridgeManager {
         args: Map<String, Any?>,
         timeoutMs: Long? = null,
         onComplete: (A2UIRpcResponse) -> Unit,
+    ): String? = invokeAgentFunction(instanceId, surfaceId, name, args, timeoutMs, onComplete, null)
+
+    /** Explicit RPC catalog override, independent of the surface's component catalog. */
+    fun invokeAgentFunction(
+        instanceId: String,
+        surfaceId: String,
+        name: String,
+        args: Map<String, Any?>,
+        timeoutMs: Long? = null,
+        onComplete: (A2UIRpcResponse) -> Unit,
+        catalogId: String? = null,
     ): String? {
         val adapter = dslBridgeMap[instanceId]?.protocolAdapter ?: run {
             println(
@@ -987,7 +1003,7 @@ object A2UIBridgeManager {
             )
             return null
         }
-        return adapter.invokeAgentFunction(surfaceId, name, args, timeoutMs, onComplete)
+        return adapter.invokeAgentFunction(surfaceId, name, args, timeoutMs, onComplete, catalogId)
     }
 
     // -------------------------------------------------------------------
@@ -1025,13 +1041,7 @@ object A2UIBridgeManager {
             return
         }
         setRendererFunctionHandler(instanceId) { req ->
-            val payload = linkedMapOf<String, Any?>(
-                "surfaceId" to req.surfaceId,
-                "requestId" to req.requestId,
-                "name" to req.name,
-                "args" to req.args,
-            )
-            req.timeoutMs?.let { payload["timeoutMs"] = it }
+            val payload = A2UIRpcJson.requestPayload(req)
             val json = A2UIRpcJson.stringify(payload)
                 ?: "{\"surfaceId\":\"${req.surfaceId}\"," +
                     "\"requestId\":\"${req.requestId}\"," +
@@ -1118,6 +1128,17 @@ object A2UIBridgeManager {
         argsJson: String?,
         timeoutMs: Long? = null,
         onCompleteJson: (responseJson: String) -> Unit,
+    ): String? = invokeAgentFunctionJson(instanceId, surfaceId, name, argsJson, timeoutMs, onCompleteJson, null)
+
+    /** JSON bridge variant with an explicit function catalog override. */
+    fun invokeAgentFunctionJson(
+        instanceId: String,
+        surfaceId: String,
+        name: String,
+        argsJson: String?,
+        timeoutMs: Long? = null,
+        onCompleteJson: (responseJson: String) -> Unit,
+        catalogId: String? = null,
     ): String? {
         val args = if (argsJson.isNullOrEmpty()) emptyMap()
                    else A2UIRpcJson.parseObject(argsJson) ?: emptyMap()
@@ -1127,30 +1148,32 @@ object A2UIBridgeManager {
             name = name,
             args = args,
             timeoutMs = timeoutMs,
-        ) { resp ->
-            val payload = linkedMapOf<String, Any?>(
-                "surfaceId" to resp.surfaceId,
-                "requestId" to resp.requestId,
-            )
-            if (resp.isSuccess) {
-                payload["result"] = resp.result
-            } else {
-                val err = resp.error!!
-                val errMap = linkedMapOf<String, Any?>("code" to err.code)
-                err.message?.let { errMap["message"] = it }
-                err.details?.let { errMap["details"] = it }
-                payload["error"] = errMap
-            }
-            val json = A2UIRpcJson.stringify(payload) ?: "{}"
-            try {
-                onCompleteJson(json)
-            } catch (t: Throwable) {
-                println(
-                    "[A2UI] error: invokeAgentFunctionJson onComplete threw " +
-                        "for requestId='${resp.requestId}': ${t.message}"
+            catalogId = catalogId,
+            onComplete = { resp ->
+                val payload = linkedMapOf<String, Any?>(
+                    "surfaceId" to resp.surfaceId,
+                    "requestId" to resp.requestId,
                 )
-            }
-        }
+                if (resp.isSuccess) {
+                    payload["result"] = resp.result
+                } else {
+                    val err = resp.error!!
+                    val errMap = linkedMapOf<String, Any?>("code" to err.code)
+                    err.message?.let { errMap["message"] = it }
+                    err.details?.let { errMap["details"] = it }
+                    payload["error"] = errMap
+                }
+                val json = A2UIRpcJson.stringify(payload) ?: "{}"
+                try {
+                    onCompleteJson(json)
+                } catch (t: Throwable) {
+                    println(
+                        "[A2UI] error: invokeAgentFunctionJson onComplete threw " +
+                            "for requestId='${resp.requestId}': ${t.message}"
+                    )
+                }
+            },
+        )
     }
 
     // -------------------------------------------------------------------

@@ -19,7 +19,7 @@ import com.tencent.kuikly.a2ui.protocol.A2UIProtocolDefaults
 import com.tencent.kuikly.a2ui.protocol.A2UIProtocolVersion
 import com.tencent.kuikly.a2ui.protocol.ProtocolKeys
 
-internal enum class A2UICommandKind { CREATE, COMPONENTS, DATA, CALL_RENDERER, RENDERER_RESPONSE, CALL_AGENT, AGENT_RESPONSE }
+internal enum class A2UICommandKind { CREATE, DELETE, COMPONENTS, DATA, CALL_RENDERER, RENDERER_RESPONSE, CALL_AGENT, AGENT_RESPONSE }
 internal data class A2UICommand(val kind: A2UICommandKind, val payload: Map<String, Any?>?)
 internal data class A2UIDecodedEnvelope(val commands: List<A2UICommand>)
 
@@ -237,6 +237,7 @@ internal class A2UIProtocolDecoder(private val getSurfaceId: () -> String) {
         val commands = mutableListOf<A2UICommand>()
         for ((key, kind) in listOf(
             "createSurface" to A2UICommandKind.CREATE,
+            "deleteSurface" to A2UICommandKind.DELETE,
             "updateComponents" to A2UICommandKind.COMPONENTS,
             "updateDataModel" to A2UICommandKind.DATA,
         )) {

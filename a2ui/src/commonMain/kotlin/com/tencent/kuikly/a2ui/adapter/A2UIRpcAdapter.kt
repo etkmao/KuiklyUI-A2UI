@@ -38,6 +38,14 @@ internal class A2UIRpcAdapter(
     private val strictV10: Boolean get() = getStrictV10()
     private val onIncomingAgentCall: ((A2UIRpcRequest) -> Unit)? get() = getIncomingAgentCall()
     private val emitWireMessage: ((String) -> Unit)? get() = getEmitWireMessage()
+    private val closedSurfaceIds = mutableSetOf<String>()
+
+    fun markSurfaceClosed(surfaceId: String) { closedSurfaceIds += surfaceId }
+    fun markSurfaceOpen(surfaceId: String) { closedSurfaceIds -= surfaceId }
+
+    init {
+        rpcDispatcher.onAgentCallTerminated = ::emitRendererFunctionResponse
+    }
 
     /** Handle an incoming `callRendererFunction` envelope (agent → renderer). */
     fun handleCallRendererFunction(payload: Map<String, Any?>?) {
@@ -46,11 +54,17 @@ internal class A2UIRpcAdapter(
             direction = A2UIRpcRequest.Direction.AGENT_TO_RENDERER,
             envelopeKey = "callRendererFunction",
         ) ?: return
+        if (parsed.surfaceId in closedSurfaceIds) {
+            emitRendererFunctionResponse(A2UIRpcResponse.failure(
+                parsed.direction, parsed.surfaceId, parsed.requestId, A2UIRpcError.surfaceClosed(),
+            ))
+            return
+        }
 
         // Record the pending entry (for timeout bookkeeping). The host
         // may call `respondToAgent` / `failAgentRequest` later — those
         // paths will look up this requestId again.
-        rpcDispatcher.onIncomingAgentCall(parsed)
+        if (!rpcDispatcher.registerIncomingAgentCall(parsed)) return
 
         val handler = onIncomingAgentCall
         if (handler == null) {
@@ -154,6 +168,7 @@ internal class A2UIRpcAdapter(
         args: Map<String, Any?>,
         timeoutMs: Long?,
         onComplete: (A2UIRpcResponse) -> Unit,
+        catalogId: String? = null,
     ): String {
         val req = rpcDispatcher.beginRendererCall(
             surfaceId = surfaceId,
@@ -161,11 +176,13 @@ internal class A2UIRpcAdapter(
             args = args,
             timeoutMs = timeoutMs,
             onComplete = onComplete,
-        )
+        ).copy(catalogId = catalogId ?: getCatalogId())
         if (strictV10) {
-            val error = if (surfaceId.isEmpty() || surfaceId != currentSurfaceId) {
+            val error = if (surfaceId in closedSurfaceIds) {
+                A2UIRpcError.surfaceClosed()
+            } else if (surfaceId != currentSurfaceId) {
                 A2UIRpcError.invalidArgs("RPC surfaceId must match the current surface")
-            } else validateCatalogCall(name, getCatalogId(), args, A2UIRpcRequest.Direction.RENDERER_TO_AGENT)
+            } else validateCatalogCall(name, req.catalogId, args, A2UIRpcRequest.Direction.RENDERER_TO_AGENT)
             if (error != null) {
                 val response = A2UIRpcResponse.failure(req.direction, surfaceId, req.requestId, error)
                 val callback = rpcDispatcher.onIncomingAgentResponse(response)?.onComplete
@@ -233,7 +250,7 @@ internal class A2UIRpcAdapter(
                     return null
                 }
             }
-            return A2UIRpcRequest(direction, surfaceId, requestId, name, arguments, null)
+            return A2UIRpcRequest(direction, surfaceId, requestId, name, arguments, null, catalogId)
         }
         if (strictV10) {
             rpcWireError(envelopeKey, "official functionCallId/callFunction request required")
@@ -427,12 +444,13 @@ internal class A2UIRpcAdapter(
             "args" to req.args,
         )
         req.timeoutMs?.let { payload["timeoutMs"] = it }
+        req.catalogId?.let { payload["catalogId"] = it }
         if (strictV10) {
             payload.clear()
             payload["surfaceId"] = req.surfaceId
             payload["functionCallId"] = req.requestId
             val call = mutableMapOf<String, Any?>("@call" to req.name, "args" to req.args)
-            getCatalogId()?.let { call["catalogId"] = it }
+            req.catalogId?.let { call["catalogId"] = it }
             payload["callFunction"] = call
         }
         val json = serializeToJson(mapOf(

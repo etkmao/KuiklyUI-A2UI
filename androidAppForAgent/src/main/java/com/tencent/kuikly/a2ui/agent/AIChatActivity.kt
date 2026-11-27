@@ -60,7 +60,8 @@ class AIChatActivity : AppCompatActivity() {
             onEdit = { model.selectCard(it); binding.input.requestFocus() },
             onResize = { if (followBottom) scrollBottom() },
             onAction = { model.submitAction(it) },
-            onLink = ::openLink
+            onLink = ::openLink,
+            rpcModel = model
         )
         binding.messages.layoutManager = manager
         binding.messages.adapter = adapter

@@ -47,12 +47,10 @@ class A2UIRpcDispatcher(
      */
     private val defaultTimeoutMs: Long = 30_000L,
     /**
-     * Monotonic clock in milliseconds. Injected so unit tests can drive
-     * time deterministically without pulling in `kotlinx.coroutines` or
-     * relying on `System.currentTimeMillis()` (which is JVM-only in
-     * commonMain).
+     * Platform epoch clock in milliseconds. Tests may inject a deterministic
+     * clock; production uses Kuikly's cross-platform DateTime implementation.
      */
-    private val clock: () -> Long = { 0L },
+    private val clock: () -> Long = com.tencent.kuikly.core.datetime.DateTime::currentTimestamp,
     /**
      * Opaque per-dispatcher prefix used when minting renderer-originated
      * [A2UIRpcRequest.requestId]s. Stable for the lifetime of this
@@ -82,6 +80,8 @@ class A2UIRpcDispatcher(
      * across the two sides are not possible in practice).
      */
     private val pending = mutableMapOf<String, PendingRpc>()
+    private val seenAgentRequestIds = mutableSetOf<String>()
+    internal var onAgentCallTerminated: ((A2UIRpcResponse) -> Unit)? = null
 
     /**
      * Monotonically increasing sequence for renderer-originated ids.
@@ -100,12 +100,17 @@ class A2UIRpcDispatcher(
      * decoded. Registers the pending entry and returns the request as-is
      * for the adapter to forward to the host via BridgeManager.
      *
-     * If an entry with the same [A2UIRpcRequest.requestId] already
-     * exists (duplicate delivery or agent bug) the newer request wins
-     * and the old pending is silently replaced — mirrors the "last
-     * writer wins" behaviour of most RPC frameworks.
+     * Repeated ids never replace an existing pending or execute again.
+     * The adapter uses [registerIncomingAgentCall] to detect replay delivery.
      */
     fun onIncomingAgentCall(req: A2UIRpcRequest): A2UIRpcRequest {
+        registerIncomingAgentCall(req)
+        return req
+    }
+
+    internal fun registerIncomingAgentCall(req: A2UIRpcRequest): Boolean {
+        tick()
+        if (pending.containsKey(req.requestId) || !seenAgentRequestIds.add(req.requestId)) return false
         val effectiveTimeout = (req.timeoutMs ?: defaultTimeoutMs)
             .coerceAtLeast(0L)
         pending[req.requestId] = PendingRpc(
@@ -116,7 +121,7 @@ class A2UIRpcDispatcher(
             timeoutMs = effectiveTimeout,
             onComplete = null,
         )
-        return req
+        return true
     }
 
     /**
@@ -126,24 +131,11 @@ class A2UIRpcDispatcher(
      * response when no pending entry matches — a late / duplicate).
      */
     internal fun onIncomingAgentResponse(resp: A2UIRpcResponse): PendingRpc? {
-        val entry = pending.remove(resp.requestId)
-        if (entry == null) {
-            println(
-                "[A2UI] warn: dropped agentFunctionResponse requestId=" +
-                    "'${resp.requestId}' (no pending entry; late or duplicate)."
-            )
-            return null
-        }
-        // Defensive: the pending entry must be the RENDERER_TO_AGENT
-        // side; receiving an agentFunctionResponse that correlates to
-        // an AGENT_TO_RENDERER pending is a wire-format violation.
-        if (entry.direction != A2UIRpcRequest.Direction.RENDERER_TO_AGENT) {
-            println(
-                "[A2UI] warn: agentFunctionResponse requestId=" +
-                    "'${resp.requestId}' matched a pending entry in the wrong " +
-                    "direction (${entry.direction}); treating as success anyway."
-            )
-        }
+        tick()
+        val entry = pending[resp.requestId] ?: return null
+        if (entry.direction != A2UIRpcRequest.Direction.RENDERER_TO_AGENT ||
+            resp.direction != entry.direction || resp.surfaceId != entry.surfaceId) return null
+        pending.remove(resp.requestId)
         return entry
     }
 
@@ -162,13 +154,10 @@ class A2UIRpcDispatcher(
         requestId: String,
         result: Any?,
     ): A2UIRpcResponse? {
-        val entry = pending.remove(requestId) ?: run {
-            println(
-                "[A2UI] warn: completeAgentCall for unknown requestId=" +
-                    "'$requestId' (already timed out?); dropping."
-            )
-            return null
-        }
+        tick()
+        val entry = pending[requestId] ?: return null
+        if (entry.direction != A2UIRpcRequest.Direction.AGENT_TO_RENDERER || entry.surfaceId != surfaceId) return null
+        pending.remove(requestId)
         return A2UIRpcResponse.success(
             direction = A2UIRpcRequest.Direction.AGENT_TO_RENDERER,
             surfaceId = surfaceId,
@@ -186,13 +175,10 @@ class A2UIRpcDispatcher(
         requestId: String,
         error: A2UIRpcError,
     ): A2UIRpcResponse? {
-        val entry = pending.remove(requestId) ?: run {
-            println(
-                "[A2UI] warn: failAgentCall for unknown requestId=" +
-                    "'$requestId' (already timed out?); dropping."
-            )
-            return null
-        }
+        tick()
+        val entry = pending[requestId] ?: return null
+        if (entry.direction != A2UIRpcRequest.Direction.AGENT_TO_RENDERER || entry.surfaceId != surfaceId) return null
+        pending.remove(requestId)
         return A2UIRpcResponse.failure(
             direction = A2UIRpcRequest.Direction.AGENT_TO_RENDERER,
             surfaceId = surfaceId,
@@ -245,9 +231,9 @@ class A2UIRpcDispatcher(
      * Otherwise only entries for that surface are cancelled (used when
      * a single surface is destroyed while others remain open).
      *
-     * Renderer-originated pendings' `onComplete` is invoked with
-     * [reason]; agent-originated pendings are silently dropped (the
-     * agent is not notified of cancellation — mirrors Google's spec).
+     * Renderer-originated callbacks receive [reason]. Agent-originated
+     * calls notify the adapter through [onAgentCallTerminated] so it can
+     * send the corresponding rendererFunctionResponse.
      */
     fun cancelAll(
         surfaceId: String?,
@@ -262,15 +248,11 @@ class A2UIRpcDispatcher(
             matching
         }
         for (entry in toCancel) {
-            if (entry.direction == A2UIRpcRequest.Direction.RENDERER_TO_AGENT) {
-                val resp = A2UIRpcResponse.failure(
-                    direction = entry.direction,
-                    surfaceId = entry.surfaceId,
-                    requestId = entry.requestId,
-                    error = reason,
-                )
-                safeInvoke(entry.onComplete, resp)
-            }
+            val resp = A2UIRpcResponse.failure(entry.direction, entry.surfaceId, entry.requestId, reason)
+            val callback = if (entry.direction == A2UIRpcRequest.Direction.RENDERER_TO_AGENT) {
+                entry.onComplete
+            } else onAgentCallTerminated
+            safeInvoke(callback, resp)
         }
     }
 
@@ -298,15 +280,13 @@ class A2UIRpcDispatcher(
             }
         }
         for (entry in expired) {
-            if (entry.direction == A2UIRpcRequest.Direction.RENDERER_TO_AGENT) {
-                val resp = A2UIRpcResponse.failure(
-                    direction = entry.direction,
-                    surfaceId = entry.surfaceId,
-                    requestId = entry.requestId,
-                    error = A2UIRpcError.timeout(entry.timeoutMs),
-                )
-                safeInvoke(entry.onComplete, resp)
-            }
+            val resp = A2UIRpcResponse.failure(
+                entry.direction, entry.surfaceId, entry.requestId, A2UIRpcError.timeout(entry.timeoutMs),
+            )
+            val callback = if (entry.direction == A2UIRpcRequest.Direction.RENDERER_TO_AGENT) {
+                entry.onComplete
+            } else onAgentCallTerminated
+            safeInvoke(callback, resp)
         }
         return expired.map { it.requestId }
     }

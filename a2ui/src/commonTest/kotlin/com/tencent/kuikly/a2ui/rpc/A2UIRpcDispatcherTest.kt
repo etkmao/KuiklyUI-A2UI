@@ -254,14 +254,16 @@ class A2UIRpcDispatcherTest {
         assertTrue(dispatcher.hasPending(req.requestId))
     }
 
-    // Test 9: duplicate requestIds \u2014 "last writer wins" per PR-6 spec.
     @Test
-    fun duplicateRequestId_overwritesPreviousPending() {
-        val (dispatcher, _) = newDispatcher()
-        dispatcher.onIncomingAgentCall(makeAgentRequest("dup", surfaceId = "s1"))
-        // Second incoming with same requestId replaces the first.
-        dispatcher.onIncomingAgentCall(makeAgentRequest("dup", surfaceId = "s1"))
-        assertEquals(1, dispatcher.pendingCountFor())
+    fun duplicateRequestId_preservesOriginalPendingAndDeadline() {
+        val (dispatcher, clock) = newDispatcher()
+        assertTrue(dispatcher.registerIncomingAgentCall(makeAgentRequest("dup")))
+        clock.now = 999L
+        assertFalse(dispatcher.registerIncomingAgentCall(makeAgentRequest("dup", surfaceId = "s2")))
+        assertEquals(1, dispatcher.pendingCountFor("s1"))
+        clock.now = 1000L
+        assertEquals(listOf("dup"), dispatcher.tick())
+        assertFalse(dispatcher.registerIncomingAgentCall(makeAgentRequest("dup")))
     }
 
     // Test 10: callback that throws does NOT leak the exception back
@@ -278,6 +280,85 @@ class A2UIRpcDispatcherTest {
         clock.now = 10L
         // Would rethrow if dispatcher didn't catch.
         dispatcher.tick()
+        assertEquals(0, dispatcher.pendingCountFor())
+    }
+
+    @Test
+    fun defaultClockTracksProductionEpochInsteadOfZero() {
+        val dispatcher = A2UIRpcDispatcher(defaultTimeoutMs = 1000L)
+        val before = com.tencent.kuikly.core.datetime.DateTime.currentTimestamp()
+        val req = dispatcher.beginRendererCall("s1", "clock", emptyMap()) {}
+        assertTrue(dispatcher.tick(before).isEmpty())
+        assertTrue(dispatcher.hasPending(req.requestId))
+        val after = com.tencent.kuikly.core.datetime.DateTime.currentTimestamp()
+        assertEquals(listOf(req.requestId), dispatcher.tick(after + 1000L))
+    }
+
+    @Test
+    fun responseAfterDeadlineCompletesOnlyTimeoutWithoutExplicitTick() {
+        val (dispatcher, clock) = newDispatcher(defaultTimeoutMs = 20L)
+        val completions = mutableListOf<A2UIRpcResponse>()
+        val req = dispatcher.beginRendererCall("s1", "slow", emptyMap()) { completions += it }
+        clock.now = 20L
+        val reply = A2UIRpcResponse.success(req.direction, "s1", req.requestId, "late")
+        assertNull(dispatcher.onIncomingAgentResponse(reply))
+        assertNull(dispatcher.onIncomingAgentResponse(reply))
+        assertEquals(listOf(A2UIRpcError.Codes.TIMEOUT), completions.map { it.error?.code })
+    }
+
+    @Test
+    fun cancellationCompletesBothDirectionsOnceAndDropsLateCompletions() {
+        val (dispatcher, _) = newDispatcher()
+        val local = mutableListOf<A2UIRpcResponse>()
+        val remote = mutableListOf<A2UIRpcResponse>()
+        dispatcher.onAgentCallTerminated = { remote += it }
+        dispatcher.onIncomingAgentCall(makeAgentRequest("agent"))
+        val req = dispatcher.beginRendererCall("s1", "wait", emptyMap()) { local += it }
+        dispatcher.cancelAll("s1")
+        dispatcher.cancelAll("s1")
+        assertEquals(1, local.size)
+        assertEquals(1, remote.size)
+        assertEquals(A2UIRpcError.Codes.SURFACE_CLOSED, local.single().error?.code)
+        assertEquals(A2UIRpcError.Codes.SURFACE_CLOSED, remote.single().error?.code)
+        assertNull(dispatcher.completeAgentCall("s1", "agent", "late"))
+        assertNull(dispatcher.onIncomingAgentResponse(A2UIRpcResponse.success(req.direction, "s1", req.requestId, "late")))
+        assertFalse(dispatcher.registerIncomingAgentCall(makeAgentRequest("agent")))
+    }
+
+    @Test
+    fun agentTimeoutReturnsFailureAndRejectsLateHostResult() {
+        val (dispatcher, clock) = newDispatcher(defaultTimeoutMs = 10L)
+        val remote = mutableListOf<A2UIRpcResponse>()
+        dispatcher.onAgentCallTerminated = { remote += it }
+        dispatcher.onIncomingAgentCall(makeAgentRequest("late-host"))
+        clock.now = 10L
+        assertNull(dispatcher.completeAgentCall("s1", "late-host", null))
+        assertEquals(A2UIRpcError.Codes.TIMEOUT, remote.single().error?.code)
+        assertNull(dispatcher.failAgentCall("s1", "late-host", A2UIRpcError.internalError("late")))
+    }
+
+    @Test
+    fun wrongSurfaceOrDirectionNeverConsumesPending() {
+        val (dispatcher, _) = newDispatcher()
+        dispatcher.onIncomingAgentCall(makeAgentRequest("agent"))
+        assertNull(dispatcher.completeAgentCall("s2", "agent", "bad"))
+        assertNull(dispatcher.onIncomingAgentResponse(A2UIRpcResponse.success(
+            A2UIRpcRequest.Direction.RENDERER_TO_AGENT, "s1", "agent", "bad",
+        )))
+        assertTrue(dispatcher.hasPending("agent"))
+        val req = dispatcher.beginRendererCall("s1", "agent-side", emptyMap()) {}
+        assertNull(dispatcher.completeAgentCall("s1", req.requestId, "wrong-side"))
+        assertNull(dispatcher.onIncomingAgentResponse(A2UIRpcResponse.success(req.direction, "s2", req.requestId, "bad")))
+        assertTrue(dispatcher.hasPending(req.requestId))
+        assertNotNull(dispatcher.completeAgentCall("s1", "agent", null))
+    }
+
+    @Test
+    fun duplicateDeliveryAfterSuccessCannotExecuteAgain() {
+        val (dispatcher, _) = newDispatcher()
+        assertTrue(dispatcher.registerIncomingAgentCall(makeAgentRequest("once")))
+        assertNotNull(dispatcher.completeAgentCall("s1", "once", null))
+        assertFalse(dispatcher.registerIncomingAgentCall(makeAgentRequest("once")))
         assertEquals(0, dispatcher.pendingCountFor())
     }
 

@@ -85,6 +85,52 @@ data class RendererCardAction(
     }
 }
 
+data class RendererBinding(
+    val rendererId: String, val sessionId: String, val cardId: String,
+    val surfaceId: String, val baseCardRevision: Int
+) {
+    fun requestBody(): JSONObject = JSONObject().put("rendererId", rendererId)
+        .put("cardId", cardId).put("baseCardRevision", baseCardRevision)
+    fun matches(card: CardDocument?): Boolean = card != null && card.id == cardId &&
+        card.surfaceId == surfaceId && card.revision == baseCardRevision && card.status == "ready"
+}
+
+data class RpcCall(
+    val functionCallId: String, val sessionId: String, val rendererId: String,
+    val cardId: String, val surfaceId: String, val baseCardRevision: Int,
+    val direction: String, val status: String, val request: String,
+    val response: String?, val deadline: String, val createdAt: String
+) {
+    val terminal: Boolean get() = status != "pending"
+    fun matches(binding: RendererBinding): Boolean = sessionId == binding.sessionId &&
+        rendererId == binding.rendererId && cardId == binding.cardId &&
+        surfaceId == binding.surfaceId && baseCardRevision == binding.baseCardRevision
+    fun canExecute(delivery: RpcDelivery): Boolean = !terminal && direction == "agent_to_renderer" &&
+        functionCallId == delivery.functionCallId && matches(delivery.binding) && request == delivery.envelope
+    companion object {
+        const val CATALOG_ID = "https://ka2ui.dev/catalogs/rpc-v1.json"
+        val STATUSES = setOf("pending", "completed", "failed", "cancelled", "timed_out", "interrupted")
+        fun parse(json: JSONObject): RpcCall {
+            val direction = json.getString("direction")
+            val status = json.getString("status")
+            require(direction in setOf("renderer_to_agent", "agent_to_renderer") && status in STATUSES)
+            val request = json.getJSONObject("request")
+            val requestType = if (direction == "renderer_to_agent") "callAgentFunction" else "callRendererFunction"
+            val responseType = if (direction == "renderer_to_agent") "agentFunctionResponse" else "rendererFunctionResponse"
+            val id = json.getString("functionCallId")
+            require(request.opt("version") == "1.0" && request.getJSONObject(requestType).getString("functionCallId") == id)
+            val response = json.optJSONObject("response")
+            if (response != null) require(response.opt("version") == "1.0" && response.getJSONObject(responseType).getString("functionCallId") == id)
+            require((status == "pending") == (response == null))
+            return RpcCall(id, json.getString("sessionId"), json.getString("rendererId"), json.getString("cardId"),
+                json.getString("surfaceId"), json.getInt("baseCardRevision"), direction, status,
+                request.toString(), response?.toString(), json.getString("deadline"), json.getString("createdAt"))
+        }
+    }
+}
+
+data class RpcDelivery(val eventId: Long, val binding: RendererBinding, val functionCallId: String, val envelope: String)
+
 data class ChatUiState(
     val connectionLabel: String = "未连接", val connected: Boolean = false,
     val messages: List<ChatMessage> = emptyList(), val cards: Map<String, CardDocument> = emptyMap(),
@@ -92,7 +138,9 @@ data class ChatUiState(
     val pendingText: String? = null, val notice: String? = null,
     val selectedCardId: String? = null, val canLoadHistory: Boolean = false,
     val loadingHistory: Boolean = false, val offline: Boolean = false,
-    val uncertainRequest: Boolean = false
+    val uncertainRequest: Boolean = false,
+    val sessionId: String = "", val rpcCalls: Map<String, RpcCall> = emptyMap(),
+    val rpcNotice: String? = null, val uncertainRpc: Boolean = false
 )
 
 internal fun JSONArray.objects(): List<JSONObject> = (0 until length()).map { getJSONObject(it) }

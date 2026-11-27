@@ -435,6 +435,16 @@ class A2UISurfaceView @JvmOverloads constructor(
     /** Main thread handler for dispatching UI tasks */
     private val mainHandler = Handler(Looper.getMainLooper())
 
+    private val rpcExpiryTask = object : Runnable {
+        override fun run() {
+            if (!isInitialized) return
+            runOnContextThread {
+                com.tencent.kuikly.a2ui.bridge.A2UIBridgeManager.expireRpcRequests(instanceId)
+            }
+            mainHandler.postDelayed(this, 100L)
+        }
+    }
+
     /** Pending UI tasks collected from Kotlin→Native render commands */
     private val pendingUITasks = mutableListOf<() -> Unit>()
 
@@ -624,6 +634,7 @@ class A2UISurfaceView @JvmOverloads constructor(
     override fun destroy() {
         if (!isInitialized) return
         isInitialized = false
+        mainHandler.removeCallbacks(rpcExpiryTask)
         // Note: memoryCacheModule is shared across all surfaces, do NOT call onDestroy() here.
         // It will be cleaned up when the process exits.
         synchronized(liveSurfaces) {
@@ -646,6 +657,14 @@ class A2UISurfaceView @JvmOverloads constructor(
     // endregion
 
     // region A2UI public API
+
+    /** Serialize host bridge operations onto the initialized surface's Context Thread. */
+    fun runOnContextThread(action: () -> Unit) {
+        val entry = coreEntry ?: return
+        KuiklyRenderCoreContextScheduler.scheduleTask {
+            if (coreEntry === entry) action()
+        }
+    }
 
     /**
      * Initialize the A2UI surface view.
@@ -737,6 +756,7 @@ class A2UISurfaceView @JvmOverloads constructor(
                 )
             }
         }
+        mainHandler.post(rpcExpiryTask)
     }
 
     /**
@@ -1107,13 +1127,13 @@ class A2UISurfaceView @JvmOverloads constructor(
                         postToMainThread { handler.onDestroy() }
                     }
                     A2UINativeMethod.SEND_RPC_ENVELOPE -> {
-                        // v1.0 outbound RPC envelope. arg1 = instanceId,
-                        // arg2 = complete wire envelope JSON. The envelope
+                        // v1.0 outbound RPC envelope. arg0 = instanceId,
+                        // arg1 = complete wire envelope JSON. The envelope
                         // is already fully formed by the Kotlin core; we
                         // just hand it to the registered sink. A2UI's
                         // inbound replies (from the agent) come back
                         // through the regular `writeStream(…)` API.
-                        val envelopeJson = arg2 as? String ?: return null
+                        val envelopeJson = arg1 as? String ?: return null
                         val sink = rpcEnvelopeOutboundHandler
                         if (sink != null) {
                             try {
