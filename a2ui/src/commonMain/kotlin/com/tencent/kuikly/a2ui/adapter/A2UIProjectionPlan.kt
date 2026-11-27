@@ -25,7 +25,7 @@ internal data class A2UIProjectionPlan(
     val pathDependencies: Map<String, Set<String>>,
     val functionDependencies: Map<String, Set<String>>,
     val definitions: Map<String, Map<String, Any?>>,
-    val actions: Map<Int, Any?>,
+    val actions: Map<Int, A2UIActionRegistration>,
     val disabledActions: Map<Int, Boolean>,
     val checks: Map<String, A2UICheckRegistration>,
     val initialValues: Map<String, Any?>,
@@ -35,7 +35,7 @@ internal class A2UIProjectionDraft {
     val pathDependencies = linkedMapOf<String, MutableSet<String>>()
     val functionDependencies = linkedMapOf<String, MutableSet<String>>()
     val definitions = linkedMapOf<String, Map<String, Any?>>()
-    val actions = linkedMapOf<Int, Any?>()
+    val actions = linkedMapOf<Int, A2UIActionRegistration>()
     val disabledActions = linkedMapOf<Int, Boolean>()
     val checks = linkedMapOf<String, A2UICheckRegistration>()
     val initialValues = linkedMapOf<String, Any?>()
@@ -64,6 +64,15 @@ internal fun A2UIComponentProjection.planProperties(
             kuikly -> computeKuiklyProperties(componentType, definition)
             else -> computeProperties(componentType, definition)
         }
+        val componentId = definition["id"] as? String
+        val renderedId = instanceId ?: componentId
+        val tag = renderedId?.let { idToTag[it] }
+        if (tag != null && componentId != null) {
+            draft.actions[tag] = A2UIActionRegistration(
+                definition["action"], componentId, scopePath,
+                if (item != null) currentTemplateIndex else null,
+            )
+        }
         return draft.finish(props)
     } finally {
         pendingProperties = previous
@@ -87,7 +96,8 @@ internal fun A2UIComponentProjection.planDefinition(id: String, definition: Map<
 }
 
 internal fun A2UIComponentProjection.planAction(tag: Int, action: Any?) {
-    checkNotNull(pendingProperties).actions[tag] = action
+    val componentId = idToTag.entries.firstOrNull { it.value == tag }?.key ?: return
+    checkNotNull(pendingProperties).actions[tag] = A2UIActionRegistration(action, componentId)
 }
 
 internal fun A2UIComponentProjection.planDisabled(tag: Int, disabled: Boolean) {
@@ -120,7 +130,14 @@ internal class A2UIMaterializationState {
         for (message in batch.messages) {
             when (message.type) {
                 A2UIMessageType.CREATE_COMPONENT -> parents[message.tag] = message.parentTag
-                A2UIMessageType.REMOVE_COMPONENT -> parents.remove(message.tag)
+                A2UIMessageType.REMOVE_COMPONENT -> {
+                    val removed = mutableSetOf(message.tag)
+                    do {
+                        val added = parents.filter { (tag, parent) -> parent in removed && tag !in removed }.keys
+                        removed.addAll(added)
+                    } while (added.isNotEmpty())
+                    removed.forEach(parents::remove)
+                }
                 else -> Unit
             }
         }

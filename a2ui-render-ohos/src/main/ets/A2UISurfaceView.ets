@@ -44,6 +44,18 @@ const a2uiHeightCallbackRegistry = new Map<string, (height: number) => void>();
  */
 const a2uiActionCallbackRegistry = new Map<string, (tag: number, action: string) => void>();
 
+function actionSurfaceId(action: string): string | null {
+  try {
+    const envelope = JSON.parse(action) as Record<string, Object>;
+    const payload = envelope['action'] as Record<string, Object>;
+    if (!payload) return null;
+    const surfaceId = payload['surfaceId'];
+    return typeof surfaceId === 'string' ? surfaceId as string : null;
+  } catch (_e) {
+    return null;
+  }
+}
+
 /**
  * Global registry mapping instanceId → picker callback.
  * Used to dispatch showDateTimePicker requests from A2UIBridgeModule to the correct
@@ -878,7 +890,10 @@ export struct A2UISurfaceView {
                 // Register action callback
                 a2uiActionCallbackRegistry.set(instanceId, (tag: number, action: string): void => {
                   if (this.listener?.onAction) {
-                    this.listener.onAction('a2ui', tag, action, null);
+                    const surfaceId = actionSurfaceId(action);
+                    if (surfaceId !== null) {
+                      this.listener.onAction(surfaceId, tag, action, null);
+                    }
                   } else {
                     // Default behavior: show a toast with the action info
                     promptAction.showToast({ message: `Action: ${action}` });

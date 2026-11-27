@@ -566,8 +566,8 @@ class A2UIDSLBridge(
      */
     fun handleViewClick(tag: Int) {
         val adapter = protocolAdapter ?: return
-        val actionJson = adapter.getActionForTag(tag) ?: return
-        onAction?.invoke("dsl-surface", tag, actionJson)
+        val actionJson = adapter.getDispatchActionForTag(tag) ?: return
+        onAction?.invoke(adapter.surfaceId, tag, actionJson)
     }
 
     /**

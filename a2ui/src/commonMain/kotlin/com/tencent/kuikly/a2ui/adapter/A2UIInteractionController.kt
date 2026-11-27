@@ -17,15 +17,25 @@ package com.tencent.kuikly.a2ui.adapter
 
 import com.tencent.kuikly.a2ui.protocol.A2UIMessage
 
+internal data class A2UIActionRegistration(
+    val value: Any?,
+    val componentId: String,
+    val scopePath: String = "",
+    val templateIndex: Int? = null,
+)
+
 internal class A2UIInteractionState {
-    private val actions = mutableMapOf<Int, Any?>()
+    private val actions = mutableMapOf<Int, A2UIActionRegistration>()
     private val disabledActions = mutableMapOf<Int, Boolean>()
     private val selectedTabs = mutableMapOf<String, Int>()
     private val openModals = mutableSetOf<String>()
 
-    fun registerAction(tag: Int, action: Any?) { actions[tag] = action }
+    fun registerAction(tag: Int, action: A2UIActionRegistration) {
+        if (action.value == null) actions.remove(tag) else actions[tag] = action
+    }
     fun setDisabled(tag: Int, disabled: Boolean) { disabledActions[tag] = disabled }
-    fun action(tag: Int): Any? = if (disabledActions[tag] == true) null else actions[tag]
+    fun registration(tag: Int): A2UIActionRegistration? = if (disabledActions[tag] == true) null else actions[tag]
+    fun action(tag: Int): Any? = registration(tag)?.value
     fun actionTags(): Set<Int> = actions.keys
     fun selectedTab(id: String): Int = selectedTabs[id] ?: 0
     fun initializeTab(id: String) { selectedTabs.getOrPut(id) { 0 } }
@@ -47,6 +57,7 @@ internal class A2UIInteractionController(
     private val values: A2UIValueEngine,
     private val projection: A2UIComponentProjection,
     private val state: A2UIInteractionState,
+    private val clock: () -> Long,
 ) {
     private fun commit(messages: List<A2UIMessage>): List<A2UIMessage> =
         projection.commitBatch(A2UIProjectionBatch(messages))
@@ -57,6 +68,48 @@ internal class A2UIInteractionController(
         val action = state.action(tag) ?: return null
         val context = A2UIEvaluationContext(model.data, catalogId = model.catalogId)
         return A2UIJsonValue.serializeToJson(values.action(action, context))
+    }
+
+    fun getDispatchActionForTag(tag: Int): String? {
+        val registration = state.registration(tag) ?: return null
+        if (model.surfaceId.isEmpty() || !projection.materialization.contains(tag)) return null
+        if (projection.idToTag.values.none { it == tag }) return null
+        val action = registration.value as? Map<*, *> ?: return null
+        val item = if (registration.scopePath.isNotEmpty()) {
+            @Suppress("UNCHECKED_CAST")
+            (model.read(registration.scopePath.removePrefix("/")) as? Map<String, Any?>) ?: return null
+        } else null
+        val context = A2UIEvaluationContext(model.data, item, registration.templateIndex, model.catalogId)
+        val functionCall = action["functionCall"] as? Map<*, *>
+        if (functionCall != null) {
+            val resolved = action.entries.associate { (key, value) ->
+                key.toString() to if (key == "functionCall") {
+                    functionCall.entries.associate { (callKey, callValue) ->
+                        callKey.toString() to if (callKey == "args") values.dispatchActionValue(callValue, context) else callValue
+                    }
+                } else values.dispatchActionValue(value, context)
+            }
+            return A2UIJsonValue.serializeToJson(resolved)
+        }
+        val event = action["event"] as? Map<*, *> ?: action
+        val name = event["name"] as? String ?: return null
+        val resolvedContext = if (event.containsKey("context")) {
+            values.dispatchActionValue(event["context"], context) as? Map<*, *> ?: return null
+        } else emptyMap<String, Any?>()
+        val userMessage = if (event.containsKey("userMessage")) {
+            values.dispatchActionValue(event["userMessage"], context) as? String ?: return null
+        } else null
+        val payload = linkedMapOf<String, Any?>(
+            "name" to name,
+            "surfaceId" to model.surfaceId,
+            "sourceComponentId" to registration.componentId,
+            "timestamp" to formatActionTimestamp(clock()),
+            "context" to resolvedContext,
+        )
+        if (userMessage != null) {
+            payload["userMessage"] = userMessage
+        }
+        return A2UIJsonValue.serializeToJson(linkedMapOf("version" to "1.0", "action" to payload))
     }
 
     fun getActionTags(): Set<Int> = state.actionTags()

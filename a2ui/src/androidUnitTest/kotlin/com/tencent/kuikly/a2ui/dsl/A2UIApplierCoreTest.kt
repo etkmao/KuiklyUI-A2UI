@@ -201,7 +201,7 @@ class A2UIApplierCoreTest {
     }
 
     @Test
-    fun migratedWeatherMountsAllFiveForecastRowsAndFifteenTexts() = withMigrationAsset("a2ui_examples/04_weather-current.json") { pager, creates ->
+    fun migratedWeatherMountsAllFiveForecastRowsAndFifteenTexts() = withMigrationAsset("a2ui_examples/weather-current.json") { pager, creates ->
         val forecast = creates.single { parent -> creates.count { it.parentTag == parent.tag && it.viewName == "KRView" } == 5 }
         val days = creates.filter { it.parentTag == forecast.tag }
         val parent = assertNotNull(pager.registry.getContainer(forecast.tag)).realContainerView()

@@ -43,6 +43,7 @@ internal class A2UIEvaluationWorker(
     internal val pathReads = linkedSetOf<String>()
     internal val functionReads = linkedSetOf<String>()
     internal val diagnostics = mutableListOf<String>()
+    private var dispatchArgsResolved = false
     private fun reportDiagnostic(message: String) {
         diagnostics.add(message)
         println(message)
@@ -101,6 +102,35 @@ internal class A2UIEvaluationWorker(
             is List<*> -> obj.map { resolveActionValue(it) }
             else -> obj
         }
+    }
+
+    internal fun resolveDispatchActionValue(obj: Any?): Any? = when (obj) {
+        is Map<*, *> -> {
+            val path = readPathKey(obj)
+            val call = readCallKey(obj)
+            when {
+                path != null && obj.size == 1 -> if (context.item != null) {
+                    resolveValueWithScope(obj, context.item)
+                } else resolveNestedDataPath(path.removePrefix("/"))
+                call != null -> {
+                    val resolved = obj.entries.associate { (key, value) ->
+                        key.toString() to if (key == "args") resolveDispatchActionValue(value) else value
+                    }
+                    val previous = dispatchArgsResolved
+                    dispatchArgsResolved = true
+                    try {
+                        val evaluated = if (context.item != null) evaluateFunctionCallWithScope(resolved, context.item)
+                            else evaluateFunctionCall(resolved)
+                        evaluated ?: resolved
+                    } finally {
+                        dispatchArgsResolved = previous
+                    }
+                }
+                else -> obj.entries.associate { (key, value) -> key.toString() to resolveDispatchActionValue(value) }
+            }
+        }
+        is List<*> -> obj.map { resolveDispatchActionValue(it) }
+        else -> obj
     }
 
     internal fun resolveValue(value: Any?, tracked: Boolean = false): Any? {
@@ -297,6 +327,7 @@ internal class A2UIEvaluationWorker(
      * Resolve a dynamic value argument (could be literal, path reference, or nested function call).
      */
     internal fun resolveDynamicArg(arg: Any?): Any? {
+        if (dispatchArgsResolved) return arg
         if (arg == null) return null
         if (arg is String) return arg
         if (arg is Number) return arg
@@ -669,6 +700,7 @@ internal class A2UIEvaluationWorker(
     }
 
     internal fun resolveValueWithScope(value: Any?, itemData: Map<String, Any?>): Any? {
+        if (dispatchArgsResolved) return value
         if (value == null) return null
 
         // Handle A2UIValue sealed class (type-safe path/function references)
@@ -1228,6 +1260,9 @@ internal class A2UIValueEngine(private val decoder: A2UIProtocolDecoder) {
 
     fun action(action: Any?, context: A2UIEvaluationContext): Any? =
         A2UIEvaluationWorker(context, decoder, customFunctionInvoker).resolveActionValue(action)
+
+    fun dispatchActionValue(value: Any?, context: A2UIEvaluationContext): Any? =
+        A2UIEvaluationWorker(context, decoder, customFunctionInvoker).resolveDispatchActionValue(value)
 
     fun paths(expression: Any?): Set<String> = A2UIEvaluationWorker(
         A2UIEvaluationContext(emptyMap()), decoder, null,

@@ -5714,7 +5714,9 @@ class NativeCardDemoActivity : AppCompatActivity() {
      */
     private fun handleActionEvent(actionJson: String) {
         val eventObj = try {
-            JSONObject(actionJson).optJSONObject("event") ?: return
+            val message = JSONObject(actionJson)
+            (if (message.optString("version") == "1.0") message.optJSONObject("action")
+            else message.optJSONObject("event")) ?: return
         } catch (e: Exception) {
             Log.w(TAG, "handleActionEvent: malformed action JSON: ${e.message}")
             return

@@ -168,7 +168,7 @@ struct NativeCardDemoPage {
   private handleActionEvent(actionJson: string): void {
     try {
       const obj = JSON.parse(actionJson) as Record<string, Object>;
-      const event = obj['event'] as Record<string, Object> | undefined;
+      const event = obj[obj['version'] === '1.0' ? 'action' : 'event'] as Record<string, Object> | undefined;
       if (!event) return;
       const name = event['name'] as string | undefined;
       if (name !== 'toast') return;

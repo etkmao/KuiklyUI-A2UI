@@ -129,11 +129,9 @@ class MyActivity : AppCompatActivity() {
         surface.setListener(object : A2UISurfaceViewListener {
             override fun onAction(surfaceId: String, tag: Int,
                                   action: String, params: String?) {
-                // A2UI 组件点击回调。action 是完整的 JSON，形如：
-                //   {"event":{"name":"toast","context":{"title":"...","message":"..."}}}
-                //   {"functionCall":{"call":"openUrl","args":{"url":"..."}}}
-                // 建议按 event.name 分派，例如：
-                //   val evt = JSONObject(action).optJSONObject("event") ?: return
+                // A2UI v1.0 事件是包含 version/action 的标准消息；v0.9 保留 event。
+                //   val message = JSONObject(action)
+                //   val evt = message.optJSONObject(if (message.optString("version") == "1.0") "action" else "event") ?: return
                 //   when (evt.optString("name")) {
                 //     "toast" -> AlertDialog.Builder(this).setMessage(...).show()
                 //     ...
@@ -318,10 +316,10 @@ extension MyViewController: A2UISurfaceViewDelegate {
                          didReceiveAction action: String,
                          fromTag tag: Int,
                          inSurface surfaceId: String) {
-        // A2UI 组件点击回调。action 是完整的 JSON，建议按 event.name 分派：
+        // A2UI 组件点击回调。按标准事件正文的 name 分派：
         //   guard let data = action.data(using: .utf8),
         //         let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-        //         let event = obj["event"] as? [String: Any],
+        //         let event = obj[(obj["version"] as? String) == "1.0" ? "action" : "event"] as? [String: Any],
         //         let name = event["name"] as? String else { return }
         //   switch name {
         //   case "toast": /* 弹 UIAlertController */ break
@@ -448,9 +446,9 @@ struct MyPage {
 
   private listener: A2UISurfaceViewListener = {
     onAction: (surfaceId, tag, action, params) => {
-      // A2UI 组件点击回调。action 是完整的 JSON，建议按 event.name 分派：
+      // A2UI 组件点击回调。按标准事件正文的 name 分派：
       //   const obj = JSON.parse(action);
-      //   const event = obj.event;
+      //   const event = obj.version === '1.0' ? obj.action : obj.event;
       //   if (event?.name === 'toast') {
       //     AlertDialog.show({ title: event.context?.title, message: event.context?.message,
       //                        confirm: { value: 'OK', action: () => {} } });
@@ -506,7 +504,11 @@ registerA2UICustomFunction('formatPhone', 'string', 'sync', (args) => {
 
 ## Action 回调协议约定
 
-A2UI v0.9 协议里 `Button.action` 有两种形态，`onAction` 回调收到的 JSON 也对应两种结构：
+A2UI v1.0 的 `action.event` 在真实点击时由 SDK 转为官方 Renderer→Agent 消息：`{"version":"1.0","action":{"name":"submit_form","surfaceId":"form_surface","sourceComponentId":"submit","timestamp":"2026-11-27T08:00:00.123Z","context":{"value":"当前输入"}}}`。宿主读取 `message.action`，不能再从顶层 `event` 读取 v1.0 事件。`name/context/userMessage` 来自事件声明并在点击时解析绑定；`surfaceId/sourceComponentId/timestamp` 由 SDK 从真实协议状态生成，回调参数 `surfaceId` 与正文一致，整数 `tag` 不是组件 ID。缺失的 context 输出 `{}`，可选 `userMessage` 为解析后的字符串。宿主资源归属、业务字段与请求幂等仍需独立校验，不能仅凭 SDK envelope 授权。
+
+本地 `action.functionCall` 保留原调用结构与现有执行分支，不包装成用户事件，也不因此启用远程 RPC。`A2UIProtocolAdapter.getActionForTag()` 仍供原始声明求值及确定性快照使用；SDK 点击入口使用统一标准派发接口，不由各平台宿主重复封装。
+
+A2UI v0.9 协议里 `Button.action` 有两种形态，`onAction` 回调收到的 JSON 仍对应原来的两种结构：
 
 | Action 类型 | JSON 结构 | 语义 | Kuikly a2ui 内置支持 |
 |---|---|---|---|

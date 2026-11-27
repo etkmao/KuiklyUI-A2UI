@@ -5668,7 +5668,7 @@ extension NativeCardDemoViewController: A2UISurfaceViewDelegate {
     private func handleActionEvent(_ actionJson: String) {
         guard let data = actionJson.data(using: .utf8),
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let event = obj["event"] as? [String: Any],
+              let event = obj[(obj["version"] as? String) == "1.0" ? "action" : "event"] as? [String: Any],
               let name = event["name"] as? String,
               name == "toast" else {
             return

@@ -274,10 +274,10 @@ private fun ScrollerView<*, *>.scrollToBottom(contentHeight: Float, animated: Bo
 }
 
 /**
- * Turn a raw A2UI `action` JSON delivered by the DSL surface into a compact
+ * Turn an A2UI Action callback delivered by the DSL surface into a compact
  * one-line header string.
  *
- * For the demo-only `event.name == "toast"` convention we surface the
+ * For the demo-only `action.name == "toast"` convention we surface the
  * `context.title` / `context.message` verbatim (as if they were a native
  * alert dialog). Everything else falls back to the raw JSON so users can
  * still inspect payload shapes for openUrl / custom / etc.
@@ -288,7 +288,9 @@ private fun ScrollerView<*, *>.scrollToBottom(contentHeight: Float, animated: Bo
 private fun formatActionForHeader(cardIndex: Int, tag: Int, actionJson: String): String {
     val cardLabel = "card #${cardIndex + 1}"
     val event = try {
-        JSONObject(actionJson).optJSONObject("event")
+        val message = JSONObject(actionJson)
+        if (message.optString("version") == "1.0") message.optJSONObject("action")
+        else message.optJSONObject("event")
     } catch (e: Exception) {
         null
     }

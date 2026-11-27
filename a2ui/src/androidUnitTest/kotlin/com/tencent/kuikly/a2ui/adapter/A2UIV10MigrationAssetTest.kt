@@ -93,7 +93,7 @@ class A2UIV10MigrationAssetTest {
 
     @Test
     fun weatherPreservesFiveForecastInstancesAndRootDependencies() {
-        val replay = replay("a2ui_examples/04_weather-current.json")
+        val replay = replay("a2ui_examples/weather-current.json")
         val creates = replay.creates
         val forecastParent = creates.single { parent -> creates.count { it.parentTag == parent.tag && it.viewName == "KRView" } == 5 }
         val days = creates.filter { it.parentTag == forecastParent.tag }

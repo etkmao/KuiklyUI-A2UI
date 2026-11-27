@@ -469,7 +469,7 @@ object A2UIBridgeManager {
         val pager = dslBridge.getPager()
         val protocolTag = pager?.getProtocolTagByNativeRef(tag) ?: return
 
-        val actionJson = adapter.getActionForTag(protocolTag) ?: return
+        val actionJson = adapter.getDispatchActionForTag(protocolTag) ?: return
 
         // Send action callback to native layer
         val nativeBridge = nativeBridgeMap[instanceId] ?: return
@@ -490,7 +490,7 @@ object A2UIBridgeManager {
             instanceId,
             protocolTag,
             actionJson,
-            "dsl-surface",
+            adapter.surfaceId,
             null,
             null
         )
@@ -789,7 +789,7 @@ object A2UIBridgeManager {
             val actionObj = com.tencent.kuikly.core.nvi.serialization.json.JSONObject(actionJson)
             val functionCall = actionObj.optJSONObject("functionCall") ?: return false
 
-            val call = functionCall.optString("call", "")
+            val call = functionCall.optString("@call", functionCall.optString("call", ""))
             val args = functionCall.optJSONObject("args")
             val argsJson = args?.toString() ?: "{}"
 

@@ -34,7 +34,8 @@ class A2UIProtocolAdapter {
     private val reactive = A2UIReactiveEngine()
     private val interactionState = A2UIInteractionState()
     private val projection = A2UIComponentProjection(model, decoder, values, reactive, interactionState)
-    private val interactions = A2UIInteractionController(model, decoder, values, projection, interactionState)
+    internal var actionClock: () -> Long = com.tencent.kuikly.core.datetime.DateTime::currentTimestamp
+    private val interactions = A2UIInteractionController(model, decoder, values, projection, interactionState) { actionClock() }
 
     val protocolVersion: A2UIProtocolVersion get() = decoder.protocolVersion
     var strictV10: Boolean
@@ -104,6 +105,13 @@ class A2UIProtocolAdapter {
     }
 
     fun getActionForTag(tag: Int): String? = interactions.getActionForTag(tag)
+
+    /** Current surface identity used by renderer callbacks. */
+    val surfaceId: String get() = model.surfaceId
+
+    /** Resolves live event values and returns the v1 callback envelope; functionCall stays top-level. */
+    fun getDispatchActionForTag(tag: Int): String? = interactions.getDispatchActionForTag(tag)
+
     fun getActionTags(): Set<Int> = interactions.getActionTags()
     fun getDataModelSnapshot(): String = A2UIJsonValue.buildJsonString(model.data)
     fun updateDataModelValue(key: String, value: Any?): List<A2UIMessage> = interactions.updateDataModelValue(key, value)
