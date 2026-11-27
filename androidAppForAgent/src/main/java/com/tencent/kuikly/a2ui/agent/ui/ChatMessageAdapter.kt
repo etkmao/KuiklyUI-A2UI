@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.tencent.kuikly.a2ui.agent.data.CardDocument
 import com.tencent.kuikly.a2ui.agent.data.ChatUiState
+import com.tencent.kuikly.a2ui.agent.data.RendererCardAction
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
@@ -17,7 +18,7 @@ import java.util.TimeZone
 class ChatMessageAdapter(
     private val onEdit: (String) -> Unit,
     private val onResize: () -> Unit,
-    private val onAction: () -> Unit,
+    private val onAction: (RendererCardAction) -> Unit,
     private val onLink: (String) -> Unit
 ) : RecyclerView.Adapter<ChatMessageAdapter.Holder>() {
     data class Row(val key: String, val user: Boolean, val text: String?, val card: CardDocument?, val status: String, val time: String)
@@ -77,7 +78,7 @@ class ChatMessageAdapter(
                 if (row.card != null) {
                     val host = A2UICardHostView(root.context).apply {
                         onContentResize = onResize
-                        onUnsupportedAction = onAction
+                        this.onAction = this@ChatMessageAdapter.onAction
                         onOpenLink = onLink
                         bind(row.card)
                     }

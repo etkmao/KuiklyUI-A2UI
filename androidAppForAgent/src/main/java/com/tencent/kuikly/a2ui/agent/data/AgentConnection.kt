@@ -17,7 +17,7 @@ data class AgentConnection(
         require(allowHttp || url.isHttps) { "非调试版本只允许 HTTPS" }
         val routes = JSONObject(routesJson)
         ROUTE_KEYS.forEach { key ->
-            val path = routes.optString(key)
+            val path = routes.optString(key, if (key == "actions") ACTION_ROUTE else "")
             require(path.startsWith('/') && !path.startsWith("//") && !path.contains("..") && !path.contains('?') && !path.contains('#')) {
                 "请配置有效的 $key 相对路径"
             }
@@ -29,7 +29,8 @@ data class AgentConnection(
     }
 
     fun url(key: String, vararg parameters: Pair<String, String>): String {
-        var route = JSONObject(routesJson).getString(key)
+        val routes = JSONObject(routesJson)
+        var route = if (key == "actions" && !routes.has(key)) ACTION_ROUTE else routes.getString(key)
         parameters.forEach { (name, value) ->
             require(value.matches(Regex("[A-Za-z0-9._:-]+"))) { "无效路径参数" }
             route = route.replace("{$name}", value)
@@ -39,7 +40,10 @@ data class AgentConnection(
     }
 
     companion object {
-        val ROUTE_KEYS = listOf("sessions", "runs", "events", "snapshot", "card", "messages", "cancel")
-        fun emptyRoutes(): String = JSONObject().apply { ROUTE_KEYS.forEach { put(it, "") } }.toString(2)
+        private const val ACTION_ROUTE = "/v1/sessions/{sessionId}/actions"
+        val ROUTE_KEYS = listOf("sessions", "runs", "events", "snapshot", "card", "messages", "cancel", "actions")
+        fun emptyRoutes(): String = JSONObject().apply {
+            ROUTE_KEYS.forEach { put(it, if (it == "actions") ACTION_ROUTE else "") }
+        }.toString(2)
     }
 }

@@ -41,7 +41,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     private var foreground = false
     private var needsSnapshot = true
     private var sessionId = preferences.getString("session", "").orEmpty()
-    private data class Submission(val key: String, val body: JSONObject, val text: String)
+    private data class Submission(val key: String, val body: JSONObject, val text: String?, val action: Boolean = false)
     private var pending: Submission? = null
 
     fun foreground(active: Boolean) {
@@ -153,6 +153,23 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         return true
     }
 
+    fun submitAction(action: com.tencent.kuikly.a2ui.agent.data.RendererCardAction): Boolean {
+        val card = store.cards[action.cardId] ?: state.value.cards[action.cardId]
+        val body = runCatching { action.requestBody(card ?: error("Missing card")) }.getOrElse {
+            mutableState.update { state -> state.copy(notice = "卡片交互缺少真实来源、输入无效或版本已变化，未发送请求。") }
+            return false
+        }
+        val current = state.value
+        if (!current.connected || current.offline || current.activeRunId != null || pending != null || current.posting || api == null) {
+            mutableState.update { it.copy(notice = "请等待服务连接或当前任务完成后再提交卡片。") }
+            return false
+        }
+        pending = Submission(UUID.randomUUID().toString(), body, null, action = true)
+        mutableState.update { it.copy(pendingText = null, notice = null) }
+        postPending()
+        return true
+    }
+
     fun retryPending() {
         if (state.value.connected && pending != null && submitJob?.isActive != true) postPending()
     }
@@ -163,7 +180,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         mutableState.update { it.copy(posting = true) }
         submitJob = viewModelScope.launch {
             try {
-                val result = transport.submit(sessionId, submission.body, submission.key)
+                val result = if (submission.action) transport.submitAction(sessionId, submission.body, submission.key)
+                    else transport.submit(sessionId, submission.body, submission.key)
+                if (submission.action && result.opt("operation") != "update_card") throw AgentFailure("INVALID_RESPONSE", false)
                 store.confirmRun(result)
                 pending = null
                 mutableState.update { it.copy(posting = false, pendingText = null, uncertainRequest = false, notice = null) }
@@ -171,7 +190,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) {
                 val failure = e as? AgentFailure
-                val uncertain = failure == null || failure.httpStatus == 0 || failure.httpStatus >= 500
+                val uncertain = failure == null || failure.submissionUncertain
                 if (!uncertain) pending = null
                 mutableState.update { it.copy(posting = false, uncertainRequest = uncertain,
                     pendingText = if (uncertain) submission.text else null,

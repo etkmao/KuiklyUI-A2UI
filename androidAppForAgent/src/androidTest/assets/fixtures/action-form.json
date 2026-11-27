@@ -1,0 +1,17 @@
+{
+  "messages": [{
+    "version": "1.0",
+    "createSurface": {
+      "surfaceId": "00000000-0000-4000-8000-000000000001",
+      "catalogId": "https://a2ui.org/specification/v1_0/catalogs/basic/catalog.json",
+      "components": [
+        { "id": "root", "component": "Column", "children": ["valueInput", "submit", "result"] },
+        { "id": "valueInput", "component": "TextField", "label": "内容", "value": { "@path": "/form/value" }, "variant": "shortText" },
+        { "id": "submit", "component": "Button", "child": "submitLabel", "action": { "event": { "name": "submit_form", "context": { "value": { "@path": "/form/value" } } } } },
+        { "id": "submitLabel", "component": "Text", "text": "提交" },
+        { "id": "result", "component": "Text", "text": { "@path": "/result/message" } }
+      ],
+      "dataModel": { "form": { "value": "" }, "result": { "message": "尚未提交" } }
+    }
+  }]
+}

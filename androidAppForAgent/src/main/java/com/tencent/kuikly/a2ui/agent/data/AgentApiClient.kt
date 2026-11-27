@@ -40,6 +40,12 @@ class AgentApiClient(val connection: AgentConnection) {
     suspend fun submit(sessionId: String, body: JSONObject, key: String): JSONObject = request(
         "runs", body, key, arrayOf("sessionId" to sessionId)
     )
+    suspend fun submitAction(sessionId: String, body: JSONObject, key: String): JSONObject {
+        require(key.isNotBlank())
+        val result = request("actions", body, key, arrayOf("sessionId" to sessionId), expectedStatus = 202)
+        if (result.opt("operation") != "update_card") throw AgentFailure("INVALID_RESPONSE", false, 202)
+        return result
+    }
     suspend fun cancel(runId: String): JSONObject = request("cancel", JSONObject(), parameters = arrayOf("runId" to runId))
     suspend fun messages(sessionId: String, before: Int): JSONObject = request(
         "messages", parameters = arrayOf("sessionId" to sessionId), query = "?limit=30&beforeOrdinal=$before"
@@ -54,7 +60,7 @@ class AgentApiClient(val connection: AgentConnection) {
 
     private suspend fun request(
         route: String, body: JSONObject? = null, idempotencyKey: String? = null,
-        parameters: Array<out Pair<String, String>> = emptyArray(), query: String = ""
+        parameters: Array<out Pair<String, String>> = emptyArray(), query: String = "", expectedStatus: Int? = null
     ): JSONObject = suspendCancellableCoroutine { continuation ->
         val request = builder(route, parameters, query).header("Accept", "application/json").apply {
             body?.let { post(it.toString().toRequestBody("application/json; charset=utf-8".toMediaType())) }
@@ -71,6 +77,7 @@ class AgentApiClient(val connection: AgentConnection) {
                     try {
                         val json = JSONObject(response.body?.string().orEmpty())
                         if (!response.isSuccessful) throw parseFailure(response.code, json)
+                        if (expectedStatus != null && response.code != expectedStatus) throw AgentFailure("INVALID_RESPONSE", false, response.code)
                         if (continuation.isActive) continuation.resume(json)
                     } catch (e: Exception) {
                         if (continuation.isActive) continuation.resumeWithException(

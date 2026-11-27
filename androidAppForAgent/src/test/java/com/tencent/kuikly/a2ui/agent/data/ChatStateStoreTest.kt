@@ -65,6 +65,36 @@ class ChatStateStoreTest {
         assertEquals(1, card.replay.size)
         assertEquals("updated", JSONObject(card.replay.single()).getJSONObject("createSurface").getJSONArray("components").getJSONObject(0).getString("text"))
     }
+    @Test fun actionRunDataModelCommitIsAtomicAndRestoresCanonicalFormAndResult() {
+        val form = fixture("action-form").single().apply { getJSONObject("createSurface").put("surfaceId", "surface") }
+        store.consume(event(1, "a2ui.message", form, revision = 1))
+        store.confirmRun(JSONObject().put("runId", "run").put("status", "running").put("operation", "update_card"))
+        val before = store.cards.getValue("card")
+        fun update(path: String, value: String) = JSONObject().put("version", "1.0").put("updateDataModel",
+            JSONObject().put("surfaceId", "surface").put("path", path).put("value", value))
+        store.consume(event(2, "a2ui.message", update("/form/value", "最新输入"), 1, 2).put("messageCount", 2))
+        assertEquals(before, store.cards.getValue("card"))
+        assertTrue(store.hasPendingCommit)
+        store.consume(event(3, "a2ui.message", update("/result/message", "已提交：最新输入"), 1, 2)
+            .put("messageCount", 2).put("messageIndex", 1))
+        val committed = store.cards.getValue("card")
+        assertEquals(2, committed.revision); assertEquals(2, committed.incrementalEnvelopes.size)
+        assertEquals(before.surfaceId, committed.surfaceId)
+        assertFalse(store.hasPendingCommit)
+        val model = UiStateDocument.restore(committed.replay).getJSONObject("surfaces").getJSONObject("surface").getJSONObject("dataModel")
+        assertEquals("最新输入", model.getJSONObject("form").getString("value"))
+        assertEquals("已提交：最新输入", model.getJSONObject("result").getString("message"))
+        val replay = JSONObject(committed.replay.single()).getJSONObject("createSurface")
+        assertEquals(5, replay.getJSONArray("components").length())
+        store.consume(event(4, "run.completed"))
+        store.confirmRun(JSONObject().put("runId", "run").put("status", "running").put("operation", "update_card"))
+        assertNull(store.activeRunId)
+        assertFalse(store.consume(event(3, "a2ui.message")))
+        assertEquals(committed, store.cards.getValue("card"))
+        assertTrue(runCatching { store.consume(event(5, "a2ui.message", update("/form/value", "stale"), 1, 2)) }.isFailure)
+        assertEquals(committed, store.cards.getValue("card"))
+    }
+
     @Test fun replaceChangesSurfaceAndClearsOldReplay() {
         createCard()
         val before = store.cards.getValue("card")

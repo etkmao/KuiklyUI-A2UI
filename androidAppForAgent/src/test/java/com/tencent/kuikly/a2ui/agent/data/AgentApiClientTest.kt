@@ -45,6 +45,153 @@ class AgentApiClientTest {
         assertEquals(first.body.readUtf8(), second.body.readUtf8())
         assertEquals(first.getHeader("Idempotency-Key"), second.getHeader("Idempotency-Key"))
     }
+    private fun formCard(): CardDocument {
+        val messages = javaClass.getResourceAsStream("/fixtures/action-form.json")!!.bufferedReader().use {
+            JSONObject(it.readText()).getJSONArray("messages").objects()
+        }
+        return CardDocument("clicked-card", messages.first().getJSONObject("createSurface").getString("surfaceId"),
+            3, "ready", true, messages.map { it.toString() })
+    }
+    private fun syntheticRendererMessage(card: CardDocument, value: Any = " 本地最新输入 "): JSONObject = JSONObject()
+        .put("version", "1.0").put("action", JSONObject().put("name", "submit_form").put("surfaceId", card.surfaceId)
+            .put("sourceComponentId", "submit").put("timestamp", "2026-11-27T01:02:03.000Z")
+            .put("context", JSONObject().put("value", value)))
+    private fun rendererAction(card: CardDocument, message: JSONObject): RendererCardAction =
+        RendererCardAction(card.id, card.revision, card.surfaceId, 99, message.toString(), null)
+
+    @Test fun syntheticCompleteRendererEnvelopePreservesLiveValueNotReplayValue() {
+        val card = formCard()
+        val message = syntheticRendererMessage(card).apply { getJSONObject("action").put("userMessage", "提交表单") }
+        val body = rendererAction(card, message).requestBody(card)
+        assertEquals("clicked-card", body.getString("cardId"))
+        assertEquals(3, body.getInt("baseCardRevision"))
+        val outgoing = body.getJSONObject("message").getJSONObject("action")
+        assertEquals(" 本地最新输入 ", outgoing.getJSONObject("context").getString("value"))
+        assertEquals("submit", outgoing.getString("sourceComponentId"))
+        assertEquals("提交表单", outgoing.getString("userMessage"))
+        assertFalse(body.has("prompt")); assertFalse(body.has("operation")); assertFalse(outgoing.has("tag"))
+    }
+    @Test fun currentSdkRawCallbackCannotInventSurfaceOrSource() {
+        val card = formCard()
+        val raw = JSONObject().put("event", JSONObject().put("name", "submit_form")
+            .put("context", JSONObject().put("value", "真实本地值")))
+        val callback = RendererCardAction(card.id, card.revision, "dsl-surface", 99, raw.toString(), null)
+        assertTrue(runCatching { callback.requestBody(card) }.isFailure)
+        assertTrue(runCatching { callback.copy(surfaceId = card.surfaceId).requestBody(card) }.isFailure)
+    }
+    @Test fun actionRejectsMissingFieldsUnresolvedBindingsAndInvalidValues() {
+        val card = formCard()
+        listOf("sourceComponentId", "surfaceId", "context", "timestamp", "name").forEach { field ->
+            val message = syntheticRendererMessage(card).apply { getJSONObject("action").remove(field) }
+            assertTrue("Missing $field must fail closed", runCatching { rendererAction(card, message).requestBody(card) }.isFailure)
+        }
+        listOf<Any>("", " \n ", "x".repeat(1001), 42, JSONObject.NULL, JSONObject().put("@path", "/form/value")).forEach { value ->
+            assertTrue(runCatching { rendererAction(card, syntheticRendererMessage(card, value)).requestBody(card) }.isFailure)
+        }
+        listOf("valueInput", "undeclared").forEach { source ->
+            val message = syntheticRendererMessage(card).apply { getJSONObject("action").put("sourceComponentId", source) }
+            assertTrue(runCatching { rendererAction(card, message).requestBody(card) }.isFailure)
+        }
+        val message = syntheticRendererMessage(card)
+        assertTrue(runCatching { rendererAction(card, message).requestBody(card.copy(revision = 4)) }.isFailure)
+        assertTrue(runCatching { rendererAction(card, message).requestBody(card.copy(id = "selected-not-clicked")) }.isFailure)
+        assertTrue(runCatching { rendererAction(card, message).requestBody(card.copy(editable = false)) }.isFailure)
+        assertTrue(runCatching { rendererAction(card, message).requestBody(card.copy(surfaceId = "replacement")) }.isFailure)
+    }
+    @Test fun actionRejectsWrongDeclaredBindingAndInvalidTimestamp() {
+        val card = formCard()
+        val altered = JSONObject(card.replay.single()).apply {
+            getJSONObject("createSurface").getJSONArray("components").objects().first { it.getString("id") == "submit" }
+                .getJSONObject("action").getJSONObject("event").getJSONObject("context").getJSONObject("value").put("@path", "/other")
+        }
+        val message = syntheticRendererMessage(card)
+        assertTrue(runCatching { rendererAction(card, message).requestBody(card.copy(replay = listOf(altered.toString()))) }.isFailure)
+        message.getJSONObject("action").put("timestamp", "2026-99-27T01:02:03.000Z")
+        assertTrue(runCatching { rendererAction(card, message).requestBody(card) }.isFailure)
+    }
+    @Test fun actionRejectsExtraDeclaredAndResolvedContextFields() {
+        val card = formCard()
+        val message = syntheticRendererMessage(card)
+        val extraResolved = JSONObject(message.toString()).apply {
+            getJSONObject("action").getJSONObject("context").put("other", "unexpected")
+        }
+        assertTrue(runCatching { rendererAction(card, extraResolved).requestBody(card) }.isFailure)
+        val extraDeclared = JSONObject(card.replay.single()).apply {
+            getJSONObject("createSurface").getJSONArray("components").objects().first { it.getString("id") == "submit" }
+                .getJSONObject("action").getJSONObject("event").getJSONObject("context").put("other", "unexpected")
+        }
+        assertTrue(runCatching { rendererAction(card, message).requestBody(card.copy(replay = listOf(extraDeclared.toString()))) }.isFailure)
+    }
+
+    @Test fun actionPostsToConfiguredPathAndRetriesReuseExactBodyAndKey() = runBlocking {
+        repeat(2) { server.enqueue(MockResponse().setResponseCode(202)
+            .setBody("{\"runId\":\"run\",\"status\":\"running\",\"operation\":\"update_card\"}")) }
+        val card = formCard()
+        val body = rendererAction(card, syntheticRendererMessage(card)).requestBody(card)
+        repeat(2) { assertEquals("update_card", api.submitAction("session", body, "action-key").getString("operation")) }
+        val first = server.takeRequest(3, TimeUnit.SECONDS)!!
+        val second = server.takeRequest(3, TimeUnit.SECONDS)!!
+        assertEquals("POST", first.method); assertEquals("/test/actions/session", first.path)
+        assertEquals("action-key", first.getHeader("Idempotency-Key"))
+        assertEquals("test-only", first.getHeader("X-Demo-Header"))
+        assertEquals(first.body.readUtf8(), second.body.readUtf8())
+        assertEquals(first.getHeader("Idempotency-Key"), second.getHeader("Idempotency-Key"))
+    }
+    @Test fun legacyRoutesUseStandardActionsPath() = runBlocking {
+        val legacy = JSONObject(routes()).apply { remove("actions") }.toString()
+        val connection = AgentConnection(server.url("/").toString(), legacy)
+        connection.validate(true)
+        val legacyApi = AgentApiClient(connection)
+        try {
+            server.enqueue(MockResponse().setResponseCode(202).setBody("{\"operation\":\"update_card\"}"))
+            legacyApi.submitAction("session", JSONObject(), "key")
+            assertEquals("/v1/sessions/session/actions", server.takeRequest(3, TimeUnit.SECONDS)!!.path)
+        } finally { legacyApi.close() }
+    }
+    @Test fun actionRevisionConflictRemainsRecoverableWithoutModelRequest() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(409).setBody("{\"error\":{\"code\":\"REVISION_CONFLICT\",\"retryable\":false}}"))
+        try { api.submitAction("session", JSONObject(), "key"); fail("Expected conflict") }
+        catch (e: AgentFailure) { assertEquals("REVISION_CONFLICT", e.code); assertEquals(409, e.httpStatus) }
+        assertEquals("/test/actions/session", server.takeRequest(3, TimeUnit.SECONDS)!!.path)
+        assertEquals(1, server.requestCount)
+    }
+
+    @Test fun submissionUncertaintyIncludes408ButNotDefinitiveClientRejections() {
+        listOf(0, 408, 500, 502, 503).forEach { status ->
+            assertTrue("Status $status must retain the pending submission", AgentFailure("TEST", false, status).submissionUncertain)
+        }
+        listOf(400, 401, 403, 404, 409, 422, 429).forEach { status ->
+            assertFalse("Status $status is a definitive rejection", AgentFailure("TEST", true, status).submissionUncertain)
+        }
+    }
+    @Test fun action408KeepsUncertainResultAndRetryUsesOriginalKeyAndBody() = runBlocking {
+        server.enqueue(MockResponse().setResponseCode(408).setBody("{\"error\":{\"code\":\"REQUEST_TIMEOUT\",\"retryable\":false}}"))
+        server.enqueue(MockResponse().setResponseCode(202)
+            .setBody("{\"runId\":\"run\",\"status\":\"running\",\"operation\":\"update_card\"}"))
+        val card = formCard()
+        val body = rendererAction(card, syntheticRendererMessage(card)).requestBody(card)
+        try { api.submitAction("session", body, "original-action-key"); fail("Expected uncertain timeout") }
+        catch (e: AgentFailure) { assertEquals(408, e.httpStatus); assertTrue(e.submissionUncertain) }
+        assertEquals("update_card", api.submitAction("session", body, "original-action-key").getString("operation"))
+        val first = server.takeRequest(3, TimeUnit.SECONDS)!!
+        val second = server.takeRequest(3, TimeUnit.SECONDS)!!
+        assertEquals("/test/actions/session", first.path); assertEquals(first.path, second.path)
+        assertEquals("original-action-key", first.getHeader("Idempotency-Key"))
+        assertEquals(first.getHeader("Idempotency-Key"), second.getHeader("Idempotency-Key"))
+        assertEquals(first.body.readUtf8(), second.body.readUtf8())
+    }
+
+    @Test fun actionRequires202UpdateCardResponseAndNonemptyKey() = runBlocking {
+        assertTrue(runCatching { api.submitAction("session", JSONObject(), "") }.isFailure)
+        assertEquals(0, server.requestCount)
+        server.enqueue(MockResponse().setResponseCode(200).setBody("{\"operation\":\"update_card\"}"))
+        try { api.submitAction("session", JSONObject(), "key"); fail("Expected invalid status") }
+        catch (e: AgentFailure) { assertEquals("INVALID_RESPONSE", e.code); assertEquals(200, e.httpStatus) }
+        server.enqueue(MockResponse().setResponseCode(202).setBody("{\"operation\":\"create_card\"}"))
+        try { api.submitAction("session", JSONObject(), "key"); fail("Expected invalid operation") }
+        catch (e: AgentFailure) { assertEquals("INVALID_RESPONSE", e.code); assertEquals(202, e.httpStatus) }
+    }
+
     @Test fun cancellationPostsToConfiguredRunPath() = runBlocking {
         server.enqueue(MockResponse().setBody("{\"status\":\"cancelled\"}"))
         assertEquals("cancelled", api.cancel("run").getString("status"))

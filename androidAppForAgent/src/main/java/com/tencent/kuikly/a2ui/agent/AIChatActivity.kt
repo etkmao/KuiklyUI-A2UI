@@ -59,7 +59,7 @@ class AIChatActivity : AppCompatActivity() {
         adapter = ChatMessageAdapter(
             onEdit = { model.selectCard(it); binding.input.requestFocus() },
             onResize = { if (followBottom) scrollBottom() },
-            onAction = { Toast.makeText(this, "当前服务尚不支持卡片交互", Toast.LENGTH_SHORT).show() },
+            onAction = { model.submitAction(it) },
             onLink = ::openLink
         )
         binding.messages.layoutManager = manager

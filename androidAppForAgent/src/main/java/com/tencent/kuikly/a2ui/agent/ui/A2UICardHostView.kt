@@ -5,16 +5,17 @@ import android.graphics.Color
 import android.widget.FrameLayout
 import android.widget.TextView
 import com.tencent.kuikly.a2ui.agent.data.CardDocument
+import com.tencent.kuikly.a2ui.agent.data.RendererCardAction
 import com.tencent.kuikly.a2ui.render.android.A2UISurfaceView
 import com.tencent.kuikly.a2ui.render.android.A2UISurfaceViewListener
 
 class A2UICardHostView(context: Context) : FrameLayout(context) {
     private var document: CardDocument? = null
     private var surface: A2UISurfaceView? = null
-    private var renderedIdentity: Pair<String, Int>? = null
+    private var renderedIdentity: Triple<String, String, Int>? = null
     private var generation = 0
     var onContentResize: (() -> Unit)? = null
-    var onUnsupportedAction: (() -> Unit)? = null
+    var onAction: ((RendererCardAction) -> Unit)? = null
     var onOpenLink: ((String) -> Unit)? = null
 
     init {
@@ -43,10 +44,10 @@ class A2UICardHostView(context: Context) : FrameLayout(context) {
 
     private fun render() {
         val card = document ?: return
-        val identity = card.surfaceId to card.revision
+        val identity = Triple(card.id, card.surfaceId, card.revision)
         if (renderedIdentity == identity && surface != null) return
         val previous = renderedIdentity
-        if (surface != null && previous?.first == card.surfaceId && previous.second + 1 == card.revision && card.incrementalEnvelopes.isNotEmpty()) {
+        if (surface != null && previous?.first == card.id && previous.second == card.surfaceId && previous.third + 1 == card.revision && card.incrementalEnvelopes.isNotEmpty()) {
             card.incrementalEnvelopes.forEach { surface?.writeStream(it) }
             renderedIdentity = identity
             return
@@ -85,7 +86,15 @@ class A2UICardHostView(context: Context) : FrameLayout(context) {
                     }
                 }
                 override fun onAction(surfaceId: String, tag: Int, action: String, params: String?) {
-                    post { if (generation == currentGeneration) onUnsupportedAction?.invoke() }
+                    val clickedCard = document ?: return
+                    val clickedIdentity = Triple(clickedCard.id, clickedCard.surfaceId, clickedCard.revision)
+                    val event = RendererCardAction(clickedCard.id, clickedCard.revision, surfaceId, tag, action, params)
+                    post {
+                        if (generation == currentGeneration && isAttachedToWindow && renderedIdentity == clickedIdentity &&
+                            document?.id == event.cardId && document?.revision == event.baseCardRevision) {
+                            this@A2UICardHostView.onAction?.invoke(event)
+                        }
+                    }
                 }
                 override fun onOpenUrl(url: String) {
                     post { if (generation == currentGeneration) onOpenLink?.invoke(url) }
